@@ -46,7 +46,7 @@ end
 --- Load the map from a file
 -- @path the file to load from
 function M:load(path)
-    log:debug('Dumping map to', path)
+    log:debug('Loading map from', path)
 
     local file = assert(io.open(path, 'r'))
     local data = file:read('*all')
@@ -56,7 +56,7 @@ function M:load(path)
 end
 
 function M:dump(path)
-    log:debug('Loading map from', path)
+    log:debug('Dumping map to', path)
 
     local file = assert(io.open(path, 'w'))
     file:write(serialize.dump(self))
