@@ -5,10 +5,12 @@ local levels = {
     error = 3
 }
 
+--- Get a string timestamp for the current time
 local function timestamp()
     return os.date('%Y-%m-%dT%H:%M:%S')
 end
 
+--- Module
 local M = {
     levels = levels,
     level = levels.warning,
@@ -17,6 +19,8 @@ local M = {
     _file = nil,
 }
 
+--- Open a log file
+-- @param path the log file path
 function M.open_file(path)
     -- Close any open file
     if M._file ~= nil then
@@ -33,6 +37,9 @@ function M.open_file(path)
     end
 end
 
+--- Write a log message with level
+-- @param msg the message text
+-- @param level the message level
 function M.log(msg, level)
     assert(level ~= nil, 'level cannot be nil')
     if level >= M.print_level then
@@ -56,22 +63,32 @@ function M.log(msg, level)
     end
 end
 
+--- Write a log message with debug level
+-- @param msg the message text
 function M.debug(msg)
     M.log('D: ' .. msg, levels.debug)
 end
 
+--- Write a log message with info level
+-- @param msg the message text
 function M.info(msg)
     M.log('I: ' .. msg, levels.info)
 end
 
+--- Write a log message with warning level
+-- @param msg the message text
 function M.warn(msg)
     M.log('W: ' .. msg, levels.warning)
 end
 
+--- Write a log message with error level
+-- @param msg the message text
 function M.error(msg)
     M.log('E: ' .. msg, levels.error)
 end
 
+--- Write a log message with error level and call error()
+-- @param msg the message text
 function M.fatal(msg)
     M.log('E: ' .. msg, levels.error)
     error()
