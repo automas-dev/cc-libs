@@ -51,14 +51,10 @@ function M.log(msg, level)
             M.open_file(M.file)
         end
 
-        if M.file then
-            if M._file then
-                local text = '[' .. timestamp() .. '] ' .. msg .. '\n'
-                file:write(text)
-                file:flush()
-            else
-                print('Error writing to log file: ' .. err)
-            end
+        if M._file then
+            local text = '[' .. timestamp() .. '] ' .. msg .. '\n'
+            M._file:write(text)
+            M._file:flush()
         end
     end
 end
