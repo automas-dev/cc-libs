@@ -20,4 +20,13 @@ function queue:pop()
     end
 end
 
+--- Return the front element of the queue or nil if the queue is empty
+function queue:peek()
+    if #self > 0 then
+        return self[0]
+    else
+        return nil
+    end
+end
+
 return queue
