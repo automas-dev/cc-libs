@@ -45,7 +45,13 @@ function serialize.table(val, name, skipnewlines, depth)
 
         local isarray = testarray(val)
         for k, v in pairs(val) do
-            tmp = tmp .. serialize.table(v, (not isarray and k or nil), skipnewlines, depth + 1) .. "," .. (not skipnewlines and "\n" or "")
+            tmp = tmp
+                .. serialize.table(v,
+                    (not isarray and k or nil),
+                    skipnewlines,
+                    depth + 1)
+                .. ","
+                .. (not skipnewlines and "\n" or "")
         end
 
         tmp = tmp .. string.rep(" ", depth) .. "}"
