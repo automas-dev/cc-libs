@@ -14,7 +14,24 @@ local M = {
     level = levels.warning,
     print_level = levels.info,
     file = nil,
+    _file = nil,
 }
+
+function M.open_file(path)
+    -- Close any open file
+    if M._file ~= nil then
+        M._file:close()
+        M._file = nil
+    end
+
+    -- Open the file in append mode
+    file, err = io.open(path, 'a')
+    if file then
+        M._file = file
+    else
+        print('Error opening log file: ' .. err)
+    end
+end
 
 function M.log(msg, level)
     assert(level ~= nil, 'level cannot be nil')
@@ -22,13 +39,16 @@ function M.log(msg, level)
         print(msg)
     end
 
-    if level >= M.level then
-        local text = '[' .. timestamp() .. '] ' .. msg .. '\n'
+    if level >= M.level and M.file ~= nil then
+        if M._file == nil then
+            M.open_file(M.file)
+        end
+
         if M.file then
-            file, err = io.open(M.file, 'a')
-            if file then
+            if M._file then
+                local text = '[' .. timestamp() .. '] ' .. msg .. '\n'
                 file:write(text)
-                file:close()
+                file:flush()
             else
                 print('Error writing to log file: ' .. err)
             end
