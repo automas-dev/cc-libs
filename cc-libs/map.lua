@@ -1,6 +1,6 @@
 local serialize = require 'cc-libs.serialize'
 local logging = require 'cc-libs.logging'
-local log = logging:new('map')
+local log = logging:new('map', logging.Levels.warning)
 logging.MAP = log
 
 local Point = {}
@@ -18,7 +18,7 @@ function Point:new(x, y)
 end
 
 --- Connect two points
--- @parm other another Point to connect to 
+-- @parm other another Point to connect to
 function Point:connect(other)
     if self.connections[other.id] == nil then
         self.connections[other.id] = other
@@ -46,7 +46,7 @@ end
 --- Load the map from a file
 -- @path the file to load from
 function M:load(path)
-    log:debug('Loading map from', path)
+    log:info('Loading map from', path)
 
     local file = assert(io.open(path, 'r'))
     local data = file:read('*all')
@@ -55,8 +55,10 @@ function M:load(path)
     self.waypoints = data.waypoints
 end
 
+--- Write the map to a file
+-- @path the file to dump to
 function M:dump(path)
-    log:debug('Dumping map to', path)
+    log:info('Dumping map to', path)
 
     local file = assert(io.open(path, 'w'))
     file:write(serialize.dump(self))
@@ -75,15 +77,18 @@ local function is_inline(pos1, pos2)
     end
 end
 
+--- Add two points to the graph and connect them.
+-- The two points must be inline.
+-- @param p1 the first point
+-- @param p2 the second point
 function M:connect(p1, p2)
     assert(is_inline(p1, p2), 'p1 is not inline with p2')
+    log:debug('Connecting', p1.id, 'to', p2.id)
 
-    local point = self.graph[p1]
-    if point == nil then
-        point = Point:new(p1)
-    end
+    self.graph[p1.id] = p1
+    self.graph[p2.id] = p2
 
-    self.graph[p1] = p2
+    p1:connect(p2)
 end
 
 return M
