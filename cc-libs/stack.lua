@@ -17,6 +17,8 @@ end
 function stack:pop()
     if #self > 0 then
         return table.remove(self, #self)
+    else
+        return nil
     end
 end
 
@@ -24,6 +26,8 @@ end
 function stack:peek()
     if #self > 0 then
         return self[#self]
+    else
+        return nil
     end
 end
 

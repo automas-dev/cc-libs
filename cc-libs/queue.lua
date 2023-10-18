@@ -17,6 +17,8 @@ end
 function queue:pop()
     if #self > 0 then
         return table.remove(self, 1)
+    else
+        return nil
     end
 end
 
