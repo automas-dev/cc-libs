@@ -43,24 +43,6 @@ local M = {
     _file = nil,
 }
 
---- Open a log file
--- @param path the log file path
-function M.open_file(path)
-    -- Close any open file
-    if M._file ~= nil then
-        M._file:close()
-        M._file = nil
-    end
-
-    -- Open the file in append mode
-    local file, err = io.open(path, 'a')
-    if file then
-        M._file = file
-    else
-        print('Error opening log file: ' .. err)
-    end
-end
-
 --- Create a new logger for the given subsystem with print and file log levels
 -- @param subsystem the subsystem name
 -- @param level the print log level
@@ -93,8 +75,6 @@ function M.open_file(path)
         print('Error opening log file: ' .. err)
     end
 end
-
-M.Core = M:new('Core')
 
 --- Write a log message with level
 -- @param level the message level
@@ -178,5 +158,8 @@ function M:fatal(...)
     self:log(Levels.fatal, ...)
     error()
 end
+
+-- Create default Core logger
+M.Core = M:new('Core')
 
 return M
