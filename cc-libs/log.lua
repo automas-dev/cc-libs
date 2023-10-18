@@ -29,7 +29,7 @@ function M.open_file(path)
     end
 
     -- Open the file in append mode
-    file, err = io.open(path, 'a')
+    local file, err = io.open(path, 'a')
     if file then
         M._file = file
     else
