@@ -1,0 +1,309 @@
+local logging = require 'cc-libs.logging'
+logging.file = 'branch_mine.log'
+local log = logging.Core
+
+local FORWARD_MAX_TRIES = 10
+
+local rgps = require('cc-libs.rgps')
+local cc_nav = require('cc-libs.nav')
+
+local args = { ... }
+if #args < 2 then
+    print('Usage: branch_mine <shafts> <length> [torch|8] [skip|0]')
+    print()
+    print('Options:')
+    print('    shafts: number of shafts to mine')
+    print('    length: length of each shaft')
+    print('    torch:  interval to place torches')
+    print('    skip:   number of shafts to skip')
+    return
+end
+
+local shafts = tonumber(args[1])
+local length = tonumber(args[2])
+local torch = tonumber(args[3] or 8)
+local skip = tonumber(args[4] or 0)
+
+log:info('Starting with parameters shafts=', shafts,
+    'length=', length,
+    'torc=', torch,
+    'skip=', skip)
+
+local gps = rgps:new()
+local nav = cc_nav:new(gps)
+
+local function debug_location()
+    log:debug('Location is x=', gps.pos.x, 'z=', gps.pos.z, 'dir=', gps:direction_name())
+end
+
+local function assert_torch()
+    local data = turtle.getItemDetail(1)
+    if not data then log:fatal('No torches in 1st slot') end
+    local total_shafts = shafts - skip
+    local total_distance = total_shafts * 3 + total_shafts * length * 2
+    local torch_need = math.ceil(total_distance / torch)
+    log:debug('Torches needed is', torch_need)
+    if data.count < torch_need then log:fatal('Not enough torches, need', torch_need) end
+    if data.name ~= 'minecraft:torch' then log:fatal('Item in slot 1 is not torch') end
+    turtle.select(1)
+end
+
+local function assert_fuel()
+    log:info('Starting fuel level', turtle.getFuelLevel())
+    local shafts_per_dump = 2
+    local total_shafts = shafts - skip
+    local total_distance = shafts * 6 + total_shafts * length * 2 + total_shafts * length * 2 / shafts_per_dump
+    local fuel_need = math.ceil(1 + total_distance)
+    log:debug('Fuel needed is', fuel_need)
+    if turtle.getFuelLevel() < fuel_need then
+        log:fatal('Not enough fuel! Need', fuel_need)
+    end
+end
+
+local function inventory_full()
+    return turtle.getItemCount(16) > 0
+end
+
+local function dump()
+    local state = {
+        dir = gps.dir,
+    }
+
+    log:info('Inventory is full, dumping')
+    log:debug('Current state is dir=', state.dir)
+
+    nav:push()
+    nav:back_follow()
+
+    -- Dump
+
+    gps:face(rgps.Compass.E)
+
+    log:debug('At station, dumping inventory')
+    for i = 2, 16 do
+        turtle.select(i)
+        while turtle.getItemCount() > 0 do
+            turtle.drop()
+        end
+    end
+    turtle.select(1)
+
+    log:info('Collecting more torches')
+    gps:face(rgps.Compass.W)
+    local success, err = turtle.suck(turtle.getItemSpace())
+    log:debug('When sucking torches, got return', tostring(success))
+    if not success then
+        log:fatal('Could not pull torches from inventory:', err)
+    end
+
+    -- Resume
+
+    log:info('Returning to mining')
+    nav:follow()
+    gps:face(state.dir)
+end
+
+local function try_forward(n)
+    n = n or 1
+    assert(n >= 0, 'n must be positive')
+
+    for _ = 1, n do
+        local did_move = false
+        for _ = 1, FORWARD_MAX_TRIES do
+            if gps:forward() then
+                did_move = true
+                break
+            else
+                log:debug('Could not move forward, trying to dig')
+                turtle.dig()
+            end
+        end
+
+        if not did_move then
+            log:fatal('Failed to move forward after', FORWARD_MAX_TRIES, 'attempts')
+        end
+    end
+end
+
+local function dig_forward(n)
+    n = n or 1
+    assert(n >= 0, 'n must be positive')
+
+    for _ = 1, n do
+        if turtle.getFuelLevel() == 0 then
+            log:fatal('Ran out of fuel!')
+        end
+
+        if inventory_full() then
+            dump()
+        end
+
+        turtle.dig()
+        try_forward()
+        turtle.digUp()
+
+        local has_block, data = turtle.inspectDown()
+        if has_block then
+            if data.name ~= 'minecraft:torch' then
+                turtle.digDown()
+            end
+        end
+    end
+end
+
+local function place_torch()
+    log:debug('Place torch')
+    local data = turtle.getItemDetail(1)
+    if not data then log:fatal('No torches in 1st slot') end
+    if data.name ~= 'minecraft:torch' then log:fatal('Item in slot 1 is not torch') end
+    turtle.placeDown()
+end
+
+local function mine_shaft()
+    log:debug('Mining shaft at z=', gps.pos.z, 'dir=', gps:direction_name())
+
+    for i = 1, length do
+        dig_forward()
+
+        if i > 0 and i % torch == 0 then -- > 0 to prevent placing in tunnel
+            place_torch()
+        end
+    end
+end
+
+local function mine_tunnel()
+    log:debug('Mining tunnel at z=', gps.pos.z)
+    assert(gps.pos.x == 0, 'Mining tunnel but not at x=0')
+
+    gps:face(rgps.Compass.N)
+
+    for _ = 1, 3 do
+        if gps.pos.z % torch == 1 then -- 1 is fix for gps starting a block behind
+            place_torch()
+        end
+
+        dig_forward()
+    end
+
+    gps:face(rgps.Compass.S)
+    try_forward(3)
+end
+
+-- TODO
+-- Smart check for inventory full
+-- Check for fail to move
+-- Don't mine fortune ores (eg. diamond)
+-- Pickup fuel
+-- Mine through wall to last shaft for dump
+
+local function run()
+    -- assert_torch() -- Disabled because of torch re-stock on dump
+    assert_fuel()
+
+    -- Move to start
+
+    nav:reset()
+
+    gps:up()
+    nav:push()
+    dig_forward()
+
+    -- Skip shafts
+
+    if skip > 0 then
+        log:info('Skipping', skip, 'shafts')
+
+        for _ = 1, skip do
+            dig_forward(3)
+        end
+    end
+
+    -- Mine each shaft
+
+    local tunnel_center = nav:mark()
+
+    local function mark_center()
+        nav:reset(tunnel_center)
+        nav:pop()
+        tunnel_center = nav:mark()
+    end
+
+    for i = 1, shafts - skip do
+        log:info('Starting shaft', i + skip)
+        debug_location()
+
+        if i == 1 then
+            log:debug('First shaft, starting at center in tunnel')
+
+            mark_center()
+            mine_tunnel()
+
+            -- Mine right half of shaft
+            gps:face(rgps.Compass.E)
+            mine_shaft()
+
+            -- Mine left half of shaft
+            gps:face(rgps.Compass.W)
+            try_forward(length)
+            mine_shaft()
+        else
+            -- Turn to face next shaft
+            if i % 2 == 0 then
+                log:debug('Shaft is even so facing East')
+                gps:face(rgps.Compass.E)
+            else
+                log:debug('Shaft is odd so facing West')
+                gps:face(rgps.Compass.W)
+            end
+
+            mine_shaft()
+            mark_center()
+            mine_tunnel()
+
+            if i % 2 == 0 then
+                log:debug('Shaft is even so facing East')
+                gps:face(rgps.Compass.E)
+            else
+                log:debug('Shaft is odd so facing West')
+                gps:face(rgps.Compass.W)
+            end
+
+            mine_shaft()
+        end
+
+        -- Push end of shaft
+        nav:push()
+
+        -- Mine to start of next shaft and push
+        if i < shafts then
+            gps:face(rgps.Compass.N)
+            dig_forward(3)
+            nav:push()
+        end
+    end
+
+    -- Return
+
+    log:info('Returning to station')
+    debug_location()
+    nav:back_follow()
+
+    gps:face(rgps.Compass.E)
+
+    log:debug('At station, dumping inventory')
+    for i = 2, 16 do
+        turtle.select(i)
+        while turtle.getItemCount() > 0 do
+            turtle.drop()
+        end
+    end
+    turtle.select(1)
+
+    gps:face(rgps.Compass.N)
+    gps:down()
+    debug_location()
+
+    log:info('Done!')
+end
+
+run()
