@@ -1,0 +1,23 @@
+{
+    "Lua.workspace.library": [
+        "stub/"
+    ],
+    "Lua.diagnostics.globals": [
+        "colors",
+        "disk",
+        "fs",
+        "gps",
+        "http",
+        "io",
+        "keys",
+        "paintutils",
+        "parallel",
+        "peripheral",
+        "rednet",
+        "term",
+        "textutils",
+        "turtle",
+        "vector",
+        "window",
+    ]
+}
