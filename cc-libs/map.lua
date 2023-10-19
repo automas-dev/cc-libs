@@ -23,9 +23,13 @@ end
 
 --- Connect two points
 -- @parm other another Point to connect to
-function Point:link(other)
-    self.links[other.id] = other
-    other.links[self.id] = self
+local function link_points(p1, p2)
+    for _, v in ipairs(p1.links) do
+        if v.id == p2.id then
+            return
+        end
+    end
+    p1.links[#p1.links + 1] = p2.id
 end
 
 local M = {
@@ -48,7 +52,7 @@ function M:load(path)
     log:info('Loading map from', path)
 
     local file = assert(io.open(path, 'r'))
-    local data = file:read('*all')
+    local data = serialize.load(file:read('*all'))
     file:close()
     self.graph = data.graph
 end
@@ -94,7 +98,8 @@ function M:add(p1, p2)
 
     local g_p1 = self:get_point(p1.x, p1.y, p1.z)
     local g_p2 = self:get_point(p2.x, p2.y, p2.z)
-    g_p1:link(g_p2)
+    link_points(g_p1, g_p2)
+    link_points(g_p2, g_p1)
 end
 
 return M
