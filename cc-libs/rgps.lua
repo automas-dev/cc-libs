@@ -28,11 +28,12 @@ local static_delta = {
     vector.new(-1, 0, 0),
 }
 
-function M:new()
+function M:new(map)
     log:trace('New rgps instance')
     local o = {
         pos = vector.new(0, 0, 0),
         dir = Compass.N,
+        map = map,
     }
     setmetatable(o, self)
     self.__index = self
@@ -58,10 +59,14 @@ function M:forward(n)
     assert(n >= 0, 'n must be positive')
     log:trace('move forward', n, 'blocks')
     for _ = 1, n do
+        local p1 = self.pos
         if not turtle.forward() then
             return false
         end
         self.pos = self.pos + self:delta()
+        if self.map then
+            self.map:add(p1, self.pos)
+        end
     end
     return true
 end
@@ -71,10 +76,14 @@ function M:backward(n)
     assert(n >= 0, 'n must be positive')
     log:trace('move backward', n, 'blocks')
     for _ = 1, n do
+        local p1 = self.pos
         if not turtle.back() then
             return false
         end
         self.pos = self.pos - self:delta()
+        if self.map then
+            self.map:add(p1, self.pos)
+        end
     end
     return true
 end
@@ -84,10 +93,14 @@ function M:up(n)
     assert(n >= 0, 'n must be positive')
     log:trace('move up', n, 'blocks')
     for _ = 1, n do
+        local p1 = self.pos
         if not turtle.up() then
             return false
         end
         self.pos = self.pos + vert_norm
+        if self.map then
+            self.map:add(p1, self.pos)
+        end
     end
     return true
 end
@@ -97,10 +110,14 @@ function M:down(n)
     assert(n >= 0, 'n must be positive')
     log:trace('move down', n, 'blocks')
     for _ = 1, n do
+        local p1 = self.pos
         if not turtle.down() then
             return false
         end
         self.pos = self.pos - vert_norm
+        if self.map then
+            self.map:add(p1, self.pos)
+        end
     end
     return true
 end
