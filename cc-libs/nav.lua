@@ -26,10 +26,6 @@ function M:reset()
     self.resume = nil
 end
 
-function M:mark()
-    log:warn('mark is deprecated')
-end
-
 function M:mark_resume()
     self.resume = self.gps.pos
     log:info('Mark resume point', self.resume)
@@ -45,14 +41,6 @@ local function is_inline(pos1, pos2)
     else
         return true
     end
-end
-
-function M:push()
-    log:warn('Nav push is deprecated')
-end
-
-function M:pop()
-    log:warn('pop is deprecated')
 end
 
 function M:trace_step(step)
