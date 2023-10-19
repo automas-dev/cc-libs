@@ -5,11 +5,12 @@ logging.MAP = log
 
 local Point = {}
 
-function Point:new(x, y)
+function Point:new(x, y, z)
     local o = {
-        id = x .. ',' .. y,
+        id = x .. ',' .. y .. ',' .. z,
         x = x,
         y = y,
+        z = z,
         connections = {},
     }
     setmetatable(o, self)
@@ -36,7 +37,6 @@ local M = {
 function M:new()
     local o = {
         graph = {},
-        waypoints = {},
     }
     setmetatable(o, self)
     self.__index = self
@@ -52,7 +52,6 @@ function M:load(path)
     local data = file:read('*all')
     file:close()
     self.graph = data.graph
-    self.waypoints = data.waypoints
 end
 
 --- Write the map to a file
