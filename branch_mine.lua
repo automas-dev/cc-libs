@@ -4,6 +4,7 @@ local log = logging.Core
 
 local FORWARD_MAX_TRIES = 10
 
+local world = require('cc-libs.map')
 local rgps = require('cc-libs.rgps')
 local cc_nav = require('cc-libs.nav')
 
@@ -29,8 +30,9 @@ log:info('Starting with parameters shafts=', shafts,
     'torc=', torch,
     'skip=', skip)
 
-local gps = rgps:new()
-local nav = cc_nav:new(gps)
+local map = world:new()
+local gps = rgps:new(map)
+local nav = cc_nav:new(gps, map)
 
 local function debug_location()
     log:debug('Location is x=', gps.pos.x, 'z=', gps.pos.z, 'dir=', gps:direction_name())
