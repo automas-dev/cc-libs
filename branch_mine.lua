@@ -178,6 +178,7 @@ local function place_torch()
         gps:down()
         return false
     end
+    turtle.select(1)
     turtle.placeDown()
     return true
 end
