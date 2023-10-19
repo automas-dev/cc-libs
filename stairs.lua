@@ -1,6 +1,6 @@
 local logging = require 'cc-libs.logging'
 logging.file = 'stairs.log'
-local log = logging.Core
+local log = logging.get_logger('main')
 
 local MOVE_MAX_TRIES = 10
 

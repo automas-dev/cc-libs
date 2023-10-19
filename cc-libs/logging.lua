@@ -169,7 +169,4 @@ function M:fatal(...)
     error()
 end
 
--- Create default Core logger
-M.Core = M:new('Core')
-
 return M
