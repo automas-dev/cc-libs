@@ -1,4 +1,3 @@
-local stack = require 'cc-libs.stack'
 local rgps = require 'cc-libs.rgps'
 local world = require 'cc-libs.map'
 local astar = require 'cc-libs.astar'
@@ -11,7 +10,8 @@ function M:new(gps, map)
     map = map or world:new()
     local o = {
         gps = gps,
-        trace = stack:new(),
+        station = gps.pos,
+        resume = nil,
         map = map,
     }
     setmetatable(o, self)
@@ -19,22 +19,20 @@ function M:new(gps, map)
     return o
 end
 
-function M:reset(mark)
-    mark = mark or 0
-    log:info('Reset to mark', mark)
+function M:reset()
+    log:info('Reset')
 
-    assert(mark >= 0, 'mark must be positive')
-    assert(mark <= #self.trace, 'mark is in the future')
-
-    while #self.trace > mark do
-        self.trace:pop()
-    end
+    self.station = self.gps.pos
+    self.resume = nil
 end
 
 function M:mark()
-    log:info('mark index')
-    self:push()
-    return #self.trace
+    log:warn('mark is deprecated')
+end
+
+function M:mark_resume()
+    self.resume = self.gps.pos
+    log:info('Mark resume point', self.resume)
 end
 
 local function is_inline(pos1, pos2)
@@ -50,22 +48,11 @@ local function is_inline(pos1, pos2)
 end
 
 function M:push()
-    log:debug('push index', #self.trace + 1)
-    if #self.trace > 0 then
-        local last_trace = self.trace:peek()
-        log:trace('Trace has more than 1 point')
-        log:trace('Checking that pos',
-            self.gps.pos.x, self.gps.pos.y, self.gps.pos.z,
-            'is inline with last trace',
-            last_trace.x, last_trace.y, last_trace.z)
-        assert(is_inline(self.gps.pos, last_trace), 'Current position is not inline with last push')
-    end
-    self.trace:push(self.gps.pos)
+    log:warn('Nav push is deprecated')
 end
 
 function M:pop()
-    log:debug('pop index', #self.trace)
-    return self.trace:pop()
+    log:warn('pop is deprecated')
 end
 
 function M:trace_step(step)
@@ -113,9 +100,10 @@ end
 
 function M:follow()
     log:info('Going to resume point')
-    assert(self.gps.pos == self.trace[1], 'Not aligned with trace start')
+    assert(self.resume ~= nil, 'No resume point is marked')
+    assert(self.gps.pos == self.station, 'Not aligned with trace start')
 
-    local path = self:find_path(1, #self.trace)
+    local path = self:find_path(self.station, self.resume)
 
     log:debug('Path has', #path, 'points')
 
@@ -126,9 +114,10 @@ end
 
 function M:back_follow()
     log:info('Going to station point')
-    assert(self.gps.pos == self.trace[#self.trace], 'Not aligned with trace end')
+    assert(self.resume ~= nil, 'No resume point is marked')
+    assert(self.gps.pos == self.resume, 'Not aligned with trace end')
 
-    local path = self:find_path(#self.trace, 1)
+    local path = self:find_path(self.resume, self.station)
 
     log:debug('Path has', #path, 'points')
 
@@ -138,17 +127,14 @@ function M:back_follow()
 end
 
 function M:find_path(start, goal)
-    log:debug('Searching for path between', start, 'and', goal)
-    assert(self.trace[start] ~= nil)
-    assert(self.trace[goal] ~= nil)
+    log:debug('Searching for path between', start.x, start.y, start.z,
+        'and', goal.x, goal.y, goal.z)
 
-    local start_pos = self.trace[start]
-    log:debug('Start pos is', start_pos.x, start_pos.y, start_pos.z)
-    local p_start = self.map:point(start_pos.x, start_pos.y, start_pos.z)
+    log:debug('Start pos is', start.x, start.y, start.z)
+    local p_start = self.map:point(start.x, start.y, start.z)
 
-    local goal_pos = self.trace[goal]
-    log:debug('Goal pos is', start_pos.x, start_pos.y, start_pos.z)
-    local p_goal = self.map:point(goal_pos.x, goal_pos.y, goal_pos.z)
+    log:debug('Goal pos is', goal.x, goal.y, goal.z)
+    local p_goal = self.map:point(goal.x, goal.y, goal.z)
 
     local function neighbors(pid)
         log:trace('neighbors', pid)

@@ -74,7 +74,7 @@ local function return_to_station()
     log:info('Returning to station')
 
     debug_location()
-    nav:push()
+    nav:mark_resume()
     nav:back_follow()
 end
 
@@ -240,7 +240,7 @@ local function run()
     nav:reset()
 
     gps:up()
-    nav:push()
+    nav:reset()
     dig_forward()
 
     -- Skip shafts
@@ -255,14 +255,6 @@ local function run()
 
     -- Mine each shaft
 
-    local tunnel_center = nav:mark()
-
-    local function mark_center()
-        nav:reset(tunnel_center)
-        nav:pop()
-        tunnel_center = nav:mark()
-    end
-
     for i = 1, shafts - skip do
         log:info('Starting shaft', i + skip)
         debug_location()
@@ -270,7 +262,6 @@ local function run()
         if i == 1 then
             log:debug('First shaft, starting at center in tunnel')
 
-            mark_center()
             if not mine_tunnel() then return end
 
             -- Mine right half of shaft
@@ -292,7 +283,6 @@ local function run()
             end
 
             if not mine_shaft() then return end
-            mark_center()
             if not mine_tunnel() then return end
 
             if i % 2 == 0 then
@@ -306,14 +296,10 @@ local function run()
             if not mine_shaft() then return end
         end
 
-        -- Push end of shaft
-        nav:push()
-
         -- Mine to start of next shaft and push
         if i < shafts then
             gps:face(rgps.Compass.N)
             dig_forward(3)
-            nav:push()
         end
     end
 
