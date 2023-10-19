@@ -2,8 +2,7 @@ local stack = require 'cc-libs.stack'
 local rgps = require 'cc-libs.rgps'
 local world = require 'cc-libs.map'
 local logging = require 'cc-libs.logging'
-local log = logging:new('nav')
-logging.NAV = log
+local log = logging.get_logger('nav')
 
 local M = {}
 

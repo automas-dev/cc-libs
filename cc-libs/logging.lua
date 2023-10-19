@@ -41,6 +41,7 @@ local M = {
     file_level = nil,
     file = nil,
     _file = nil,
+    _subsystems = {},
 }
 
 --- Create a new logger for the given subsystem with print and file log levels
@@ -56,6 +57,15 @@ function M:new(subsystem, level, file_level)
     setmetatable(o, self)
     self.__index = self
     return o
+end
+
+function M.get_logger(subsystem)
+    local exists = M._subsystems[subsystem]
+    if exists == nil then
+        exists = M:new(subsystem)
+        M._subsystems[subsystem] = exists
+    end
+    return exists
 end
 
 --- Open a log file

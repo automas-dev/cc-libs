@@ -1,6 +1,5 @@
 local logging = require 'cc-libs.logging'
-local log = logging:new('rgps')
-logging.RGPS = log
+local log = logging.get_logger('rgps')
 
 local vert_norm = vector.new(0, 1, 0)
 

@@ -1,7 +1,6 @@
 local serialize = require 'cc-libs.serialize'
 local logging = require 'cc-libs.logging'
-local log = logging:new('map', logging.Levels.warning)
-logging.MAP = log
+local log = logging.get_logger('map')
 
 local Point = {}
 
