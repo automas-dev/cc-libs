@@ -1,6 +1,7 @@
 local stack = require 'cc-libs.stack'
 local rgps = require 'cc-libs.rgps'
 local world = require 'cc-libs.map'
+local astar = require 'cc-libs.astar'
 local logging = require 'cc-libs.logging'
 local log = logging.get_logger('nav')
 
@@ -109,6 +110,34 @@ function M:back_follow()
     for i = #self.trace, 1, -1 do
         self:trace_step(self.trace[i])
     end
+end
+
+function M:find_path(start, goal)
+    assert(self.map.graph[start] ~= nil)
+    assert(self.map.graph[goal] ~= nil)
+
+    local p_start = self.map:get_point(start)
+    local p_goal = self.map:get_point(goal)
+
+    local function neighbors(point)
+        return point.links
+    end
+
+    local function f(n1, n2)
+        local dx = math.abs(self.map:get_point(n1).x - self.map:get_point(n2).x)
+        local dy = math.abs(self.map:get_point(n1).y - self.map:get_point(n2).y)
+        return dx + dy
+    end
+
+    local function h(n1, n2)
+        local dx = math.abs(self.map:get_point(n1).x - self.map:get_point(n2).x)
+        local dy = math.abs(self.map:get_point(n1).y - self.map:get_point(n2).y)
+        return math.sqrt(dx * dx + dy * dy)
+    end
+
+    local path = astar(p_start.id, p_goal.id, neighbors, f, h)
+
+    return path
 end
 
 return M
