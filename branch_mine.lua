@@ -1,5 +1,9 @@
 local logging = require 'cc-libs.logging'
 logging.file = 'branch_mine.log'
+logging.level = logging.Levels.info
+logging.file_level = logging.Levels.debug
+logging.get_logger('map').level = logging.Levels.warning
+logging.get_logger('nav').file_level = logging.Levels.trace
 local log = logging.get_logger('main')
 
 local FORWARD_MAX_TRIES = 10
