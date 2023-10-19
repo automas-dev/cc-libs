@@ -21,17 +21,19 @@ end
 
 function M:reset(mark)
     mark = mark or 0
+    log:info('Reset to mark', mark)
+
     assert(mark >= 0, 'mark must be positive')
     assert(mark <= #self.trace, 'mark is in the future')
-    log:trace('reset to', mark)
+
     while #self.trace > mark do
         self.trace:pop()
     end
 end
 
 function M:mark()
+    log:info('mark index')
     self:push()
-    log:trace('mark index', #self.trace)
     return #self.trace
 end
 
@@ -48,21 +50,29 @@ local function is_inline(pos1, pos2)
 end
 
 function M:push()
+    log:debug('push index', #self.trace + 1)
     if #self.trace > 0 then
-        assert(is_inline(self.gps.pos, self.trace:peek()), 'Current position is not inline with last push')
+        local last_trace = self.trace:peek()
+        log:trace('Trace has more than 1 point')
+        log:trace('Checking that pos',
+            self.gps.pos.x, self.gps.pos.y, self.gps.pos.z,
+            'is inline with last trace',
+            last_trace.x, last_trace.y, last_trace.z)
+        assert(is_inline(self.gps.pos, last_trace), 'Current position is not inline with last push')
     end
     self.trace:push(self.gps.pos)
-    log:trace('push index', #self.trace)
 end
 
 function M:pop()
-    log:trace('pop index', #self.trace)
+    log:debug('pop index', #self.trace)
     return self.trace:pop()
 end
 
 function M:trace_step(step)
+    log:debug('trace step to pos', step.x, step.y, step.z)
     local pos = self.gps.pos
     assert(is_inline(pos, step), 'Step is not inline with current position')
+    log:trace('trace starts at pos', pos.x, pos.y, pos.z)
 
     if pos.x ~= step.x then
         local delta = math.abs(step.x - pos.x)
@@ -93,51 +103,82 @@ function M:trace_step(step)
         self.gps:forward(delta)
     end
 
-    assert(self.gps.pos == step, 'trace_step did not reach step position')
+    local end_pos = self.gps.pos
+    local at_end_pos = end_pos.x == step.x
+        and end_pos.y == step.y
+        and end_pos.z == step.z
+
+    assert(at_end_pos, 'trace_step did not reach step position')
 end
 
 function M:follow()
+    log:info('Going to resume point')
     assert(self.gps.pos == self.trace[1], 'Not aligned with trace start')
 
-    for i = 1, #self.trace do
-        self:trace_step(self.trace[i])
+    local path = self:find_path(1, #self.trace)
+
+    log:debug('Path has', #path, 'points')
+
+    for i = 1, #path do
+        self:trace_step(path[i])
     end
 end
 
 function M:back_follow()
+    log:info('Going to station point')
     assert(self.gps.pos == self.trace[#self.trace], 'Not aligned with trace end')
 
-    for i = #self.trace, 1, -1 do
-        self:trace_step(self.trace[i])
+    local path = self:find_path(#self.trace, 1)
+
+    log:debug('Path has', #path, 'points')
+
+    for i = 1, #path do
+        self:trace_step(path[i])
     end
 end
 
 function M:find_path(start, goal)
-    assert(self.map.graph[start] ~= nil)
-    assert(self.map.graph[goal] ~= nil)
+    log:debug('Searching for path between', start, 'and', goal)
+    assert(self.trace[start] ~= nil)
+    assert(self.trace[goal] ~= nil)
 
-    local p_start = self.map:get_point(start)
-    local p_goal = self.map:get_point(goal)
+    local start_pos = self.trace[start]
+    log:debug('Start pos is', start_pos.x, start_pos.y, start_pos.z)
+    local p_start = self.map:point(start_pos.x, start_pos.y, start_pos.z)
 
-    local function neighbors(point)
+    local goal_pos = self.trace[goal]
+    log:debug('Goal pos is', start_pos.x, start_pos.y, start_pos.z)
+    local p_goal = self.map:point(goal_pos.x, goal_pos.y, goal_pos.z)
+
+    local function neighbors(pid)
+        log:trace('neighbors', pid)
+        local point = self.map:get(pid)
         return point.links
     end
 
     local function f(n1, n2)
-        local dx = math.abs(self.map:get_point(n1).x - self.map:get_point(n2).x)
-        local dy = math.abs(self.map:get_point(n1).y - self.map:get_point(n2).y)
+        log:trace('f', n1, n2)
+        local dx = math.abs(self.map:get(n1).x - self.map:get(n2).x)
+        local dy = math.abs(self.map:get(n1).y - self.map:get(n2).y)
         return dx + dy
     end
 
     local function h(n1, n2)
-        local dx = math.abs(self.map:get_point(n1).x - self.map:get_point(n2).x)
-        local dy = math.abs(self.map:get_point(n1).y - self.map:get_point(n2).y)
+        log:trace('h', n1, n2)
+        local dx = math.abs(self.map:get(n1).x - self.map:get(n2).x)
+        local dy = math.abs(self.map:get(n1).y - self.map:get(n2).y)
         return math.sqrt(dx * dx + dy * dy)
     end
 
-    local path = astar(p_start.id, p_goal.id, neighbors, f, h)
+    local path = astar(p_start.id, p_goal.id, neighbors, f, h, true)
+    log:debug('Path completed with', #path, 'points')
 
-    return path
+    local path_points = {}
+    for i = 1, #path do
+        path_points[i] = self.map:get(path[i])
+    end
+
+    return path_points
 end
 
 return M

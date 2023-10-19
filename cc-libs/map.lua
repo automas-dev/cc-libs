@@ -5,6 +5,7 @@ local log = logging.get_logger('map')
 local Point = {}
 
 local function point_id(x, y, z)
+    log:trace('Point id from pos', x, y, z)
     return x .. ',' .. y .. ',' .. z
 end
 
@@ -79,9 +80,15 @@ local function is_inline(pos1, pos2)
     end
 end
 
-function M:get_point(x, y, z)
+function M:get(pid)
+    log:trace('Get point for id', pid)
+    return self.graph[pid]
+end
+
+function M:point(x, y, z)
+    log:trace('Get point for pos', x, y, z)
     local pid = point_id(x, y, z)
-    local point = self.graph[pid]
+    local point = self:get(pid)
     if point == nil then
         point = Point:new(x, y, z)
         self.graph[point.id] = point
@@ -94,10 +101,11 @@ end
 -- @param p1 the first point vector (x, y, z)
 -- @param p2 the second point vector (x, y, z)
 function M:add(p1, p2)
+    log:info('Add point', p1.x, p1.y, p1.y, 'and', p2.x, p2.y, p2.z)
     assert(is_inline(p1, p2), 'p1 is not inline with p2')
 
-    local g_p1 = self:get_point(p1.x, p1.y, p1.z)
-    local g_p2 = self:get_point(p2.x, p2.y, p2.z)
+    local g_p1 = self:point(p1.x, p1.y, p1.z)
+    local g_p2 = self:point(p2.x, p2.y, p2.z)
     link_points(g_p1, g_p2)
     link_points(g_p2, g_p1)
 end
