@@ -4,13 +4,17 @@ local log = logging.get_logger('map')
 
 local Point = {}
 
+local function point_id(x, y, z)
+    return x .. ',' .. y .. ',' .. z
+end
+
 function Point:new(x, y, z)
     local o = {
-        id = x .. ',' .. y .. ',' .. z,
+        id = point_id(x, y, z),
         x = x,
         y = y,
         z = z,
-        connections = {},
+        links = {},
     }
     setmetatable(o, self)
     self.__index = self
@@ -19,13 +23,9 @@ end
 
 --- Connect two points
 -- @parm other another Point to connect to
-function Point:connect(other)
-    if self.connections[other.id] == nil then
-        self.connections[other.id] = other
-    end
-    if other.connections[self.id] == nil then
-        other.connections[self.id] = self
-    end
+function Point:link(other)
+    self.links[other.id] = other
+    other.links[self.id] = self
 end
 
 local M = {
@@ -75,18 +75,26 @@ local function is_inline(pos1, pos2)
     end
 end
 
---- Add two points to the graph and connect them.
+function M:get_point(x, y, z)
+    local pid = point_id(x, y, z)
+    local point = self.graph[pid]
+    if point == nil then
+        point = Point:new(x, y, z)
+        self.graph[point.id] = point
+    end
+    return point
+end
+
+--- Add two points to the graph and link them.
 -- The two points must be inline.
--- @param p1 the first point
--- @param p2 the second point
-function M:connect(p1, p2)
+-- @param p1 the first point vector (x, y, z)
+-- @param p2 the second point vector (x, y, z)
+function M:add(p1, p2)
     assert(is_inline(p1, p2), 'p1 is not inline with p2')
-    log:debug('Connecting', p1.id, 'to', p2.id)
 
-    self.graph[p1.id] = p1
-    self.graph[p2.id] = p2
-
-    p1:connect(p2)
+    local g_p1 = self:get_point(p1.x, p1.y, p1.z)
+    local g_p2 = self:get_point(p2.x, p2.y, p2.z)
+    g_p1:link(g_p2)
 end
 
 return M
