@@ -1,4 +1,4 @@
-local function astar(start, goal, get_neighbors, cost_fn, heuristic_fn)
+local function astar(start, goal, get_neighbors, cost_fn, heuristic_fn, start_to_goal)
     local open = { start }
     local parent = {}
     local f_score = {
@@ -57,6 +57,14 @@ local function astar(start, goal, get_neighbors, cost_fn, heuristic_fn)
     while curr ~= nil do
         path[#path + 1] = curr
         curr = parent[curr]
+    end
+
+    if start_to_goal then
+        local reversed = {}
+        for i = 1, #path do
+            reversed[#path - (i - 1)] = path[i]
+        end
+        return reversed
     end
 
     -- Returns path from goal to start
