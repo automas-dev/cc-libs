@@ -6,7 +6,7 @@ local MOVE_MAX_TRIES = 10
 
 local args = { ... }
 if #args < 1 then
-    print('Usage: stairs <n> [place stairs]')
+    print('Usage: stairs <n> [place stairs|false]')
     print()
     print('Options:')
     print('    n: number of steps')
