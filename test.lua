@@ -53,7 +53,7 @@ local function test_serialize()
     local s = require 'cc-libs.serialize'
     local a = {
         text = 'a',
-        list = {1, 2, 3},
+        list = { 1, 2, 3 },
         nest = {
             foo = 1,
             bar = {
@@ -73,22 +73,69 @@ local function test_serialize()
     assert(a.nest.bar.baz == b.nest.bar.baz)
 end
 
+local function test_astar()
+    local astar = require 'cc-libs.astar'
+
+    local nodes = {
+        a = {
+            x = 0,
+            y = 0,
+            neighbors = { 'b' }
+        },
+        b = {
+            x = 0,
+            y = 3,
+            neighbors = { 'a', 'c' }
+        },
+        c = {
+            x = 2,
+            y = 3,
+            neighbors = { 'b' }
+        },
+    }
+
+    local function f(n1, n2)
+        local dx = math.abs(nodes[n1].x - nodes[n2].x)
+        local dy = math.abs(nodes[n1].y - nodes[n2].y)
+        return dx + dy
+    end
+
+    local function h(n1, n2)
+        local dx = math.abs(nodes[n1].x - nodes[n2].x)
+        local dy = math.abs(nodes[n1].y - nodes[n2].y)
+        return math.sqrt(dx * dx + dy * dy)
+    end
+
+    local function neighbors(node)
+        return nodes[node].neighbors
+    end
+
+    local path = astar('a', 'c', neighbors, f, h)
+
+    assert(#path == 3)
+    assert(path[1] == 'c')
+    assert(path[2] == 'b')
+    assert(path[3] == 'a')
+end
+
 local function test_map()
     local map = require 'cc-libs.map'
 
     local m = map:new()
     m.graph[0] = {
         name = 'a',
-        place = {0, 1}
+        place = { 0, 1 }
     }
 
     m:dump('m.map')
 end
 
+
 -- test_rgps()
 test_stack()
 test_queue()
 test_serialize()
+test_astar()
 -- test_map()
 
 print('All tests passed')
