@@ -85,6 +85,8 @@ local function try_up()
     end
 end
 
+turtle.up()
+
 for i = 1, n do
     if turtle.getFuelLevel() == 0 then
         log:fatal('Ran out of fuel!')
@@ -125,5 +127,6 @@ end
 
 turtle.turnRight()
 turtle.turnRight()
+turtle.down()
 
 log:info('Done!')
