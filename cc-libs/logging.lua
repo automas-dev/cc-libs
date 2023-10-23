@@ -150,9 +150,9 @@ function M:info(...)
     self:log(Levels.info, ...)
 end
 
---- Write a log message with warn level
+--- Write a log message with warning level
 -- @param ... the message
-function M:warn(...)
+function M:warning(...)
     self:log(Levels.warning, ...)
 end
 
