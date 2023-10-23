@@ -1,3 +1,4 @@
+--- Log levels
 local Levels = {
     trace = 0,
     debug = 1,
