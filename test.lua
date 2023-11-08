@@ -22,7 +22,7 @@ local function test_rgps()
 end
 
 local function test_stack()
-    local stack = require 'cc-libs.stack'
+    local stack = require 'cc-libs.util.stack'
     local s = stack:new()
     s:push('a')
     s:push('b')
@@ -36,7 +36,7 @@ local function test_stack()
 end
 
 local function test_queue()
-    local queue = require 'cc-libs.queue'
+    local queue = require 'cc-libs.util.queue'
     local q = queue:new()
     q:push('a')
     q:push('b')
@@ -50,7 +50,7 @@ local function test_queue()
 end
 
 local function test_serialize()
-    local s = require 'cc-libs.serialize'
+    local s = require 'cc-libs.util.serialize'
     local a = {
         text = 'a',
         list = { 1, 2, 3 },

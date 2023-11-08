@@ -1,4 +1,4 @@
-local logging = require 'cc-libs.logging'
+local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('rgps')
 
 local vert_norm = vector.new(0, 1, 0)

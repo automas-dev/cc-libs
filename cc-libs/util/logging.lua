@@ -1,4 +1,3 @@
---- Log levels
 local Levels = {
     trace = 0,
     debug = 1,
@@ -151,9 +150,9 @@ function M:info(...)
     self:log(Levels.info, ...)
 end
 
---- Write a log message with warning level
+--- Write a log message with warn level
 -- @param ... the message
-function M:warning(...)
+function M:warn(...)
     self:log(Levels.warning, ...)
 end
 

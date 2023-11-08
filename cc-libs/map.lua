@@ -1,5 +1,5 @@
-local serialize = require 'cc-libs.serialize'
-local logging = require 'cc-libs.logging'
+local serialize = require 'cc-libs.util.serialize'
+local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('map')
 
 local Point = {}

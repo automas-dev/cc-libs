@@ -1,4 +1,4 @@
-local logging = require 'cc-libs.logging'
+local logging = require 'cc-libs.util.logging'
 logging.file = 'branch_mine.log'
 logging.level = logging.Levels.info
 logging.file_level = logging.Levels.debug
