@@ -51,6 +51,7 @@ end
 
 local function test_serialize()
     local s = require 'cc-libs.util.serialize'
+    assert(s ~= nil)
     local a = {
         text = 'a',
         list = { 1, 2, 3 },
@@ -118,6 +119,32 @@ local function test_astar()
     assert(path[3] == 'a')
 end
 
+local function test_vec()
+    local vec = require 'cc-libs.util.vec'
+    local Vec2 = vec.Vec2
+
+    assert(Vec2:new(1) == Vec2:new(1, 1))
+    assert(Vec2:new() == Vec2:new(0, 0))
+
+    assert(Vec2:new(1, 2) + Vec2:new(1, 1) == Vec2:new(2, 3))
+    assert(Vec2:new(1, 2) - Vec2:new(1, 1) == Vec2:new(0, 1))
+    assert(Vec2:new(1, 2) * Vec2:new(2, 2) == Vec2:new(2, 4))
+    assert(Vec2:new(4, 2) / Vec2:new(2, 2) == Vec2:new(2, 1))
+    assert(Vec2:new(2, 3) % Vec2:new(2, 2) == Vec2:new(0, 1))
+    assert(Vec2:new(2, 2) ^ Vec2:new(2, 3) == Vec2:new(4, 8))
+
+    assert(#Vec2:new() == 2)
+
+    assert(Vec2:new(1, 1) ~= Vec2:new(2, 2))
+    assert(Vec2:new(1, 1) == Vec2:new(1, 1))
+
+    -- assert(Vec2:new(2, 3)[0] == 2)
+    -- assert(Vec2:new(2, 3)[1] == 3)
+    -- assert(Vec2:new(2, 3)[2] == nil)
+
+    assert(tostring(Vec2:new(1, 2)) == 'vec2(1, 2)')
+end
+
 local function test_map()
     local map = require 'cc-libs.map'
 
@@ -136,6 +163,7 @@ test_stack()
 test_queue()
 test_serialize()
 test_astar()
+test_vec()
 -- test_map()
 
 print('All tests passed')
