@@ -1,3 +1,5 @@
+---@meta ccl_rgps
+
 ---@module 'ccl_logging'
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('rgps')
@@ -10,12 +12,22 @@ local vec3 = vec.vec3
 
 local vert_norm = vec3:new(0, 1, 0)
 
----@enum compass
+---@enum Compass
 local Compass = {
     N = 1,
     E = 2,
     S = 3,
     W = 4,
+}
+
+---@enum Action
+local Action = {
+    FORWARD = 1,
+    BACKWARD = 2,
+    UP = 3,
+    DOWN = 4,
+    TURN_LEFT = 5,
+    TURN_RIGHT = 6,
 }
 
 local static_name = {
@@ -34,11 +46,12 @@ local static_delta = {
 
 ---@class RGPS
 ---@field pos vec3
----@field dir compass
+---@field dir Compass
 ---@field map cc_map
 ---@field max_tries number
 local M = {
-    Compass = Compass
+    Compass = Compass,
+    Action = Action,
 }
 
 ---Create a new
@@ -71,121 +84,28 @@ function M:delta()
     return static_delta[self.dir]
 end
 
----Attempt an action up to self.max_tries times
----@param action function normally turtle.forward or .back or .up or .down
----@return boolean was the move a success
-function M:_attempt_move(action)
-    local success = false
-    local tries = 0
-    for i = 1, self.max_tries do
-        tries = i
-        if action() then
-            success = true
-            break
-        end
-    end
-    log:trace('Attempt to move took', tries, 'tries and was', (success and 'success' or 'fail'))
-    return success
-end
-
-function M:forward(n)
-    n = n or 1
-    assert(n >= 0, 'n must be positive')
-    log:trace('move forward', n, 'blocks')
-    for _ = 1, n do
-        local p1 = self.pos
-        if not self:_attempt_move(turtle.forward) then
-            error('Failed to move forward after ' .. self.max_tires .. 'attempts')
-        end
+---Update position or rotation based on action
+---@param action Action
+function M:update(action)
+    if action == Action.FORWARD then
         self.pos = self.pos + self:delta()
-        if self.map then
-            self.map:add(p1, self.pos)
-        end
-    end
-    return true
-end
-
-function M:backward(n)
-    n = n or 1
-    assert(n >= 0, 'n must be positive')
-    log:trace('move backward', n, 'blocks')
-    for _ = 1, n do
-        local p1 = self.pos
-        if not self:_attempt_move(turtle.back) then
-            error('Failed to move back after ' .. self.max_tires .. 'attempts')
-        end
+    elseif action == Action.BACKWARD then
         self.pos = self.pos - self:delta()
-        if self.map then
-            self.map:add(p1, self.pos)
-        end
-    end
-    return true
-end
-
-function M:up(n)
-    n = n or 1
-    assert(n >= 0, 'n must be positive')
-    log:trace('move up', n, 'blocks')
-    for _ = 1, n do
-        local p1 = self.pos
-        if not self:_attempt_move(turtle.up) then
-            error('Failed to move up after ' .. self.max_tires .. 'attempts')
-        end
+    elseif action == Action.UP then
         self.pos = self.pos + vert_norm
-        if self.map then
-            self.map:add(p1, self.pos)
-        end
-    end
-    return true
-end
-
-function M:down(n)
-    n = n or 1
-    assert(n >= 0, 'n must be positive')
-    log:trace('move down', n, 'blocks')
-    for _ = 1, n do
-        local p1 = self.pos
-        if not turtle.down() then
-            return false
-        end
+    elseif action == Action.DOWN then
         self.pos = self.pos - vert_norm
-        if self.map then
-            self.map:add(p1, self.pos)
+    elseif action == Action.TURN_LEFT then
+        self.dir = self.dir - 1
+        if self.dir < 1 then
+            self.dir = 4
+        end
+    elseif action == Action.TURN_RIGHT then
+        self.dir = self.dir + 1
+        if self.dir > 4 then
+            self.dir = 1
         end
     end
-    return true
-end
-
-function M:left(n)
-    n = n or 1
-    assert(n >= 0, 'n must be positive')
-    assert(self.dir >= 1 and self.dir <= 4, 'Direction is an unknown value ' .. self.dir)
-
-    if n == 0 then return end
-
-    turtle.turnLeft()
-    self.dir = self.dir - 1
-    if self.dir < 1 then self.dir = 4 end
-
-    self:left(n - 1)
-end
-
-function M:right(n)
-    n = n or 1
-    assert(n >= 0, 'n must be positive')
-    assert(self.dir >= 1 and self.dir <= 4, 'Direction is an unknown value ' .. self.dir)
-
-    if n == 0 then return end
-
-    turtle.turnRight()
-    self.dir = self.dir + 1
-    if self.dir > 4 then self.dir = 1 end
-
-    self:right(n - 1)
-end
-
-function M:around()
-    self:right(2)
 end
 
 function M:face(compass)
