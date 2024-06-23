@@ -424,6 +424,6 @@ function vec3:normalized()
 end
 
 return {
-    Vec2 = vec2,
-    Vec3 = vec3,
+    vec2 = vec2,
+    vec3 = vec3,
 }
