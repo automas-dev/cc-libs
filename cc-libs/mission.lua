@@ -1,5 +1,4 @@
 ---@module 'ccl_logging'
-
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('mission')
 local cc_map = require 'cc-libs.map'
