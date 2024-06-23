@@ -1,64 +1,78 @@
-local Levels = {
-    trace = 0,
-    debug = 1,
-    info = 2,
-    warning = 3,
-    error = 4,
+---@meta ccl_logging
+
+---@enum LogLevel
+local Level = {
+    TRACE = 0,
+    DEBUG = 1,
+    INFO = 2,
+    WARNING = 3,
+    ERROR = 4,
     fatal = 5,
 }
 
---- Get the string representation of a level
--- @param level the level number
+---Get the string name of a level
+---@param level number|LogLevel level or level number
+---@return string
 local function level_name(level)
     assert(level >= 0, 'level must be a positive number')
-    if level == Levels.trace then
+    if level == Level.TRACE then
         return 'trace'
-    elseif level == Levels.debug then
+    elseif level == Level.DEBUG then
         return 'debug'
-    elseif level == Levels.info then
+    elseif level == Level.INFO then
         return 'info'
-    elseif level == Levels.warning then
+    elseif level == Level.WARNING then
         return 'warning'
-    elseif level == Levels.error then
+    elseif level == Level.ERROR then
         return 'error'
-    elseif level == Levels.fatal then
+    elseif level == Level.fatal then
         return 'fatal'
     else
         return 'custom:' .. tostring(level)
     end
 end
 
---- Get a string timestamp for the current time
+---Get a string timestamp for the current time
+---@return string
 local function timestamp()
+    ---@diagnostic disable-next-line: return-type-mismatch
     return os.date('%Y-%m-%dT%H:%M:%S')
 end
 
---- Module
+---@class Logger
+---@field subsystem string
+---@field level number|LogLevel
+---@field file_level number|LogLevel
+---@field file? string active log file path if _file is not nil
+---@field _file? file*
+---@field _subsystems { [string]: Logger }
 local M = {
-    Levels = Levels,
+    Level = Level,
     level_name = level_name,
-    level = Levels.info,
-    file_level = nil,
     file = nil,
     _file = nil,
     _subsystems = {},
 }
 
---- Create a new logger for the given subsystem with print and file log levels
--- @param subsystem the subsystem name
--- @param level the print log level
--- @param file_level the file log level
+---Create a new logger for the given subsystem with print and file log Level
+---@param subsystem string the subsystem name
+---@param level? number|LogLevel the print log level
+---@param file_level? number|LogLevel the file log level
+---@return Logger
 function M:new(subsystem, level, file_level)
     local o = {
         subsystem = subsystem or 'undefined',
-        level = level,
-        file_level = file_level,
+        level = level or Level.WARNING,
+        file_level = file_level or Level.INFO,
     }
     setmetatable(o, self)
     self.__index = self
     return o
 end
 
+---Get the logger object for the give subsystem name
+---@param subsystem string name of the subsystem
+---@return Logger
 function M.get_logger(subsystem)
     local exists = M._subsystems[subsystem]
     if exists == nil then
@@ -68,8 +82,8 @@ function M.get_logger(subsystem)
     return exists
 end
 
---- Open a log file
--- @param path the log file path
+---Open a log file
+---@param path string log file path
 function M.open_file(path)
     -- Close any open file
     if M._file ~= nil then
@@ -86,9 +100,9 @@ function M.open_file(path)
     end
 end
 
---- Write a log message with level
--- @param level the message level
--- @param ... the message
+---Write a log message with level
+---@param level number|LogLevel message level
+---@param ... any message
 function M:log(level, ...)
     assert(level ~= nil, 'level cannot be nil')
     local args = { ... }
@@ -132,41 +146,41 @@ function M:log(level, ...)
     end
 end
 
---- Write a log message with trace level
--- @param ... the message
+---Write a log message with TRACE level
+---@param ... any message
 function M:trace(...)
-    self:log(Levels.trace, ...)
+    self:log(Level.TRACE, ...)
 end
 
---- Write a log message with debug level
--- @param ... the message
+---Write a log message with DEBUG level
+---@param ... any message
 function M:debug(...)
-    self:log(Levels.debug, ...)
+    self:log(Level.DEBUG, ...)
 end
 
---- Write a log message with info level
--- @param ... the message
+---Write a log message with INFO level
+---@param ... any message
 function M:info(...)
-    self:log(Levels.info, ...)
+    self:log(Level.INFO, ...)
 end
 
---- Write a log message with warn level
--- @param ... the message
+---Write a log message with WARNING level
+---@param ... any message
 function M:warn(...)
-    self:log(Levels.warning, ...)
+    self:log(Level.WARNING, ...)
 end
 
---- Write a log message with error level
--- @param ... the message
+---Write a log message with ERROR level
+---@param ... any message
 function M:error(...)
-    self:log(Levels.error, ...)
+    self:log(Level.ERROR, ...)
 end
 
---- Write a log message with error level and call error()
--- @param ... the message
+---Write a log message with ERROR level and call error()
+---@param ... any message
 function M:fatal(...)
-    self:log(Levels.fatal, ...)
-    error()
+    self:log(Level.fatal, ...)
+    error(table.concat({ ... }, ''))
 end
 
 return M
