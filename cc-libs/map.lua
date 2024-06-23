@@ -56,12 +56,12 @@ end
 
 ---@class Map
 ---@field graph { [PointId]: Point }
-local M = {
+local Map = {
     Point = Point,
 }
 
 --- Create a new empty map
-function M:new()
+function Map:new()
     local o = {
         graph = {},
     }
@@ -72,7 +72,7 @@ end
 
 ---Load the map from a file
 ---@param path string to load from
-function M:load(path)
+function Map:load(path)
     log:info('Loading map from', path)
 
     local file = assert(io.open(path, 'r'))
@@ -83,7 +83,7 @@ end
 
 ---Write the map to a file
 ---@param path string file to dump to
-function M:dump(path)
+function Map:dump(path)
     log:info('Dumping map to', path)
 
     local file = assert(io.open(path, 'w'))
@@ -110,7 +110,7 @@ end
 ---Get a point by it's id
 ---@param pid PointId
 ---@return Point
-function M:get(pid)
+function Map:get(pid)
     log:trace('Get point for id', pid)
     return self.graph[pid]
 end
@@ -120,7 +120,7 @@ end
 ---@param y number
 ---@param z number
 ---@return Point
-function M:point(x, y, z)
+function Map:point(x, y, z)
     log:trace('Get point for pos', x, y, z)
     local pid = point_id(x, y, z)
     local point = self:get(pid)
@@ -134,7 +134,7 @@ end
 ---Add two points to the graph and link them. The two points must be inline.
 ---@param p1 Point the first point
 ---@param p2 Point the second point
-function M:add(p1, p2)
+function Map:add(p1, p2)
     log:info('Add point', p1.x, p1.y, p1.y, 'and', p2.x, p2.y, p2.z)
     assert(is_inline(p1, p2), 'p1 is not inline with p2')
 
@@ -143,5 +143,10 @@ function M:add(p1, p2)
     link_points(g_p1, g_p2)
     link_points(g_p2, g_p1)
 end
+
+local M = {
+    Point = Point,
+    Map = Map,
+}
 
 return M
