@@ -3,7 +3,8 @@ local logging = require 'cc-libs.util.logging'
 logging.file = 'stairs.log'
 local log = logging.get_logger('main')
 
-local MOVE_MAX_TRIES = 10
+---@module 'ccl_motion'
+local ccl_motion = require 'cc-libs.turtle.motion'
 
 local args = { ... }
 if #args < 1 then
@@ -13,112 +14,47 @@ if #args < 1 then
     return
 end
 
-local fuel_need = n * 4 * 2
-stats:check_fuel(fuel_need)
+local log_types = {
+    ['minecraft:oak_log'] = true,
+    ['minecraft:spruce_log'] = true,
+    ['minecraft:birch_log'] = true,
+    ['minecraft:jungle_log'] = true,
+    ['minecraft:acacia_log'] = true,
+    ['minecraft:dark_oak_log'] = true,
+    ['minecraft:mangrove_log'] = true,
+    ['minecraft:cherry_log'] = true,
+    ['minecraft:crimson_stem'] = true,
+    ['minecraft:warped_stem'] = true,
+    ['minecraft:stripped_oak_log'] = true,
+    ['minecraft:stripped_spruce_log'] = true,
+    ['minecraft:stripped_birch_log'] = true,
+    ['minecraft:stripped_jungle_log'] = true,
+    ['minecraft:stripped_acacia_log'] = true,
+    ['minecraft:stripped_dark_oak_log'] = true,
+    ['minecraft:stripped_mangrove_log'] = true,
+    ['minecraft:stripped_cherry_log'] = true,
+    ['minecraft:stripped_crimson_stem'] = true,
+    ['minecraft:stripped_warped_stem'] = true,
+}
 
-log:debug('Fuel needed is', fuel_need)
-if turtle.getFuelLevel() < fuel_need then
-    log:fatal('Not enough fuel! Need', fuel_need)
-end
+local tmc = ccl_motion.Motion:new()
+tmc:enable_dig()
 
-turtle.select(1)
-if place_stairs and turtle.getItemCount(1) < n then
-    log:fatal('Not enough stairs in slot 1, need', n)
-end
+local height = 0
 
-local function try_forward()
-    local did_move = false
-    for _ = 1, MOVE_MAX_TRIES do
-        if turtle.forward() then
-            did_move = true
-            break
-        else
-            log:debug('Could not move forward, trying to dig')
-            turtle.dig()
-        end
+while true do
+    local exists, info = turtle.inspect()
+    if not exists or not log_types[info.name] then
+        break
     end
-
-    if not did_move then
-        log:fatal('Failed to move forward after', MOVE_MAX_TRIES, 'attempts')
-    end
-end
-
-local function try_down()
-    local did_move = false
-    for _ = 1, MOVE_MAX_TRIES do
-        if turtle.down() then
-            did_move = true
-            break
-        else
-            log:debug('Could not move down, trying to dig down')
-            turtle.digDown()
-        end
-    end
-
-    if not did_move then
-        log:fatal('Failed to move down after', MOVE_MAX_TRIES, 'attempts')
-    end
-end
-
-local function try_up()
-    local did_move = false
-    for _ = 1, MOVE_MAX_TRIES do
-        if turtle.up() then
-            did_move = true
-            break
-        else
-            log:debug('Could not move up, trying to dig down')
-            turtle.digUp()
-        end
-    end
-
-    if not did_move then
-        log:fatal('Failed to move up after', MOVE_MAX_TRIES, 'attempts')
-    end
-end
-
-turtle.up()
-
-for i = 1, n do
-    if turtle.getFuelLevel() == 0 then
-        log:fatal('Ran out of fuel!')
-    end
-
     turtle.dig()
-    try_forward()
-    turtle.digUp()
-
-    if place_stairs and i % 2 == 1 then
-        try_up()
-        turtle.digUp()
-        if i < n then
-            turtle.dig()
-        end
-        try_down()
-    end
-
-    turtle.digDown()
-    try_down()
-    turtle.digDown()
+    tmc:up()
+    height = height + 1
 end
 
 -- Return
 
 log:info('Returning to station')
-
-turtle.turnRight()
-turtle.turnRight()
-
-for _ = 1, n do
-    if place_stairs then
-        turtle.placeDown()
-    end
-    try_up()
-    try_forward()
-end
-
-turtle.turnRight()
-turtle.turnRight()
-turtle.down()
+tmc:down(height)
 
 log:info('Done!')
