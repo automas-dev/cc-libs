@@ -8,6 +8,8 @@ local log = logging.get_logger('rgps')
 local vec = require 'ccl-libs.util.vec'
 local vec3 = vec.vec3
 
+---@module 'ccl_map'
+
 local vert_norm = vec3:new(0, 1, 0)
 
 ---@enum Compass
@@ -46,16 +48,19 @@ local static_delta = {
 ---@field pos vec3
 ---@field dir Compass
 ---@field max_tries number
+---@field map Map
 local RGPS = {}
 
 ---Create a new
+---@param map? Map optional map to update with each move
 ---@return RGPS
-function RGPS:new()
+function RGPS:new(map)
     log:trace('New rgps instance')
     local o = {
         pos = vec3:new(0, 0, 0),
         dir = Compass.N,
         max_tries = 10,
+        map = map or nil,
     }
     setmetatable(o, self)
     self.__index = self
@@ -79,6 +84,8 @@ end
 ---Update position or rotation based on action
 ---@param action Action
 function RGPS:update(action)
+    local p1 = self.pos
+
     if action == Action.FORWARD then
         self.pos = self.pos + self:delta()
     elseif action == Action.BACKWARD then
@@ -97,6 +104,10 @@ function RGPS:update(action)
         if self.dir > 4 then
             self.dir = 1
         end
+    end
+
+    if self.map ~= nil then
+        self.map:add(p1, self.pos)
     end
 end
 
