@@ -1,5 +1,7 @@
 ---@meta ccl_map
 
+---@module 'ccl_vec'
+
 local serialize = require 'cc-libs.util.serialize'
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('map')
@@ -92,8 +94,8 @@ function Map:dump(path)
 end
 
 ---Check if two points share the same value for at least 2 axis
----@param pos1 Point
----@param pos2 Point
+---@param pos1 vec3|Point
+---@param pos2 vec3|Point
 ---@return boolean
 local function is_inline(pos1, pos2)
     if pos1.x ~= pos2.x then
@@ -132,8 +134,8 @@ function Map:point(x, y, z)
 end
 
 ---Add two points to the graph and link them. The two points must be inline.
----@param p1 Point the first point
----@param p2 Point the second point
+---@param p1 vec3|Point the first point
+---@param p2 vec3|Point the second point
 function Map:add(p1, p2)
     log:info('Add point', p1.x, p1.y, p1.y, 'and', p2.x, p2.y, p2.z)
     assert(is_inline(p1, p2), 'p1 is not inline with p2')
