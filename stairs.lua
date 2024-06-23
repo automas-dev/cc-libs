@@ -5,8 +5,6 @@ local log = logging.get_logger('main')
 ---@module 'ccl_motion'
 local ccl_motion = require 'cc-libs.turtle.motion'
 
-local MOVE_MAX_TRIES = 10
-
 local args = { ... }
 if #args < 1 then
     print('Usage: stairs <n> [place stairs|false]')
