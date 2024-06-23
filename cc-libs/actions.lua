@@ -1,8 +1,6 @@
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('actions')
 
-local FORWARD_MAX_TRIES = 10
-
 local M = {}
 
 function M.find_slot(item_name, need)
@@ -51,62 +49,6 @@ function M.dump_slot(slot)
     while turtle.getItemCount() > 0 do
         turtle.drop()
     end
-end
-
-function M.try_forward(n, max_tries)
-    n = n or 1
-    assert(n >= 0, 'n must be positive')
-    max_tries = max_tries or FORWARD_MAX_TRIES
-    assert(max_tries >= 0, 'max_tries must be positive')
-
-    for _ = 1, n do
-        local did_move = false
-        for _ = 1, max_tries do
-            if turtle.forward() then
-                did_move = true
-                break
-            else
-                log:debug('Could not move forward, trying to dig')
-                turtle.dig()
-            end
-        end
-
-        if not did_move then
-            log:fatal('Failed to move forward after', max_tries, 'attempts')
-            return false
-        end
-    end
-
-    return true
-end
-
-function M.dig_forward(n, max_tries)
-    n = n or 1
-    assert(n >= 0, 'n must be positive')
-    max_tries = max_tries or FORWARD_MAX_TRIES
-    assert(max_tries >= 0, 'max_tries must be positive')
-
-    for _ = 1, n do
-        if turtle.getFuelLevel() == 0 then
-            log:fatal('Ran out of fuel!')
-            return false
-        end
-
-        turtle.dig()
-        if not M.try_forward(1, max_tries) then
-            return false
-        end
-        turtle.digUp()
-
-        local has_block, data = turtle.inspectDown()
-        if has_block then
-            if data.name ~= 'minecraft:torch' then
-                turtle.digDown()
-            end
-        end
-    end
-
-    return true
 end
 
 function M.place_torch()
