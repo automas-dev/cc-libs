@@ -23,7 +23,7 @@ end
 ---@field x number
 ---@field y number
 ---@field z number
----@field links { [PointId]: Point }
+---@field links { [PointId]: number } value is the weight
 local Point = {}
 
 ---Construct a new Point
@@ -45,13 +45,11 @@ function Point:new(x, y, z)
 end
 
 ---Connect this point to another. This will create the link on both points to each other.
----@param other Point
-function Point:link(other)
-    if self.links[other.id] ~= nil then
-        return
-    end
-    self.links[other.id] = other
-    other.links[self.id] = self
+---@param other Point point to link with
+---@param weight number weight of this link
+function Point:link(other, weight)
+    weight = weight or 1
+    self.links[other.id] = weight
 end
 
 ---@class Map
