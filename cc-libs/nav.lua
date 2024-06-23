@@ -1,36 +1,69 @@
-local rgps = require 'cc-libs.turtle.rgps'
-local world = require 'cc-libs.map'
-local astar = require 'cc-libs.astar'
+---@meta ccl_nav
+
+---@module 'ccl_logging'
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('nav')
 
-local M = {}
+---@module 'ccl_motion'
 
-function M:new(gps, map)
+---@module 'ccl_vec'
+
+---@module 'ccl_map'
+local world = require 'cc-libs.map'
+
+---@module 'ccl_rgps'
+local rgps = require 'cc-libs.turtle.rgps'
+local Compass = rgps.Compass
+
+local astar = require 'cc-libs.astar'
+
+---@class Nav
+---@field map Map
+---@field motion Motion
+---@field gps any
+---@field station vec3
+---@field resume? vec3
+local Nav = {}
+
+---Create a new navigation controller
+---@param motion Motion controller to move the turtle
+---@param gps any provides turtle position
+---@param map? Map  map to store paths, will create new if nil
+---@param station? vec3 location of the station, if nil will be set to gps.pos
+---@return Nav
+function Nav:new(motion, gps, map, station)
     map = map or world:new()
+    station = station or gps.pos
     local o = {
-        gps = gps,
-        station = gps.pos,
-        resume = nil,
         map = map,
+        motion = motion,
+        gps = gps,
+        station = station,
+        resume = nil,
     }
     setmetatable(o, self)
     self.__index = self
     return o
 end
 
-function M:reset()
+---Clear the resume point and set the station to gps.pos
+function Nav:reset()
     log:info('Reset')
 
     self.station = self.gps.pos
     self.resume = nil
 end
 
-function M:mark_resume()
+---Mark the current location as a resume point
+function Nav:mark_resume()
     self.resume = self.gps.pos
     log:info('Mark resume point', self.resume)
 end
 
+---Check if two points share the same value for at least 2 axis
+---@param pos1 vec3
+---@param pos2 vec3
+---@return boolean
 local function is_inline(pos1, pos2)
     if pos1.x ~= pos2.x then
         return pos1.y == pos2.y and pos1.z == pos2.z
@@ -43,7 +76,9 @@ local function is_inline(pos1, pos2)
     end
 end
 
-function M:trace_step(step)
+---Move to the trace step
+---@param step vec3 position to move to
+function Nav:trace_step(step)
     log:debug('trace step to pos', step.x, step.y, step.z)
     local pos = self.gps.pos
     assert(is_inline(pos, step), 'Step is not inline with current position')
@@ -53,9 +88,9 @@ function M:trace_step(step)
         local delta = math.abs(step.x - pos.x)
 
         if pos.x < step.x then
-            self.gps:face(rgps.Compass.E)
+            self.gps:face(Compass.E)
         else
-            self.gps:face(rgps.Compass.W)
+            self.gps:face(Compass.W)
         end
 
         self.gps:forward(delta)
@@ -71,9 +106,9 @@ function M:trace_step(step)
         local delta = math.abs(step.z - pos.z)
 
         if pos.z < step.z then
-            self.gps:face(rgps.Compass.N)
+            self.gps:face(Compass.N)
         else
-            self.gps:face(rgps.Compass.S)
+            self.gps:face(Compass.S)
         end
         self.gps:forward(delta)
     end
@@ -86,7 +121,7 @@ function M:trace_step(step)
     assert(at_end_pos, 'trace_step did not reach step position')
 end
 
-function M:follow()
+function Nav:follow()
     log:info('Going to resume point')
     assert(self.resume ~= nil, 'No resume point is marked')
     assert(self.gps.pos == self.station, 'Not aligned with trace start')
@@ -100,7 +135,7 @@ function M:follow()
     end
 end
 
-function M:back_follow()
+function Nav:back_follow()
     log:info('Going to station point')
     assert(self.resume ~= nil, 'No resume point is marked')
     assert(self.gps.pos == self.resume, 'Not aligned with trace end')
@@ -114,7 +149,7 @@ function M:back_follow()
     end
 end
 
-function M:find_path(start, goal)
+function Nav:find_path(start, goal)
     log:debug('Searching for path between', start.x, start.y, start.z,
         'and', goal.x, goal.y, goal.z)
 
@@ -154,5 +189,9 @@ function M:find_path(start, goal)
 
     return path_points
 end
+
+local M = {
+    Nav = Nav,
+}
 
 return M
