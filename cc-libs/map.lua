@@ -44,16 +44,14 @@ function Point:new(x, y, z)
     return o
 end
 
----Connect two points
----@param p1 Point
----@param p2 Point
-local function link_points(p1, p2)
-    for _, v in ipairs(p1.links) do
-        if v.id == p2.id then
-            return
-        end
+---Connect this point to another. This will create the link on both points to each other.
+---@param other Point
+function Point:link(other)
+    if self.links[other.id] ~= nil then
+        return
     end
-    p1.links[#p1.links + 1] = p2.id
+    self.links[other.id] = other
+    other.links[self.id] = self
 end
 
 ---@class Map
