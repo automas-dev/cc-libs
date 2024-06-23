@@ -46,7 +46,7 @@ end
 
 ---Connect this point to another. This will create the link on both points to each other.
 ---@param other Point point to link with
----@param weight number weight of this link
+---@param weight? number weight of this link
 function Point:link(other, weight)
     weight = weight or 1
     self.links[other.id] = weight
@@ -54,9 +54,7 @@ end
 
 ---@class Map
 ---@field graph { [PointId]: Point }
-local Map = {
-    Point = Point,
-}
+local Map = {}
 
 --- Create a new empty map
 function Map:new()
@@ -132,14 +130,15 @@ end
 ---Add two points to the graph and link them. The two points must be inline.
 ---@param p1 vec3|Point the first point
 ---@param p2 vec3|Point the second point
-function Map:add(p1, p2)
+---@param weight? number weight of the link
+function Map:add(p1, p2, weight)
     log:info('Add point', p1.x, p1.y, p1.y, 'and', p2.x, p2.y, p2.z)
     assert(is_inline(p1, p2), 'p1 is not inline with p2')
 
     local g_p1 = self:point(p1.x, p1.y, p1.z)
     local g_p2 = self:point(p2.x, p2.y, p2.z)
-    link_points(g_p1, g_p2)
-    link_points(g_p2, g_p1)
+    g_p1:link(g_p2, weight)
+    g_p1:link(g_p1, weight)
 end
 
 local M = {
