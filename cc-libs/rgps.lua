@@ -1,17 +1,21 @@
+---@module 'ccl_logging'
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('rgps')
 
-local vert_norm = vector.new(0, 1, 0)
+---@module 'ccl_vec'
+local vec = require 'ccl-libs.util.vec'
+local vec3 = vec.vec3
 
+---@module 'ccl_map'
+
+local vert_norm = vec3:new(0, 1, 0)
+
+---@enum compass
 local Compass = {
     N = 1,
     E = 2,
     S = 3,
     W = 4,
-}
-
-local M = {
-    Compass = Compass
 }
 
 local static_name = {
@@ -22,18 +26,31 @@ local static_name = {
 }
 
 local static_delta = {
-    vector.new(0, 0, 1),
-    vector.new(1, 0, 0),
-    vector.new(0, 0, -1),
-    vector.new(-1, 0, 0),
+    vec3:new(0, 0, 1),
+    vec3:new(1, 0, 0),
+    vec3:new(0, 0, -1),
+    vec3:new(-1, 0, 0),
 }
 
+---@class RGPS
+---@field pos vec3
+---@field dir compass
+---@field map cc_map
+---@field max_tries number
+local M = {
+    Compass = Compass
+}
+
+---Create a new
+---@param map cc_map
+---@return table
 function M:new(map)
     log:trace('New rgps instance')
     local o = {
-        pos = vector.new(0, 0, 0),
+        pos = vec3:new(0, 0, 0),
         dir = Compass.N,
         map = map,
+        max_tries = 10,
     }
     setmetatable(o, self)
     self.__index = self
@@ -54,14 +71,31 @@ function M:delta()
     return static_delta[self.dir]
 end
 
+---Attempt an action up to self.max_tries times
+---@param action function normally turtle.forward or .back or .up or .down
+---@return boolean was the move a success
+function M:_attempt_move(action)
+    local success = false
+    local tries = 0
+    for i = 1, self.max_tries do
+        tries = i
+        if action() then
+            success = true
+            break
+        end
+    end
+    log:trace('Attempt to move took', tries, 'tries and was', (success and 'success' or 'fail'))
+    return success
+end
+
 function M:forward(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
     log:trace('move forward', n, 'blocks')
     for _ = 1, n do
         local p1 = self.pos
-        if not turtle.forward() then
-            return false
+        if not self:_attempt_move(turtle.forward) then
+            error('Failed to move forward after ' .. self.max_tires .. 'attempts')
         end
         self.pos = self.pos + self:delta()
         if self.map then
@@ -77,8 +111,8 @@ function M:backward(n)
     log:trace('move backward', n, 'blocks')
     for _ = 1, n do
         local p1 = self.pos
-        if not turtle.back() then
-            return false
+        if not self:_attempt_move(turtle.back) then
+            error('Failed to move back after ' .. self.max_tires .. 'attempts')
         end
         self.pos = self.pos - self:delta()
         if self.map then
@@ -94,8 +128,8 @@ function M:up(n)
     log:trace('move up', n, 'blocks')
     for _ = 1, n do
         local p1 = self.pos
-        if not turtle.up() then
-            return false
+        if not self:_attempt_move(turtle.up) then
+            error('Failed to move up after ' .. self.max_tires .. 'attempts')
         end
         self.pos = self.pos + vert_norm
         if self.map then
