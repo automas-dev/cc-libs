@@ -100,18 +100,18 @@ function RGPS:update(action)
     end
 end
 
-function RGPS:face(compass)
-    assert(compass >= 1 and compass <= 4, 'Direction is an unknown value ' .. self.dir)
-    log:trace('face', static_name[compass])
+-- function RGPS:face(compass)
+--     assert(compass >= 1 and compass <= 4, 'Direction is an unknown value ' .. self.dir)
+--     log:trace('face', static_name[compass])
 
-    if compass == self.dir + 2 or compass == self.dir - 2 then
-        self:around()
-    elseif compass == self.dir + 1 or compass == self.dir - 3 then
-        self:right()
-    elseif compass == self.dir - 1 or compass == self.dir + 3 then
-        self:left()
-    end
-end
+--     if compass == self.dir + 2 or compass == self.dir - 2 then
+--         self:around()
+--     elseif compass == self.dir + 1 or compass == self.dir - 3 then
+--         self:right()
+--     elseif compass == self.dir - 1 or compass == self.dir + 3 then
+--         self:left()
+--     end
+-- end
 
 local M = {
     Compass = Compass,
