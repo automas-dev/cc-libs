@@ -6,6 +6,10 @@
 ---@param str string
 ---@return number
 local function hash(str)
+    if type(str) ~= 'string' then
+        str = tostring(str)
+    end
+
     local h = 5381
 
     for c in str:gmatch "." do
