@@ -10,6 +10,7 @@ local Action = ccl_rgps.Action
 
 ---@class Motion
 ---@field max_tries integer
+---@field can_dig boolean
 ---@field rgps? RGPS
 local Motion = {}
 
@@ -20,11 +21,22 @@ function Motion:new(rgps)
     log:trace('New Motion instance')
     local o = {
         max_tries = 10,
-        rgps = rgps,
+        can_dig = false,
+        rgps = rgps or nil,
     }
     setmetatable(o, self)
     self.__index = self
     return o
+end
+
+---If a move fails, dig before the next attempt (default: false)
+function Motion:enable_dig()
+    self.can_dig = true
+end
+
+---Do not try to dig if a move fails
+function Motion:disable_dig()
+    self.can_dig = false
 end
 
 ---Attempt an action up to self.max_tries times
@@ -54,14 +66,13 @@ end
 
 ---Move the turtle forward by n blocks
 ---@param n? integer number of blocks to move (default: 1)
----@param can_dig? boolean if a move fails, dig before the next attempt (default: false)
 ---@return boolean
-function Motion:forward(n, can_dig)
+function Motion:forward(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
     log:trace('move forward', n, 'blocks')
     for _ = 1, n do
-        if not self:_attempt_move(turtle.forward, (can_dig and turtle.dig or nil)) then
+        if not self:_attempt_move(turtle.forward, (self.can_dig and turtle.dig or nil)) then
             log:warn('Failed to move forward after ' .. self.max_tries .. 'attempts')
             return false
         end
@@ -93,14 +104,13 @@ end
 
 ---Move the turtle up by n blocks
 ---@param n? integer number of blocks to move (default: 1)
----@param can_dig? boolean if a move fails, dig before the next attempt (default: false)
 ---@return boolean
-function Motion:up(n, can_dig)
+function Motion:up(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
     log:trace('move up', n, 'blocks')
     for _ = 1, n do
-        if not self:_attempt_move(turtle.up, (can_dig and turtle.digUp or nil)) then
+        if not self:_attempt_move(turtle.up, (self.can_dig and turtle.digUp or nil)) then
             log:warn('Failed to move up after ' .. self.max_tries .. 'attempts')
             return false
         end
@@ -113,14 +123,13 @@ end
 
 ---Move the turtle down by n blocks
 ---@param n? integer number of blocks to move (default: 1)
----@param can_dig? boolean if a move fails, dig before the next attempt (default: false)
 ---@return boolean
-function Motion:down(n, can_dig)
+function Motion:down(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
     log:trace('move down', n, 'blocks')
     for _ = 1, n do
-        if not self:_attempt_move(turtle.down, (can_dig and turtle.digDown or nil)) then
+        if not self:_attempt_move(turtle.down, (self.can_dig and turtle.digDown or nil)) then
             log:warn('Failed to move down after ' .. self.max_tries .. 'attempts')
             return false
         end
