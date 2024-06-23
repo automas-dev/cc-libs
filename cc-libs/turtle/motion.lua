@@ -1,20 +1,20 @@
 ---@meta ccl_motion
 
----@module 'ccl_rgps'
-local ccl_rgps = require 'cc-libs.rgps'
-local Action = ccl_rgps.Action
-
 ---@module 'ccl_logging'
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('motion')
 
+---@module 'ccl_rgps'
+local ccl_rgps = require 'cc-libs.rgps'
+local Action = ccl_rgps.Action
+
 ---@class Motion
 ---@field max_tries integer
----@field rgps? ccl_rgps
+---@field rgps? RGPS
 local Motion = {}
 
 ---Create a new motion controller
----@param rgps? ccl_rgps rgps to be updated with motions
+---@param rgps? RGPS rgps to be updated with motions
 ---@return Motion
 function Motion:new(rgps)
     log:trace('New Motion instance')

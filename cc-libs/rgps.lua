@@ -8,8 +8,6 @@ local log = logging.get_logger('rgps')
 local vec = require 'ccl-libs.util.vec'
 local vec3 = vec.vec3
 
----@module 'ccl_map'
-
 local vert_norm = vec3:new(0, 1, 0)
 
 ---@enum Compass
@@ -47,22 +45,16 @@ local static_delta = {
 ---@class RGPS
 ---@field pos vec3
 ---@field dir Compass
----@field map cc_map
 ---@field max_tries number
-local M = {
-    Compass = Compass,
-    Action = Action,
-}
+local RGPS = {}
 
 ---Create a new
----@param map cc_map
 ---@return table
-function M:new(map)
+function RGPS:new()
     log:trace('New rgps instance')
     local o = {
         pos = vec3:new(0, 0, 0),
         dir = Compass.N,
-        map = map,
         max_tries = 10,
     }
     setmetatable(o, self)
@@ -70,23 +62,23 @@ function M:new(map)
     return o
 end
 
-function M:location()
+function RGPS:location()
     return self.pos, self.dir
 end
 
-function M:direction_name()
+function RGPS:direction_name()
     assert(self.dir >= 1 and self.dir <= 4, 'Direction is an unknown value ' .. self.dir)
     return static_name[self.dir]
 end
 
-function M:delta()
+function RGPS:delta()
     assert(self.dir >= 1 and self.dir <= 4, 'Direction is an unknown value ' .. self.dir)
     return static_delta[self.dir]
 end
 
 ---Update position or rotation based on action
 ---@param action Action
-function M:update(action)
+function RGPS:update(action)
     if action == Action.FORWARD then
         self.pos = self.pos + self:delta()
     elseif action == Action.BACKWARD then
@@ -108,7 +100,7 @@ function M:update(action)
     end
 end
 
-function M:face(compass)
+function RGPS:face(compass)
     assert(compass >= 1 and compass <= 4, 'Direction is an unknown value ' .. self.dir)
     log:trace('face', static_name[compass])
 
@@ -120,5 +112,11 @@ function M:face(compass)
         self:left()
     end
 end
+
+local M = {
+    Compass = Compass,
+    Action = Action,
+    RGPS = RGPS,
+}
 
 return M
