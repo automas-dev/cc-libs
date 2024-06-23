@@ -1,5 +1,5 @@
 local function test_rgps()
-    local rgps = require 'cc-libs.rgps'
+    local rgps = require 'cc-libs.turtle.rgps'
 
     local gps = rgps:new()
 

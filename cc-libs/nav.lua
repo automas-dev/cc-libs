@@ -1,4 +1,4 @@
-local rgps = require 'cc-libs.rgps'
+local rgps = require 'cc-libs.turtle.rgps'
 local world = require 'cc-libs.map'
 local astar = require 'cc-libs.astar'
 local logging = require 'cc-libs.util.logging'

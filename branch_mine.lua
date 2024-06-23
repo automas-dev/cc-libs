@@ -10,7 +10,7 @@ local FORWARD_MAX_TRIES = 10
 local map_file = 'branch.map'
 
 local world = require('cc-libs.map')
-local rgps = require('cc-libs.rgps')
+local rgps = require('cc-libs.turtle.rgps')
 local cc_nav = require('cc-libs.nav')
 
 local args = { ... }
