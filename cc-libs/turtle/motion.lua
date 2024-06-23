@@ -53,8 +53,8 @@ function Motion:_attempt_move(action, fail_cb)
 end
 
 ---Move the turtle forward by n blocks
----@param n integer number of blocks to move (default: 1)
----@param can_dig boolean if a move fails, dig before the next attempt (default: false)
+---@param n? integer number of blocks to move (default: 1)
+---@param can_dig? boolean if a move fails, dig before the next attempt (default: false)
 ---@return boolean
 function Motion:forward(n, can_dig)
     n = n or 1
@@ -73,7 +73,7 @@ function Motion:forward(n, can_dig)
 end
 
 ---Move the turtle backward by n blocks
----@param n integer number of blocks to move (default: 1)
+---@param n? integer number of blocks to move (default: 1)
 ---@return boolean
 function Motion:backward(n)
     n = n or 1
@@ -92,8 +92,8 @@ function Motion:backward(n)
 end
 
 ---Move the turtle up by n blocks
----@param n integer number of blocks to move (default: 1)
----@param can_dig boolean if a move fails, dig before the next attempt (default: false)
+---@param n? integer number of blocks to move (default: 1)
+---@param can_dig? boolean if a move fails, dig before the next attempt (default: false)
 ---@return boolean
 function Motion:up(n, can_dig)
     n = n or 1
@@ -112,8 +112,8 @@ function Motion:up(n, can_dig)
 end
 
 ---Move the turtle down by n blocks
----@param n integer number of blocks to move (default: 1)
----@param can_dig boolean if a move fails, dig before the next attempt (default: false)
+---@param n? integer number of blocks to move (default: 1)
+---@param can_dig? boolean if a move fails, dig before the next attempt (default: false)
 ---@return boolean
 function Motion:down(n, can_dig)
     n = n or 1
@@ -132,7 +132,7 @@ function Motion:down(n, can_dig)
 end
 
 ---Turn to the left n times
----@param n integer number of turns to make
+---@param n? integer number of turns to make
 function Motion:left(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
@@ -148,7 +148,7 @@ function Motion:left(n)
 end
 
 ---Turn to the right n times
----@param n integer number of turns to make
+---@param n? integer number of turns to make
 function Motion:right(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
