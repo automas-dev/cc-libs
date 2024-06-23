@@ -49,7 +49,7 @@ local static_delta = {
 local RGPS = {}
 
 ---Create a new
----@return table
+---@return RGPS
 function RGPS:new()
     log:trace('New rgps instance')
     local o = {
