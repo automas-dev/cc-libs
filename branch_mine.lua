@@ -1,9 +1,9 @@
 local logging = require 'cc-libs.util.logging'
 logging.file = 'branch_mine.log'
-logging.level = logging.Levels.info
-logging.file_level = logging.Levels.debug
-logging.get_logger('map').level = logging.Levels.warning
-logging.get_logger('nav').file_level = logging.Levels.trace
+logging.level = logging.Level.info
+logging.file_level = logging.Level.debug
+logging.get_logger('map').level = logging.Level.warning
+logging.get_logger('nav').file_level = logging.Level.trace
 local log = logging.get_logger('main')
 
 local FORWARD_MAX_TRIES = 10
@@ -24,6 +24,8 @@ if #args < 2 then
     print('    skip:   number of shafts to skip')
     return
 end
+
+-- TODO don't crash if torch chest is empty
 
 local shafts = tonumber(args[1])
 local length = tonumber(args[2])
