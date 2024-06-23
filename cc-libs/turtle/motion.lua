@@ -66,7 +66,7 @@ function Motion:forward(n, can_dig)
             return false
         end
         if self.rgps ~= nil then
-            self.rgps.update(Action.FORWARD)
+            self.rgps:update(Action.FORWARD)
         end
     end
     return true
@@ -85,7 +85,7 @@ function Motion:backward(n)
             return false
         end
         if self.rgps ~= nil then
-            self.rgps.update(Action.BACKWARD)
+            self.rgps:update(Action.BACKWARD)
         end
     end
     return true
@@ -105,7 +105,7 @@ function Motion:up(n, can_dig)
             return false
         end
         if self.rgps ~= nil then
-            self.rgps.update(Action.UP)
+            self.rgps:update(Action.UP)
         end
     end
     return true
@@ -125,7 +125,7 @@ function Motion:down(n, can_dig)
             return false
         end
         if self.rgps ~= nil then
-            self.rgps.update(Action.DOWN)
+            self.rgps:update(Action.DOWN)
         end
     end
     return true
@@ -142,7 +142,7 @@ function Motion:left(n)
     for _ = 1, n do
         turtle.turnLeft()
         if self.rgps ~= nil then
-            self.rgps.update(Action.TURN_LEFT)
+            self.rgps:update(Action.TURN_LEFT)
         end
     end
 end
@@ -158,7 +158,7 @@ function Motion:right(n)
     for _ = 1, n do
         turtle.turnRight()
         if self.rgps ~= nil then
-            self.rgps.update(Action.TURN_RIGHT)
+            self.rgps:update(Action.TURN_RIGHT)
         end
     end
 end
