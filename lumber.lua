@@ -6,14 +6,6 @@ local log = logging.get_logger('main')
 ---@module 'ccl_motion'
 local ccl_motion = require 'cc-libs.turtle.motion'
 
-local args = { ... }
-if #args < 1 then
-    print('Usage: lumber')
-    print()
-    print('Chop down a tree')
-    return
-end
-
 local log_types = {
     ['minecraft:oak_log'] = true,
     ['minecraft:spruce_log'] = true,

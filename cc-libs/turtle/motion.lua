@@ -5,7 +5,7 @@ local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('motion')
 
 ---@module 'ccl_rgps'
-local ccl_rgps = require 'ccl_rgps'
+local ccl_rgps = require 'cc-libs.turtle.rgps'
 local Action = ccl_rgps.Action
 
 ---@class Motion

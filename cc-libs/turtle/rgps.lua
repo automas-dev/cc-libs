@@ -5,7 +5,7 @@ local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('rgps')
 
 ---@module 'ccl_vec'
-local vec = require 'ccl-libs.util.vec'
+local vec = require 'cc-libs.util.vec'
 local vec3 = vec.vec3
 
 ---@module 'ccl_map'
