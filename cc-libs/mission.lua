@@ -3,7 +3,7 @@ local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('mission')
 local cc_map = require 'cc-libs.map'
 local cc_rgps = require 'cc-libs.turtle.rgps'
-local cc_nav = require 'cc-libs.nav'
+local cc_nav = require 'cc-libs.turtle.nav'
 
 local M = {}
 

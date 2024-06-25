@@ -19,7 +19,7 @@ local rgps = require('cc-libs.turtle.rgps')
 local RGPS = rgps.RGPS
 local Compass = rgps.Compass
 
-local cc_nav = require('cc-libs.nav')
+local cc_nav = require('cc-libs.turtle.nav')
 local Nav = cc_nav.Nav
 
 local args = { ... }
