@@ -1,4 +1,3 @@
-local stats = require 'cc-libs.stats'
 local logging = require 'cc-libs.util.logging'
 logging.file = 'lumber.log'
 local log = logging.get_logger('main')
