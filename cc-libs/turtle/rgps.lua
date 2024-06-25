@@ -67,15 +67,22 @@ function RGPS:new(map)
     return o
 end
 
+---Get the current location as position and direction
+---@return vec3 position
+---@return Compass direction
 function RGPS:location()
     return self.pos, self.dir
 end
 
+---Get a string name representing the current direction
+---@return string direction name
 function RGPS:direction_name()
     assert(self.dir >= 1 and self.dir <= 4, 'Direction is an unknown value ' .. self.dir)
     return static_name[self.dir]
 end
 
+---Get the delta vector for forwards
+---@return vec3 forwards vector
 function RGPS:delta()
     assert(self.dir >= 1 and self.dir <= 4, 'Direction is an unknown value ' .. self.dir)
     return static_delta[self.dir]
@@ -113,6 +120,7 @@ end
 
 local M = {
     Compass = Compass,
+    CompassName = static_name,
     Action = Action,
     RGPS = RGPS,
 }
