@@ -1,7 +1,7 @@
 local logging = require 'cc-libs.util.logging'
 logging.file = 'tunnel2.log'
-logging.level = logging.Level.info
-logging.file_level = logging.Level.debug
+logging.level = logging.Level.INFO
+logging.file_level = logging.Level.DEBUG
 local log = logging.get_logger('main')
 
 local actions = require 'cc-libs.turtle.actions'
