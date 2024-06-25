@@ -2,6 +2,7 @@
 
 ---@enum LogLevel
 local Level = {
+    DISABLED = nil,
     TRACE = 0,
     DEBUG = 1,
     INFO = 2,
@@ -15,7 +16,9 @@ local Level = {
 ---@return string
 local function level_name(level)
     assert(level >= 0, 'level must be a positive number')
-    if level == Level.TRACE then
+    if level == nil then
+        return 'disabled'
+    elseif level == Level.TRACE then
         return 'trace'
     elseif level == Level.DEBUG then
         return 'debug'
@@ -121,12 +124,12 @@ function M:log(level, ...)
         return msg
     end
 
-    if level >= (self.level or M.level) then
+    if (self.level ~= nil or M.level ~= nil) and level >= (self.level or M.level) then
         local short_msg = '[' .. self.subsystem .. '] ' .. get_msg()
         print(short_msg)
     end
 
-    if M.file and level >= (self.file_level or self.level or M.file_level or M.level) then
+    if M.file and (self.file_level ~= nil or M.file_level ~= nil) and level >= (self.file_level or self.level or M.file_level or M.level) then
         if M._file == nil then
             M.open_file(M.file)
         end
