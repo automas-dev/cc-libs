@@ -14,6 +14,7 @@ local world = require 'cc-libs.map'
 ---@module 'ccl_rgps'
 local rgps = require 'cc-libs.turtle.rgps'
 local Compass = rgps.Compass
+local CompassName = rgps.CompassName
 
 local astar = require 'cc-libs.astar'
 
@@ -76,6 +77,19 @@ local function is_inline(pos1, pos2)
     end
 end
 
+function Nav:face(compass)
+    assert(compass >= 1 and compass <= 4, 'Direction is an unknown value ' .. self.gps.dir)
+    log:trace('face', CompassName[compass])
+
+    if compass == self.gps.dir + 2 or compass == self.gps.dir - 2 then
+        self.motion:around()
+    elseif compass == self.gps.dir + 1 or compass == self.gps.dir - 3 then
+        self.motion:right()
+    elseif compass == self.gps.dir - 1 or compass == self.gps.dir + 3 then
+        self.motion:left()
+    end
+end
+
 ---Move to the trace step
 ---@param step vec3 position to move to
 function Nav:trace_step(step)
@@ -88,29 +102,29 @@ function Nav:trace_step(step)
         local delta = math.abs(step.x - pos.x)
 
         if pos.x < step.x then
-            self.gps:face(Compass.E)
+            self:face(Compass.E)
         else
-            self.gps:face(Compass.W)
+            self:face(Compass.W)
         end
 
-        self.gps:forward(delta)
+        self.motion:forward(delta)
     elseif pos.y ~= step.y then
         local delta = math.abs(step.y - pos.y)
 
         if pos.y < step.y then
-            self.gps:up(delta)
+            self.motion:up(delta)
         else
-            self.gps:down(delta)
+            self.motion:down(delta)
         end
     elseif pos.z ~= step.z then
         local delta = math.abs(step.z - pos.z)
 
         if pos.z < step.z then
-            self.gps:face(Compass.N)
+            self:face(Compass.N)
         else
-            self.gps:face(Compass.S)
+            self:face(Compass.S)
         end
-        self.gps:forward(delta)
+        self.motion:forward(delta)
     end
 
     local end_pos = self.gps.pos
