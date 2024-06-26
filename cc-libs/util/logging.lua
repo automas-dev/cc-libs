@@ -173,6 +173,12 @@ function M:warn(...)
     self:log(Level.WARNING, ...)
 end
 
+---Write a log message with WARNING level
+---@param ... any message
+function M:warning(...)
+    self:log(Level.WARNING, ...)
+end
+
 ---Write a log message with ERROR level
 ---@param ... any message
 function M:error(...)
