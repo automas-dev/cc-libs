@@ -7,6 +7,8 @@ local log = logging.get_logger('main')
 local ccl_motion = require 'cc-libs.turtle.motion'
 local Motion = ccl_motion.Motion
 
+local actions = require 'cc-libs.turtle.actions'
+
 local args = { ... }
 if #args < 2 then
     print('Usage: tunnel3 <length> <block_floor> [block_ceiling]')
@@ -26,19 +28,6 @@ local block_ceiling = args[3]
 
 log:info('Starting with parameters length=', length, 'floor=', block_floor, 'ceiling=', block_ceiling)
 
-local function select_block(block_id)
-    for i = 1, 16 do
-        local info = turtle.getItemDetail(i)
-        if info ~= nil then
-            if info.name == block_id then
-                turtle.select(i)
-                return true
-            end
-        end
-    end
-    return false
-end
-
 local tmc = Motion:new()
 tmc:enable_dig()
 
@@ -48,7 +37,7 @@ local total_len = 0
 
 for _ = 1, length do
     if block_ceiling ~= nil and not turtle.inspectUp() then
-        if select_block(block_ceiling) then
+        if actions.select_slot(block_ceiling) then
             turtle.placeUp()
         else
             log:warning('Failed to find block', block_ceiling, 'for ceiling')
@@ -59,7 +48,7 @@ for _ = 1, length do
 end
 
 if block_ceiling ~= nil and not turtle.inspectUp() then
-    if select_block(block_ceiling) then
+    if actions.select_slot(block_ceiling) then
         turtle.placeUp()
     else
         log:warning('Failed to find block', block_ceiling, 'for ceiling')
@@ -75,7 +64,7 @@ tmc:down()
 
 for _ = 1, total_len do
     if not turtle.inspectDown() then
-        if select_block(block_floor) then
+        if actions.select_slot(block_floor) then
             turtle.placeDown()
         else
             log:warning('Failed to find block', block_floor, 'for floor')
@@ -85,7 +74,7 @@ for _ = 1, total_len do
 end
 
 if not turtle.inspectDown() then
-    if select_block(block_floor) then
+    if actions.select_slot(block_floor) then
         turtle.placeDown()
     else
         log:warning('Failed to find block', block_floor, 'for floor')
