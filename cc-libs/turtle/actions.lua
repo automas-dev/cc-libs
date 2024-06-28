@@ -41,12 +41,9 @@ end
 function M.select_slot(item_name)
     local item_slot = M.find_slot(item_name, 1)
 
-    if item_slot == nil then
-        log:warning('Item', item_name, 'was not found in inventory')
-        return nil
+    if item_slot ~= nil then
+        turtle.select(item_slot)
     end
-
-    turtle.select(item_slot)
 
     return item_slot
 end
@@ -59,6 +56,8 @@ function M.assert_fuel(need)
     end
 end
 
+---Check if all slots have at least 1 item
+---@return boolean
 function M.inventory_full()
     for i = 1, 16 do
         if turtle.getItemCount(i) == 0 then
@@ -68,20 +67,31 @@ function M.inventory_full()
     return true
 end
 
+---Drop all items from the given slot.
+---@param slot integer 1 to 16
+---@return integer count number of items dropped
 function M.dump_slot(slot)
+    assert(slot > 0 and slot <= 16, 'slot must be a number between 1 and 16')
+
     turtle.select(slot)
+
+    local count = 0
     while turtle.getItemCount() > 0 do
         turtle.drop()
+        count = count + 1
     end
+    return count
 end
 
+---Select the first slot with at least 1 torch and place it down.
+---@return boolean success
 function M.place_torch()
     log:debug('Place torch')
 
     local old_slot = turtle.getSelectedSlot()
 
-    local torch_slot = M.find_torch(1)
-    if torch_slot == 0 then
+    local torch_slot = M.find_torch()
+    if torch_slot == nil then
         log:error('No torches were found in inventory')
         return false
     end
