@@ -1,5 +1,5 @@
 local logging = require 'cc-libs.util.logging'
-logging.file = 'lumber.log'
+-- logging.file = 'lumber.log'
 local log = logging.get_logger('main')
 
 ---@module 'ccl_motion'
