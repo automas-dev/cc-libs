@@ -65,8 +65,8 @@ local M = {
 function M:new(subsystem, level, file_level)
     local o = {
         subsystem = subsystem or 'undefined',
-        level = level or Level.WARNING,
-        file_level = file_level or Level.INFO,
+        level = level,
+        file_level = file_level,
     }
     setmetatable(o, self)
     self.__index = self
