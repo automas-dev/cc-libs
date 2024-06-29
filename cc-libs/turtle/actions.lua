@@ -14,7 +14,8 @@ function M.find_slot(item_name, need)
 
     local item_slot = nil
     for i = 1, 16 do
-        if turtle.getItemDetail(i).name == item_name then
+        local item = turtle.getItemDetail(i)
+        if item ~= nil and item.name == item_name then
             item_slot = i
         end
     end
