@@ -26,16 +26,10 @@ local length = tonumber(args[1])
 local block_floor = args[2]
 local block_ceiling = args[3]
 
-log:info('Starting with parameters length=', length, 'floor=', block_floor, 'ceiling=', block_ceiling)
-
 local tmc = Motion:new()
 tmc:enable_dig()
 
-tmc:up()
-
-local total_len = 0
-
-for _ = 1, length do
+local function ceiling()
     if block_ceiling ~= nil and not turtle.inspectUp() then
         if actions.select_slot(block_ceiling) then
             turtle.placeUp()
@@ -43,26 +37,9 @@ for _ = 1, length do
             log:warning('Failed to find block', block_ceiling, 'for ceiling')
         end
     end
-    tmc:forward()
-    total_len = total_len + 1
 end
 
-if block_ceiling ~= nil and not turtle.inspectUp() then
-    if actions.select_slot(block_ceiling) then
-        turtle.placeUp()
-    else
-        log:warning('Failed to find block', block_ceiling, 'for ceiling')
-    end
-end
-
--- Return
-
-log:info('Returning to station')
-
-tmc:around()
-tmc:down()
-
-for _ = 1, total_len do
+local function floor()
     if not turtle.inspectDown() then
         if actions.select_slot(block_floor) then
             turtle.placeDown()
@@ -70,16 +47,33 @@ for _ = 1, total_len do
             log:warning('Failed to find block', block_floor, 'for floor')
         end
     end
+end
+
+log:info('Starting with parameters length=', length, 'floor=', block_floor, 'ceiling=', block_ceiling)
+
+local total_len = 0
+
+for _ = 1, length do
+    floor()
+    tmc:forward()
+    total_len = total_len + 1
+end
+
+floor()
+tmc:around()
+
+-- Return
+
+log:info('Returning to station')
+tmc:up()
+
+for _ = 1, total_len do
+    ceiling()
     tmc:forward()
 end
 
-if not turtle.inspectDown() then
-    if actions.select_slot(block_floor) then
-        turtle.placeDown()
-    else
-        log:warning('Failed to find block', block_floor, 'for floor')
-    end
-end
+ceiling()
 tmc:around()
+tmc:down()
 
 log:info('Done!')
