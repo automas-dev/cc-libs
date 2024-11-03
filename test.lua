@@ -121,28 +121,28 @@ end
 
 local function test_vec()
     local vec = require 'cc-libs.util.vec'
-    local Vec2 = vec.Vec2
+    local vec2 = vec.vec2
 
-    assert(Vec2:new(1) == Vec2:new(1, 1))
-    assert(Vec2:new() == Vec2:new(0, 0))
+    assert(vec2:new(1) == vec2:new(1, 1))
+    assert(vec2:new() == vec2:new(0, 0))
 
-    assert(Vec2:new(1, 2) + Vec2:new(1, 1) == Vec2:new(2, 3))
-    assert(Vec2:new(1, 2) - Vec2:new(1, 1) == Vec2:new(0, 1))
-    assert(Vec2:new(1, 2) * Vec2:new(2, 2) == Vec2:new(2, 4))
-    assert(Vec2:new(4, 2) / Vec2:new(2, 2) == Vec2:new(2, 1))
-    assert(Vec2:new(2, 3) % Vec2:new(2, 2) == Vec2:new(0, 1))
-    assert(Vec2:new(2, 2) ^ Vec2:new(2, 3) == Vec2:new(4, 8))
+    assert(vec2:new(1, 2) + vec2:new(1, 1) == vec2:new(2, 3))
+    assert(vec2:new(1, 2) - vec2:new(1, 1) == vec2:new(0, 1))
+    assert(vec2:new(1, 2) * vec2:new(2, 2) == vec2:new(2, 4))
+    assert(vec2:new(4, 2) / vec2:new(2, 2) == vec2:new(2, 1))
+    assert(vec2:new(2, 3) % vec2:new(2, 2) == vec2:new(0, 1))
+    assert(vec2:new(2, 2) ^ vec2:new(2, 3) == vec2:new(4, 8))
 
-    assert(#Vec2:new() == 2)
+    assert(#vec2:new() == 2)
 
-    assert(Vec2:new(1, 1) ~= Vec2:new(2, 2))
-    assert(Vec2:new(1, 1) == Vec2:new(1, 1))
+    assert(vec2:new(1, 1) ~= vec2:new(2, 2))
+    assert(vec2:new(1, 1) == vec2:new(1, 1))
 
-    -- assert(Vec2:new(2, 3)[0] == 2)
-    -- assert(Vec2:new(2, 3)[1] == 3)
-    -- assert(Vec2:new(2, 3)[2] == nil)
+    -- assert(vec2:new(2, 3)[0] == 2)
+    -- assert(vec2:new(2, 3)[1] == 3)
+    -- assert(vec2:new(2, 3)[2] == nil)
 
-    assert(tostring(Vec2:new(1, 2)) == 'vec2(1, 2)')
+    assert(tostring(vec2:new(1, 2)) == 'vec2(1, 2)')
 end
 
 local function test_map()
