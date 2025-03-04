@@ -70,7 +70,7 @@ end
 function Motion:forward(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
-    log:trace('move forward', n, 'blocks')
+    log:debug('move forward', n, 'blocks')
     for _ = 1, n do
         if not self:_attempt_move(turtle.forward, (self.can_dig and turtle.dig or nil)) then
             log:warn('Failed to move forward after ' .. self.max_tries .. 'attempts')
@@ -89,7 +89,7 @@ end
 function Motion:backward(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
-    log:trace('move backward', n, 'blocks')
+    log:debug('move backward', n, 'blocks')
     for _ = 1, n do
         if not self:_attempt_move(turtle.back) then
             log:warn('Failed to move back after ' .. self.max_tries .. 'attempts')
@@ -108,7 +108,7 @@ end
 function Motion:up(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
-    log:trace('move up', n, 'blocks')
+    log:debug('move up', n, 'blocks')
     for _ = 1, n do
         if not self:_attempt_move(turtle.up, (self.can_dig and turtle.digUp or nil)) then
             log:warn('Failed to move up after ' .. self.max_tries .. 'attempts')
@@ -127,7 +127,7 @@ end
 function Motion:down(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
-    log:trace('move down', n, 'blocks')
+    log:debug('move down', n, 'blocks')
     for _ = 1, n do
         if not self:_attempt_move(turtle.down, (self.can_dig and turtle.digDown or nil)) then
             log:warn('Failed to move down after ' .. self.max_tries .. 'attempts')
