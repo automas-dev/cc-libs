@@ -145,10 +145,15 @@ end
 function Motion:left(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
+    log:debug('turn left', n, 'times')
 
-    if n == 0 then return end
+    if n == 0 then
+        log:debug('n is 0, will do nothing')
+        return
+    end
 
-    for _ = 1, n do
+    for i = 1, n do
+        log:trace('Turn number', i)
         turtle.turnLeft()
         if self.rgps ~= nil then
             self.rgps:update(Action.TURN_LEFT)
@@ -161,10 +166,15 @@ end
 function Motion:right(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
+    log:debug('turn right', n, 'times')
 
-    if n == 0 then return end
+    if n == 0 then
+        log:debug('n is 0, will do nothing')
+        return
+    end
 
-    for _ = 1, n do
+    for i = 1, n do
+        log:trace('Turn number', i)
         turtle.turnRight()
         if self.rgps ~= nil then
             self.rgps:update(Action.TURN_RIGHT)
