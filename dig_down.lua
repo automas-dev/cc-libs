@@ -1,5 +1,7 @@
 local logging = require 'cc-libs.util.logging'
--- logging.file = 'dig_down.log'
+logging.file = 'logs/dig_down.log'
+logging.level = logging.Level.INFO
+logging.file_level = logging.Level.DEBUG
 local log = logging.get_logger('main')
 
 ---@module 'ccl_motion'

@@ -1,5 +1,5 @@
 local logging = require 'cc-libs.util.logging'
-logging.file = 'branch_mine.log'
+logging.file = 'logs/branch_mine.log'
 logging.level = logging.Level.INFO
 logging.file_level = logging.Level.DEBUG
 logging.get_logger('map').level = logging.Level.WARNING

@@ -1,5 +1,5 @@
 local logging = require 'cc-libs.util.logging'
-logging.file = 'shaft_down.log'
+logging.file = 'logs/shaft_down.log'
 logging.level = logging.Level.INFO
 logging.file_level = logging.Level.TRACE
 local log = logging.get_logger('main')

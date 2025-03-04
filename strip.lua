@@ -1,5 +1,5 @@
 local logging = require 'cc-libs.util.logging'
--- logging.file = 'strip.log'
+logging.file = 'logs/strip.log'
 logging.level = logging.Level.INFO
 logging.file_level = logging.Level.DEBUG
 local log = logging.get_logger('main')
