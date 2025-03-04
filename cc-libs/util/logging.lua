@@ -42,6 +42,19 @@ local function timestamp()
     return os.date('%Y-%m-%dT%H:%M:%S')
 end
 
+---Get a string with filename and line of the calling code
+---@return string
+local function traceback()
+    local info = debug.getinfo(3, 'Slfn')
+    for _, check in ipairs({ 'trace', 'debug', 'info', 'warn', 'warning', 'error', 'fatal' }) do
+        if info.name == check then
+            info = debug.getinfo(4, 'Slf')
+            break
+        end
+    end
+    return info.source .. ':' .. info.currentline
+end
+
 ---@class Logger
 ---@field subsystem string
 ---@field level number|LogLevel
@@ -139,6 +152,8 @@ function M:log(level, ...)
                 .. timestamp()
                 .. '] ['
                 .. self.subsystem
+                .. '] ['
+                .. traceback()
                 .. '] ['
                 .. level_name(level)
                 .. '] '

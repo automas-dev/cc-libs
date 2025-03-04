@@ -32,7 +32,7 @@ end
 ---@return any
 function queue:peek()
     if #self > 0 then
-        return self[0]
+        return self[1]
     else
         return nil
     end

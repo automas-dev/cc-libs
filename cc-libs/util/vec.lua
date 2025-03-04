@@ -16,7 +16,14 @@
 ---@operator pow(vec2): vec2
 ---@operator pow(number): vec2
 ---@operator len(): integer
-local vec2 = {}
+local vec2 = {
+    mt = {}
+}
+setmetatable(vec2, vec2.mt)
+
+vec2.mt.__call = function(_, x, y)
+    return vec2:new(x, y)
+end
 
 ---Create a new vec2
 ---@param x number
@@ -31,8 +38,17 @@ function vec2:new(x, y)
         y = y or 0,
     }
     setmetatable(o, self)
-    self.__index = self
     return o
+end
+
+function vec2.__index(a, key)
+    if key == 1 then
+        return a.x
+    elseif key == 2 then
+        return a.y
+    else
+        return vec2[key]
+    end
 end
 
 ---Addition operator
@@ -83,6 +99,18 @@ function vec2.__div(a, b)
     end
 end
 
+-- ---Floor division operator
+-- ---@param a vec2
+-- ---@param b number|vec2
+-- ---@return vec2
+-- function vec2.__idiv(a, b)
+--     if type(b) == 'number' then
+--         return vec2:new(a.x // b, a.y // b)
+--     else
+--         return vec2:new(a.x // b.x, a.y // b.y)
+--     end
+-- end
+
 ---Modulo operator
 ---@param a vec2
 ---@param b number|vec2
@@ -93,6 +121,13 @@ function vec2.__mod(a, b)
     else
         return vec2:new(a.x % b.x, a.y % b.y)
     end
+end
+
+---Negation operator
+---@param a vec2
+---@return vec2
+function vec2.__unm(a)
+    return vec2:new(-a.x, -a.y)
 end
 
 ---Power operator
@@ -121,28 +156,14 @@ function vec2.__eq(a, b)
     return a.x == b.x and a.y == b.y
 end
 
----Index operator
----@param a vec2
----@param key integer must be 1 or 2
----@return number
-function vec2.__index(a, key)
-    assert(key == 1 or key == 2, 'key must be 1 or 2')
-    if key == 1 then
-        return a.x
-    else
-        return a.y
-    end
-end
-
 ---Assign index operator
 ---@param a vec2
 ---@param key integer must be 1 or 2
 ---@param value number
 function vec2.__newindex(a, key, value)
-    assert(key == 1 or key == 2, 'key must be 1 or 2')
     if key == 1 then
         a.x = value
-    else
+    elseif key == 2 then
         a.y = value
     end
 end
@@ -259,7 +280,15 @@ end
 ---@operator pow(vec3): vec3
 ---@operator pow(number): vec3
 ---@operator len(): integer
-local vec3 = {}
+local vec3 = {
+    mt = {}
+}
+setmetatable(vec3, vec3.mt)
+
+vec3.mt.__call = function(_, x, y, z)
+    return vec3:new(x, y, z)
+end
+
 
 ---Create a new vec3
 ---@param x number
@@ -267,6 +296,7 @@ local vec3 = {}
 ---@param z number
 ---@return vec3
 function vec3:new(x, y, z)
+    assert(z ~= nil or y == nil, 'Only 2 values provided, need 1 or 3')
     if y == nil then
         y = x
         z = x
@@ -277,8 +307,19 @@ function vec3:new(x, y, z)
         z = z or 0,
     }
     setmetatable(o, self)
-    self.__index = self
     return o
+end
+
+vec3.__index = function(a, key)
+    if key == 1 then
+        return a.x
+    elseif key == 2 then
+        return a.y
+    elseif key == 3 then
+        return a.z
+    else
+        return vec3[key]
+    end
 end
 
 ---Addition operator
@@ -286,7 +327,11 @@ end
 ---@param b number|vec3
 ---@return vec3
 vec3.__add = function(a, b)
-    return vec3:new(a.x + b.x, a.y + b.y, a.z + b.z)
+    if type(b) == 'number' then
+        return vec3:new(a.x + b, a.y + b, a.z + b)
+    else
+        return vec3:new(a.x + b.x, a.y + b.y, a.z + b.z)
+    end
 end
 
 ---Subtraction operator
@@ -294,7 +339,11 @@ end
 ---@param b number|vec3
 ---@return vec3
 vec3.__sub = function(a, b)
-    return vec3:new(a.x - b.x, a.y - b.y, a.z - b.z)
+    if type(b) == 'number' then
+        return vec3:new(a.x - b, a.y - b, a.z - b)
+    else
+        return vec3:new(a.x - b.x, a.y - b.y, a.z - b.z)
+    end
 end
 
 ---Multiply operator
@@ -302,7 +351,11 @@ end
 ---@param b number|vec3
 ---@return vec3
 vec3.__mul = function(a, b)
-    return vec3:new(a.x * b.x, a.y * b.y, a.z * b.z)
+    if type(b) == 'number' then
+        return vec3:new(a.x * b, a.y * b, a.z * b)
+    else
+        return vec3:new(a.x * b.x, a.y * b.y, a.z * b.z)
+    end
 end
 
 ---Division operator
@@ -310,15 +363,42 @@ end
 ---@param b number|vec3
 ---@return vec3
 vec3.__div = function(a, b)
-    return vec3:new(a.x / b.x, a.y / b.y, a.z / b.z)
+    if type(b) == 'number' then
+        return vec3:new(a.x / b, a.y / b, a.z / b)
+    else
+        return vec3:new(a.x / b.x, a.y / b.y, a.z / b.z)
+    end
 end
+
+-- ---Floor division operator
+-- ---@param a vec3
+-- ---@param b number|vec3
+-- ---@return vec3
+-- vec3.__idiv = function(a, b)
+--     if type(b) == 'number' then
+--         return vec3:new(a.x // b, a.y // b, a.z // b)
+--     else
+--         return vec3:new(a.x // b.x, a.y // b.y, a.z // b.z)
+--     end
+-- end
 
 ---Modulo operator
 ---@param a vec3
 ---@param b number|vec3
 ---@return vec3
 vec3.__mod = function(a, b)
-    return vec3:new(a.x % b.x, a.y % b.y, a.z % b.z)
+    if type(b) == 'number' then
+        return vec3:new(a.x % b, a.y % b, a.z % b)
+    else
+        return vec3:new(a.x % b.x, a.y % b.y, a.z % b.z)
+    end
+end
+
+---Negation operator
+---@param a vec3
+---@return vec3
+function vec3.__unm(a)
+    return vec3:new(-a.x, -a.y, -a.z)
 end
 
 ---Power operator
@@ -326,13 +406,17 @@ end
 ---@param b number|vec3
 ---@return vec3
 vec3.__pow = function(a, b)
-    return vec3:new(a.x ^ b.x, a.y ^ b.y, a.z ^ b.z)
+    if type(b) == 'number' then
+        return vec3:new(a.x ^ b, a.y ^ b, a.z ^ b)
+    else
+        return vec3:new(a.x ^ b.x, a.y ^ b.y, a.z ^ b.z)
+    end
 end
 
 ---Length of vec3. Will always be 3.
 ---@return integer
 vec3.__len = function()
-    return 2
+    return 3
 end
 
 ---Equality operator overload
@@ -343,32 +427,16 @@ vec3.__eq = function(a, b)
     return a.x == b.x and a.y == b.y and a.z == b.z
 end
 
----Index operator
----@param a vec3
----@param key integer must be 1, 2 or 3
----@return number
-vec3.__index = function(a, key)
-    assert(key == 1 or key == 2 or key == 3, 'key must be 1, 2 or 3')
-    if key == 1 then
-        return a.x
-    elseif key == 2 then
-        return a.y
-    else
-        return a.z
-    end
-end
-
 ---Assign index operator
 ---@param a vec3
 ---@param key integer must be 1, 2 or 3
 ---@param value number
 vec3.__newindex = function(a, key, value)
-    assert(key == 1 or key == 2 or key == 3, 'key must be 1, 2 or 3')
     if key == 1 then
         a.x = value
     elseif key == 2 then
         a.y = value
-    else
+    elseif key == 3 then
         a.z = value
     end
 end

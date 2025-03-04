@@ -2,7 +2,7 @@
 
 ---@module 'ccl_vec'
 
-local serialize = require 'cc-libs.util.serialize'
+local json = require 'cc-libs.util.json'
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('map')
 
@@ -72,7 +72,7 @@ function Map:load(path)
     log:info('Loading map from', path)
 
     local file = assert(io.open(path, 'r'))
-    local data = serialize.load(file:read('*all'))
+    local data = json.decode(file:read('*all'))
     file:close()
     self.graph = data.graph
 end
@@ -83,7 +83,7 @@ function Map:dump(path)
     log:info('Dumping map to', path)
 
     local file = assert(io.open(path, 'w'))
-    file:write(serialize.dump(self))
+    file:write(json.encode(self))
     file:close()
 end
 

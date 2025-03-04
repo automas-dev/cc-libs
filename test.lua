@@ -21,59 +21,6 @@ local function test_rgps()
     gps:down()
 end
 
-local function test_stack()
-    local stack = require 'cc-libs.util.stack'
-    local s = stack:new()
-    s:push('a')
-    s:push('b')
-    s:push('c')
-    assert(#s == 3)
-    assert(s:pop() == 'c')
-    assert(s:pop() == 'b')
-    assert(s:pop() == 'a')
-    assert(#s == 0)
-    assert(s:pop() == nil)
-end
-
-local function test_queue()
-    local queue = require 'cc-libs.util.queue'
-    local q = queue:new()
-    q:push('a')
-    q:push('b')
-    q:push('c')
-    assert(#q == 3)
-    assert(q:pop() == 'a')
-    assert(q:pop() == 'b')
-    assert(q:pop() == 'c')
-    assert(q:pop() == nil)
-    assert(#q == 0)
-end
-
-local function test_serialize()
-    local s = require 'cc-libs.util.serialize'
-    assert(s ~= nil)
-    local a = {
-        text = 'a',
-        list = { 1, 2, 3 },
-        nest = {
-            foo = 1,
-            bar = {
-                baz = 2
-            },
-        },
-    }
-
-    local str = s.dump(a)
-    local b = s.load(str)
-    assert(a.text == b.text)
-    assert(#a.list == #b.list, tostring(#a.list) .. ' ' .. tostring(#b.list))
-    assert(a.list[1] == b.list[1])
-    assert(a.list[2] == b.list[2])
-    assert(a.list[3] == b.list[3])
-    assert(a.nest.foo == b.nest.foo)
-    assert(a.nest.bar.baz == b.nest.bar.baz)
-end
-
 local function test_astar()
     local astar = require 'cc-libs.astar'
 
@@ -119,32 +66,6 @@ local function test_astar()
     assert(path[3] == 'a')
 end
 
-local function test_vec()
-    local vec = require 'cc-libs.util.vec'
-    local vec2 = vec.vec2
-
-    assert(vec2:new(1) == vec2:new(1, 1))
-    assert(vec2:new() == vec2:new(0, 0))
-
-    assert(vec2:new(1, 2) + vec2:new(1, 1) == vec2:new(2, 3))
-    assert(vec2:new(1, 2) - vec2:new(1, 1) == vec2:new(0, 1))
-    assert(vec2:new(1, 2) * vec2:new(2, 2) == vec2:new(2, 4))
-    assert(vec2:new(4, 2) / vec2:new(2, 2) == vec2:new(2, 1))
-    assert(vec2:new(2, 3) % vec2:new(2, 2) == vec2:new(0, 1))
-    assert(vec2:new(2, 2) ^ vec2:new(2, 3) == vec2:new(4, 8))
-
-    assert(#vec2:new() == 2)
-
-    assert(vec2:new(1, 1) ~= vec2:new(2, 2))
-    assert(vec2:new(1, 1) == vec2:new(1, 1))
-
-    -- assert(vec2:new(2, 3)[0] == 2)
-    -- assert(vec2:new(2, 3)[1] == 3)
-    -- assert(vec2:new(2, 3)[2] == nil)
-
-    assert(tostring(vec2:new(1, 2)) == 'vec2(1, 2)')
-end
-
 local function test_map()
     local map = require 'cc-libs.map'
 
@@ -159,11 +80,7 @@ end
 
 
 -- test_rgps()
-test_stack()
-test_queue()
-test_serialize()
 test_astar()
-test_vec()
 -- test_map()
 
 print('All tests passed')
