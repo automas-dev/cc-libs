@@ -1,4 +1,4 @@
-package.path = '../?.lua;' .. package.path
+package.path = '../?.lua;../?/init.lua;' .. package.path
 
 local disable_color = os.getenv('DISABLE_COLOR_TEST')
 local test_file_prefix = 'test_'
