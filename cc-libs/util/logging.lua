@@ -35,18 +35,19 @@ end
 ---Get the level from it's string name
 ---@param name string name of the level
 ---@return LogLevel? level number
-local function name_from_name(name)
-    if name == 'trace' or name == 'TRACE' then
+local function level_from_name(name)
+    name = name:lower()
+    if name == 'trace' then
         return Level.TRACE
-    elseif name == 'debug' or name == 'DEBUG' then
+    elseif name == 'debug' then
         return Level.DEBUG
-    elseif name == 'info' or name == 'INFO' then
+    elseif name == 'info' then
         return Level.INFO
-    elseif name == 'warning' or name == 'WARNING' then
+    elseif name == 'warning' then
         return Level.WARNING
-    elseif name == 'error' or name == 'ERROR' then
+    elseif name == 'error' then
         return Level.ERROR
-    elseif name == 'fatal' or name == 'FATAL' then
+    elseif name == 'fatal' then
         return Level.FATAL
     end
 end
@@ -83,7 +84,7 @@ end
 local M = {
     Level = Level,
     level_name = level_name,
-    name_from_name = name_from_name,
+    level_from_name = level_from_name,
     file = nil,
     _file = nil,
     _subsystems = {},
