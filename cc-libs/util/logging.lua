@@ -2,7 +2,6 @@ local json = require 'cc-libs.util.json'
 
 ---@enum LogLevel
 local Level = {
-    DISABLED = nil,
     TRACE = 0,
     DEBUG = 1,
     INFO = 2,
@@ -16,9 +15,7 @@ local Level = {
 ---@return string
 local function level_name(level)
     assert(level >= 0, 'level must be a positive number')
-    if level == nil then
-        return 'disabled'
-    elseif level == Level.TRACE then
+    if level == Level.TRACE then
         return 'trace'
     elseif level == Level.DEBUG then
         return 'debug'

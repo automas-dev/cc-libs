@@ -17,6 +17,23 @@ function test.teardown()
     io = _old_io
 end
 
+function test.level_name()
+    expect_eq("trace", logging.level_name(logging.Level.TRACE))
+    expect_eq("debug", logging.level_name(logging.Level.DEBUG))
+    expect_eq("info", logging.level_name(logging.Level.INFO))
+    expect_eq("warning", logging.level_name(logging.Level.WARNING))
+    expect_eq("error", logging.level_name(logging.Level.ERROR))
+    expect_eq("fatal", logging.level_name(logging.Level.FATAL))
+end
+
+function test.level_order()
+    expect_lt(logging.Level.TRACE, logging.Level.DEBUG)
+    expect_lt(logging.Level.DEBUG, logging.Level.INFO)
+    expect_lt(logging.Level.INFO, logging.Level.WARNING)
+    expect_lt(logging.Level.WARNING, logging.Level.ERROR)
+    expect_lt(logging.Level.ERROR, logging.Level.FATAL)
+end
+
 function test.first()
     local l = logging:new('subsystem')
     l.log = MagicMock()
