@@ -123,17 +123,17 @@ end
 
 ---Open a log file
 ---@param path string log file path
-function M.open_file(path)
+function M:open_file(path)
     -- Close any open file
-    if M._file ~= nil then
-        M._file:close()
-        M._file = nil
+    if self._file ~= nil then
+        self._file:close()
+        self._file = nil
     end
 
     -- Open the file in append mode
     local file, err = io.open(path, 'a')
     if file then
-        M._file = file
+        self._file = file
     else
         print('Error opening log file: ' .. err)
     end
@@ -165,14 +165,14 @@ function M:log(level, ...)
         print(short_msg)
     end
 
-    if M.file and (self.file_level ~= nil or M.file_level ~= nil) and level >= (self.file_level or self.level or M.file_level or M.level) then
-        if M._file == nil then
-            M.open_file(M.file)
+    if self.file and (self.file_level ~= nil or M.file_level ~= nil) and level >= (self.file_level or self.level or M.file_level or M.level) then
+        if self._file == nil then
+            self:open_file(self.file)
         end
 
-        if M._file then
+        if self._file then
             local long_msg
-            if self.machine_log or M.machine_log then
+            if self.machine_log or self.machine_log then
                 long_msg = json.encode({
                     timestamp = timestamp(),
                     subsystem = self.subsystem,
@@ -192,8 +192,8 @@ function M:log(level, ...)
                     .. '] '
                     .. get_msg()
             end
-            M._file:write(long_msg .. '\n')
-            M._file:flush()
+            self._file:write(long_msg .. '\n')
+            self._file:flush()
         end
     end
 end
