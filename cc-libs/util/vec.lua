@@ -1,5 +1,3 @@
----@meta ccl_vec
-
 ---@class vec2
 ---@field x number
 ---@field y number
@@ -234,7 +232,7 @@ function vec2:get_angle()
     if self:get_length() == 0 then
         return 0
     else
-        return math.deg(math.atan(self.y, self.x))
+        return math.deg(math.atan2(self.y, self.x))
     end
 end
 
@@ -252,7 +250,7 @@ end
 function vec2:get_angle_between(other)
     local cross = self.x * other.y - self.y * other.x
     local dot = self.x * other.x + self.y * other.y
-    return math.deg(math.atan(cross, dot))
+    return math.deg(math.atan2(cross, dot))
 end
 
 ---Get a new vector with length == 1 and a matching angle to this vec2

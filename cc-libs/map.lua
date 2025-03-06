@@ -1,5 +1,3 @@
----@meta ccl_map
-
 ---@module 'ccl_vec'
 
 local json = require 'cc-libs.util.json'

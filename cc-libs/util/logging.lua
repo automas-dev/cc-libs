@@ -1,4 +1,4 @@
----@meta ccl_logging
+local json = require 'cc-libs.util.json'
 
 ---@enum LogLevel
 local Level = {
@@ -8,7 +8,7 @@ local Level = {
     INFO = 2,
     WARNING = 3,
     ERROR = 4,
-    fatal = 5,
+    FATAL = 5,
 }
 
 ---Get the string name of a level
@@ -28,10 +28,29 @@ local function level_name(level)
         return 'warning'
     elseif level == Level.ERROR then
         return 'error'
-    elseif level == Level.fatal then
+    elseif level == Level.FATAL then
         return 'fatal'
     else
         return 'custom:' .. tostring(level)
+    end
+end
+
+---Get the level from it's string name
+---@param name string name of the level
+---@return LogLevel? level number
+local function name_from_name(name)
+    if name == 'trace' or name == 'TRACE' then
+        return Level.TRACE
+    elseif name == 'debug' or name == 'DEBUG' then
+        return Level.DEBUG
+    elseif name == 'info' or name == 'INFO' then
+        return Level.INFO
+    elseif name == 'warning' or name == 'WARNING' then
+        return Level.WARNING
+    elseif name == 'error' or name == 'ERROR' then
+        return Level.ERROR
+    elseif name == 'fatal' or name == 'FATAL' then
+        return Level.FATAL
     end
 end
 
@@ -43,7 +62,7 @@ local function timestamp()
 end
 
 ---Get a string with filename and line of the calling code
----@return string
+---@return string traceback, table info name and debug info
 local function traceback()
     local info = debug.getinfo(3, 'Slfn')
     for _, check in ipairs({ 'trace', 'debug', 'info', 'warn', 'warning', 'error', 'fatal' }) do
@@ -52,19 +71,22 @@ local function traceback()
             break
         end
     end
-    return info.source .. ':' .. info.currentline
+    local traceback_str = info.source .. ':' .. info.currentline
+    return traceback_str, info
 end
 
 ---@class Logger
----@field subsystem string
----@field level number|LogLevel
----@field file_level number|LogLevel
+---@field subsystem string name of the subsystem
+---@field level number|LogLevel minimum log level for terminal logging
+---@field file_level number|LogLevel minimum log level for file logging
+---@field machine_log boolean write log file in a machine readable format (json)
 ---@field file? string active log file path if _file is not nil
 ---@field _file? file*
 ---@field _subsystems { [string]: Logger }
 local M = {
     Level = Level,
     level_name = level_name,
+    name_from_name = name_from_name,
     file = nil,
     _file = nil,
     _subsystems = {},
@@ -74,12 +96,14 @@ local M = {
 ---@param subsystem string the subsystem name
 ---@param level? number|LogLevel the print log level
 ---@param file_level? number|LogLevel the file log level
+---@param machine_log? boolean change log file to machine readable format
 ---@return Logger
-function M:new(subsystem, level, file_level)
+function M:new(subsystem, level, file_level, machine_log)
     local o = {
         subsystem = subsystem or 'undefined',
         level = level,
         file_level = file_level,
+        machine_log = machine_log or false,
     }
     setmetatable(o, self)
     self.__index = self
@@ -148,16 +172,27 @@ function M:log(level, ...)
         end
 
         if M._file then
-            local long_msg = '['
-                .. timestamp()
-                .. '] ['
-                .. self.subsystem
-                .. '] ['
-                .. traceback()
-                .. '] ['
-                .. level_name(level)
-                .. '] '
-                .. get_msg()
+            local long_msg
+            if self.machine_log or M.machine_log then
+                long_msg = json.encode({
+                    timestamp = timestamp(),
+                    subsystem = self.subsystem,
+                    location = traceback(),
+                    level = level_name(level),
+                    msg = get_msg(),
+                })
+            else
+                long_msg = '['
+                    .. timestamp()
+                    .. '] ['
+                    .. self.subsystem
+                    .. '] ['
+                    .. traceback()
+                    .. '] ['
+                    .. level_name(level)
+                    .. '] '
+                    .. get_msg()
+            end
             M._file:write(long_msg .. '\n')
             M._file:flush()
         end
@@ -203,7 +238,7 @@ end
 ---Write a log message with ERROR level and call error()
 ---@param ... any message
 function M:fatal(...)
-    self:log(Level.fatal, ...)
+    self:log(Level.FATAL, ...)
     error(table.concat({ ... }, ''))
 end
 

@@ -1,5 +1,3 @@
----@meta ccl_stack
-
 ---@class stack
 local stack = {}
 

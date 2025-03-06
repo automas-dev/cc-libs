@@ -1,7 +1,7 @@
 local logging = require 'cc-libs.util.logging'
 logging.file = 'logs/shaft_down.log'
 logging.level = logging.Level.INFO
-logging.file_level = logging.Level.TRACE
+logging.file_level = logging.Level.DEBUG
 local log = logging.get_logger('main')
 
 ---@module 'ccl_motion'
@@ -48,7 +48,7 @@ local function place()
 end
 
 local function place_all_sides()
-    for _ = 1,4 do
+    for _ = 1, 4 do
         place()
         tmc:right()
     end

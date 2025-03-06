@@ -19,5 +19,22 @@
         "turtle",
         "vector",
         "window",
-    ]
+        "assert_true",
+        "assert_false",
+        "assert_eq",
+        "assert_ne",
+        "assert_float_eq",
+        "assert_float_ne",
+        "expect_true",
+        "expect_false",
+        "expect_eq",
+        "expect_ne",
+        "expect_float_eq",
+        "expect_float_ne",
+        "store_check_fail"
+    ],
+    "Lua.runtime.version": "Lua 5.2",
+    "Lua.format.defaultConfig": {
+        "quote_style": "single"
+    }
 }

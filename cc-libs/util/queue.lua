@@ -1,5 +1,3 @@
----@meta ccl_queue
-
 ---@class queue
 local queue = {}
 

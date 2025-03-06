@@ -10,8 +10,8 @@ function MagicMock()
     local mock = {
         mt = {
             reserved = {
-                "return_value",
-                "return_sequence",
+                'return_value',
+                'return_sequence',
             },
         },
         call_count = 0,

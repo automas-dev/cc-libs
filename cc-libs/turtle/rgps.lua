@@ -31,10 +31,10 @@ local Action = {
 }
 
 local static_name = {
-    "North",
-    "East",
-    "South",
-    "West",
+    'North',
+    'East',
+    'South',
+    'West',
 }
 
 local static_delta = {

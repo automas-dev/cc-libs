@@ -17,3 +17,4 @@
 *.log
 *.map
 .settings
+test_report.json
