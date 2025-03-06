@@ -15,6 +15,6 @@ jobs:
         with:
           luaVersion: "5.2"
 
-      - name: test
+      - name: Run Tests
         run: |
-          # cd tests && lua runtests.lua
+          cd tests && lua runtests.lua
