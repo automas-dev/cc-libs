@@ -162,6 +162,7 @@ for file in io.popen([[ls -ap | grep -v /]]):lines() do
             else
                 print('\27[33mFailed to load test file ' .. file .. '\27[0m')
             end
+            print(test)
         end
         n_test_run = n_test_run + 1
         table.insert(all_test_results, {
