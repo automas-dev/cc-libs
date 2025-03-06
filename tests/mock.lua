@@ -6,6 +6,7 @@ local function reset_mocks()
     end
 end
 
+---@return any
 function MagicMock()
     local mock = {
         mt = {
