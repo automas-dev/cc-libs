@@ -24,8 +24,8 @@ vec2.mt.__call = function(_, x, y)
 end
 
 ---Create a new vec2
----@param x number
----@param y number
+---@param x? number
+---@param y? number
 ---@return vec2
 function vec2:new(x, y)
     if y == nil then
@@ -289,9 +289,9 @@ end
 
 
 ---Create a new vec3
----@param x number
----@param y number
----@param z number
+---@param x? number
+---@param y? number
+---@param z? number
 ---@return vec3
 function vec3:new(x, y, z)
     assert(z ~= nil or y == nil, 'Only 2 values provided, need 1 or 3')
