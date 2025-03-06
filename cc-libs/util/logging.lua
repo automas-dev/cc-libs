@@ -97,9 +97,10 @@ local M = {
 ---@param machine_log? boolean change log file to machine readable format
 ---@return Logger
 function M:new(subsystem, level, file_level, machine_log)
+    assert(subsystem ~= nil, 'subsystem must not be nil')
     local o = {
-        subsystem = subsystem or 'undefined',
-        level = level,
+        subsystem = subsystem,
+        level = level or Level.INFO,
         file_level = file_level,
         machine_log = machine_log or false,
     }

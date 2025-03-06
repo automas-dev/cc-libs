@@ -55,6 +55,20 @@ function test.level_order()
     expect_lt(logging.Level.ERROR, logging.Level.FATAL)
 end
 
+function test.new_no_args()
+    local success = pcall(logging.new)
+    expect_false(success)
+end
+
+function test.new_name_only()
+    local log = logging:new('ss')
+    expect_eq('ss', log.subsystem)
+    expect_eq(logging.Level.INFO, log.level)
+    expect_eq(nil, log.file_level)
+    expect_eq(nil, log.file)
+    expect_false(log.machine_log)
+end
+
 function test.first()
     local l = logging:new('subsystem')
     l.log = MagicMock()
