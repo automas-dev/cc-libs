@@ -1,3 +1,5 @@
+---@diagnostic disable: inject-field, undefined-field
+
 local logging = require 'cc-libs.util.logging'
 
 local test = {}
