@@ -26,10 +26,12 @@ end
 ---@field time number
 local Record = {}
 
+---Create a new Record instance
 ---@param subsystem string
 ---@param level number|LogLevel
 ---@param location string
 ---@param message string
+---@return Record
 function Record:new(subsystem, level, location, message, time)
     local o = {
         subsystem = subsystem,
@@ -46,6 +48,8 @@ end
 ---@class Formatter
 local Formatter = {}
 
+---Create a new Formatter instance
+---@return Formatter
 function Formatter:new()
     local o = {}
     setmetatable(o, self)
@@ -53,7 +57,9 @@ function Formatter:new()
     return o
 end
 
----@param record Record
+---Format record into a string
+---@param record Record the record to format
+---@return string text the formatted message for record
 function Formatter:format_record(record)
     return record.message
 end
