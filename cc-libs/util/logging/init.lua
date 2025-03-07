@@ -1,8 +1,8 @@
 local json = require 'cc-libs.util.json'
 
-local level = require 'cc-libs.util.logging.level'
-local Level = level.Level
-local level_name = level.level_name
+local _level = require 'cc-libs.util.logging.level'
+local Level = _level.Level
+local level_name = _level.level_name
 
 ---Get a string timestamp for the current time
 ---@return string
@@ -35,8 +35,8 @@ end
 ---@field _subsystems { [string]: Logger }
 local M = {
     Level = Level,
-    level_name = level.level_name,
-    level_from_name = level.level_from_name,
+    level_name = _level.level_name,
+    level_from_name = _level.level_from_name,
     file = nil,
     _file = nil,
     _subsystems = {},
