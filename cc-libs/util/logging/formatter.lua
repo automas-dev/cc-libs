@@ -15,7 +15,7 @@ end
 ---@return string
 local function datetime(time)
     ---@diagnostic disable-next-line: return-type-mismatch
-    return os.date('!%Y-%m-%dT%H:%M:%S', time)
+    return os.date('%Y-%m-%dT%H:%M:%S', time)
 end
 
 ---@class Record
