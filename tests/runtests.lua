@@ -92,7 +92,7 @@ local function find_run_tests(test, test_module)
             table.insert(cases, {
                 name = fn_name,
                 status = status and 'pass' or 'fail',
-                failed_checks = not status and failed_checks or nil
+                failed_checks = not status and failed_checks or nil,
             })
         end
     end
@@ -168,7 +168,7 @@ for file in io.popen([[ls -ap | grep -v /]]):lines() do
         table.insert(all_test_results, {
             name = module,
             cases = cases,
-            status = success and 'pass' or 'fail'
+            status = success and 'pass' or 'fail',
         })
         reset_packages(old_packages)
         reset_g(old_g)
@@ -188,6 +188,5 @@ elseif n_test_pass == n_test_run then
 else
     print('\27[31mFinished tests ' .. n_test_pass .. '/' .. n_test_run .. ' passed\27[0m')
 end
-
 
 os.exit(n_test_pass == n_test_run)

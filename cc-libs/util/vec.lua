@@ -15,7 +15,7 @@
 ---@operator pow(number): vec2
 ---@operator len(): integer
 local vec2 = {
-    mt = {}
+    mt = {},
 }
 setmetatable(vec2, vec2.mt)
 
@@ -279,14 +279,13 @@ end
 ---@operator pow(number): vec3
 ---@operator len(): integer
 local vec3 = {
-    mt = {}
+    mt = {},
 }
 setmetatable(vec3, vec3.mt)
 
 vec3.mt.__call = function(_, x, y, z)
     return vec3:new(x, y, z)
 end
-
 
 ---Create a new vec3
 ---@param x? number

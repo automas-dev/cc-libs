@@ -11,7 +11,9 @@ function test.new()
 end
 
 function test.new_two()
-    expect_false(pcall(function() vec3:new(1, 2) end))
+    expect_false(pcall(function()
+        vec3:new(1, 2)
+    end))
 end
 
 function test.new_single()

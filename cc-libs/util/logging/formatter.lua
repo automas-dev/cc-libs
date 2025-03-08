@@ -105,5 +105,5 @@ return {
     Record = Record,
     ShortFormatter = ShortFormatter,
     LongFormatter = LongFormatter,
-    JsonFormatter = JsonFormatter
+    JsonFormatter = JsonFormatter,
 }
