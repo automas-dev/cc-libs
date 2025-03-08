@@ -12,4 +12,6 @@ function test.get_logger()
     expect_eq(1, l.level)
 end
 
+function test.basic_config() end
+
 return test

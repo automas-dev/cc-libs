@@ -26,18 +26,21 @@ end
 ---@field subsystem string name of the subsystem
 ---@field level number|LogLevel minimum log level for this logger
 ---@field handlers Handler[]
+---@field parent? Logger
 local Logger = {}
 
 ---Create a new Logger instance
 ---@param subsystem string name of the subsystem
 ---@param level? number|LogLevel minimum log level for this logger
+---@param parent? Logger parent logger for default handlers
 ---@return Logger
-function Logger:new(subsystem, level)
+function Logger:new(subsystem, level, parent)
     assert(subsystem ~= nil, 'subsystem must not be nil')
     local o = {
         subsystem = subsystem,
         level = level or 0,
         handlers = {},
+        parent = parent,
     }
     setmetatable(o, self)
     self.__index = self
@@ -68,6 +71,9 @@ end
 ---Write a log message to each handler
 ---@param level number|LogLevel message level
 function Logger:log(level, ...)
+    if level < self.level then
+        return
+    end
     local args = { ... }
     local log_time = os.time()
     local msg = ''
@@ -79,7 +85,12 @@ function Logger:log(level, ...)
         end
     end
     local record = Record:new(self.subsystem, level, traceback(), msg, log_time)
-    for _, h in ipairs(self.handlers) do
+    local handlers = self.handlers
+    --- root should always have handlers after basic_config is called
+    if #handlers == 0 and self.parent ~= nil then
+        handlers = self.parent.handlers
+    end
+    for _, h in ipairs(handlers) do
         if level >= h.level and level >= h.stream.level then
             h:send(record)
         end

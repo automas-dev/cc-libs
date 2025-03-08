@@ -36,6 +36,15 @@ function test.new_level()
     expect_eq(0, #l.handlers)
 end
 
+function test.new_parent()
+    local parent = MagicMock()
+    local l = Logger:new('ss', 1, parent)
+    expect_eq('ss', l.subsystem)
+    expect_eq(1, l.level)
+    expect_eq(0, #l.handlers)
+    expect_eq(parent, l.parent)
+end
+
 function test.new_no_subsystem()
     expect_false(pcall(Logger.new))
 end
@@ -98,6 +107,29 @@ function test.log()
     expect_eq(12, Record.new.args[6])
     assert_eq(1, h.send.call_count)
     expect_eq(mock_record, h.send.args[2])
+end
+
+function test.log_parent_handlers()
+    local parent = MagicMock()
+    local h = MagicMock()
+    h.level = 0
+    h.stream.level = 0
+    parent.handlers = {
+        h,
+    }
+    local l = Logger:new('ss', 0, parent)
+    l:log(0, 'hi')
+    expect_eq(1, h.send.call_count)
+end
+
+function test.log_logger_block()
+    local l = Logger:new('ss', 1)
+    local h = MagicMock()
+    l.handlers[1] = h
+    Record.new = MagicMock()
+    os.time.return_value = 12
+    l:log(0, 'a')
+    expect_eq(0, l.handlers[1].call_count)
 end
 
 function test.log_handler_block()
