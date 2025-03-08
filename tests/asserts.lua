@@ -41,7 +41,7 @@ function expect_eq(lhs, rhs, msg)
 end
 
 function expect_ne(lhs, rhs, msg)
-    if lhs ~= rhs then
+    if lhs == rhs then
         local error_msg = 'expect failed (' .. tostring(lhs) .. ') == (' .. tostring(rhs) .. ')'
         if msg then
             error_msg = error_msg .. '\n  ' .. msg
@@ -182,7 +182,7 @@ function assert_eq(lhs, rhs, msg)
 end
 
 function assert_ne(lhs, rhs, msg)
-    if lhs ~= rhs then
+    if lhs == rhs then
         local error_msg = 'assert failed (' .. tostring(lhs) .. ') == (' .. tostring(rhs) .. ')'
         if msg then
             error_msg = error_msg .. '\n  ' .. msg
