@@ -8,7 +8,8 @@ on:
   pull_request:
 
 jobs:
-  Lint / Test:
+  lint_test:
+    name: Lint & Test
     runs-on: ubuntu-latest
 
     steps:
