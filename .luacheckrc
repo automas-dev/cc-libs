@@ -9,3 +9,6 @@ ignore = {
 unused = false
 max_line_length = false
 allow_defined = true
+exclude_files = {
+    ".luarocks",
+}
