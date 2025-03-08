@@ -20,15 +20,16 @@ jobs:
         with:
           luaVersion: "5.2"
 
-      - uses: leafo/gh-actions-luarocks@v4
+      - name: Setup luarocks
+        uses: leafo/gh-actions-luarocks@v4
 
-      - name: build
+      - name: Install luacheck
         run: |
           luarocks install luacheck
 
       - name: Lint (luacheck)
         run: |
-          luacheck cc-libs
+          luacheck .
 
       - name: Lint (stylua)
         uses: JohnnyMorganz/stylua-action@v4
