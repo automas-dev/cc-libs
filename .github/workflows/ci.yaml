@@ -25,9 +25,16 @@ jobs:
         run: |
           luarocks install luacheck
 
-      - name: Lint
+      - name: Lint (luacheck)
         run: |
           luacheck cc-libs
+
+      - name: Lint (stylua)
+        uses: JohnnyMorganz/stylua-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: v4
+          args: --check .
 
       - name: Run Tests
         run: |
