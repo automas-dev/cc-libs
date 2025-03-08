@@ -1,5 +1,26 @@
 local test = {}
 
+function test.new_empty()
+    local mock = MagicMock()
+    expect_eq(nil, mock.return_value)
+    expect_eq(nil, mock.return_unpack)
+    expect_eq(nil, mock.return_sequence)
+    expect_eq(nil, mock.return_sequence_unpack)
+end
+
+function test.new()
+    local mock = MagicMock {
+        return_value = 'a',
+        return_unpack = { 'b' },
+        return_sequence = { 'c' },
+        return_sequence_unpack = { { 'd' } },
+    }
+    expect_eq('a', mock.return_value)
+    expect_eq('b', mock.return_unpack[1])
+    expect_eq('c', mock.return_sequence[1])
+    expect_eq('d', mock.return_sequence_unpack[1][1])
+end
+
 function test.no_return()
     local mock = MagicMock()
     expect_eq(nil, mock())

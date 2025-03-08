@@ -6,8 +6,10 @@ local function reset_mocks()
     end
 end
 
+---@param args? {return_value?: any, return_unpack?: any[], return_sequence?: any[], return_sequence_unpack?: any[][]}
 ---@return any
-function MagicMock()
+function MagicMock(args)
+    args = args or {}
     local mock = {
         mt = {
             reserved = {
@@ -21,10 +23,10 @@ function MagicMock()
         args = {},
         calls = {},
         reset_all = reset_mocks,
-        return_value = nil,
-        return_unpack = nil,
-        return_sequence = nil,
-        return_sequence_unpack = nil,
+        return_value = args.return_value,
+        return_unpack = args.return_unpack,
+        return_sequence = args.return_sequence,
+        return_sequence_unpack = args.return_sequence_unpack,
     }
     setmetatable(mock, mock.mt)
     table.insert(all_mocks, mock)
