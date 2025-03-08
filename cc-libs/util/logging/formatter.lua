@@ -95,7 +95,7 @@ function JsonFormatter:format_record(record)
         timestamp = datetime(record.time),
         subsystem = record.subsystem,
         location = record.location,
-        level = record.level,
+        level = _level.level_name(record.level),
         message = record.message,
     })
 end
