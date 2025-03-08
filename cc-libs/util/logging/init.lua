@@ -45,11 +45,19 @@ end
 ---@field filepath? string
 ---@field machine_level? number|LogLevel
 ---@field machine_filepath? string
+---@field force? boolean
 
 ---Setup root logger and default handlers
 ---@param args? BasicConfigArgs
 function M.basic_config(args)
     args = args or {}
+    if subsystems[ROOT_LOGGER_NAME] ~= nil then
+        if args.force then
+            subsystems[ROOT_LOGGER_NAME].handler = {}
+        else
+            return
+        end
+    end
     local level = args.level or M.Level.WARNING
     M.root = M.get_logger(ROOT_LOGGER_NAME)
     M.root:new_handler(M.ShortFormatter:new(), M.ConsoleStream:new(level))
