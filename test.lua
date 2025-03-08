@@ -28,17 +28,17 @@ local function test_astar()
         a = {
             x = 0,
             y = 0,
-            neighbors = { 'b' }
+            neighbors = { 'b' },
         },
         b = {
             x = 0,
             y = 3,
-            neighbors = { 'a', 'c' }
+            neighbors = { 'a', 'c' },
         },
         c = {
             x = 2,
             y = 3,
-            neighbors = { 'b' }
+            neighbors = { 'b' },
         },
     }
 
@@ -72,12 +72,11 @@ local function test_map()
     local m = map:new()
     m.graph[0] = {
         name = 'a',
-        place = { 0, 1 }
+        place = { 0, 1 },
     }
 
     m:dump('m.map')
 end
-
 
 -- test_rgps()
 test_astar()

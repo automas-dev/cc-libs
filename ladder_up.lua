@@ -14,7 +14,7 @@ local args = { ... }
 if #args < 1 then
     print('Usage: ladder_up <height> [block_fill]')
     print()
-    print('Dig forwards and lay a bridge on the way back if there isn\'t one already')
+    print("Dig forwards and lay a bridge on the way back if there isn't one already")
     print()
     print('Options:')
     print('    height: height of the ladder')
@@ -31,7 +31,9 @@ local tmc = Motion:new()
 tmc:enable_dig()
 
 local function place_fill()
-    if block_fill == nil then return end
+    if block_fill == nil then
+        return
+    end
     if not turtle.inspect() then
         if actions.select_slot(block_fill) then
             turtle.place()

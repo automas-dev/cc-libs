@@ -1,6 +1,6 @@
 local json = require 'cc-libs.util.json'
 
-local level = require 'cc-libs.util.logging.level'
+local _level = require 'cc-libs.util.logging.level'
 
 ---Get a string timestamp for the current time
 ---@param time? number
@@ -82,7 +82,7 @@ function LongFormatter:format_record(record)
         .. '] ['
         .. record.location
         .. '] ['
-        .. level.level_name(record.level)
+        .. _level.level_name(record.level)
         .. '] '
         .. record.message
 end
@@ -105,5 +105,5 @@ return {
     Record = Record,
     ShortFormatter = ShortFormatter,
     LongFormatter = LongFormatter,
-    JsonFormatter = JsonFormatter
+    JsonFormatter = JsonFormatter,
 }

@@ -29,8 +29,9 @@ end
 
 function test.long_formatter()
     local f = LongFormatter:new()
-    local r = Record:new('ss', 1, 'lc', 'msg', 1234)
-    expect_eq('[1969-12-31T19:20:34] [ss] [lc] [debug] msg', f:format_record(r))
+    local r = Record:new('ss', 1, 'lc', 'msg', 1741354307)
+    local local_date = os.date('%Y-%m-%dT%H:%M:%S', 1741354307)
+    expect_eq('[' .. local_date .. '] [ss] [lc] [debug] msg', f:format_record(r))
 end
 
 return test

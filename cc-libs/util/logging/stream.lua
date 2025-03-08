@@ -9,7 +9,7 @@ local ConsoleStream = {}
 ---@return ConsoleStream
 function ConsoleStream:new(level)
     local o = {
-        level = level or 0
+        level = level or 0,
     }
     setmetatable(o, self)
     self.__index = self

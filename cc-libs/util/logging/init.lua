@@ -1,8 +1,8 @@
 local json = require 'cc-libs.util.json'
 
-local level = require 'cc-libs.util.logging.level'
-local Level = level.Level
-local level_name = level.level_name
+local _level = require 'cc-libs.util.logging.level'
+local Level = _level.Level
+local level_name = _level.level_name
 
 ---Get a string timestamp for the current time
 ---@return string
@@ -35,8 +35,8 @@ end
 ---@field _subsystems { [string]: Logger }
 local M = {
     Level = Level,
-    level_name = level.level_name,
-    level_from_name = level.level_from_name,
+    level_name = _level.level_name,
+    level_from_name = _level.level_from_name,
     file = nil,
     _file = nil,
     _subsystems = {},
@@ -100,7 +100,9 @@ function M:log(level, ...)
 
     local msg = nil
     local function get_msg()
-        if msg then return msg end
+        if msg then
+            return msg
+        end
         msg = ''
         for i = 1, #args do
             if i == 1 then
@@ -117,7 +119,11 @@ function M:log(level, ...)
         print(short_msg)
     end
 
-    if self.file and (self.file_level ~= nil or M.file_level ~= nil) and level >= (self.file_level or self.level or M.file_level or M.level) then
+    if
+        self.file
+        and (self.file_level ~= nil or M.file_level ~= nil)
+        and level >= (self.file_level or self.level or M.file_level or M.level)
+    then
         if self._file == nil then
             self:open_file(self.file)
         end

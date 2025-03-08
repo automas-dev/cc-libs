@@ -44,5 +44,8 @@
     "Lua.runtime.version": "Lua 5.2",
     "Lua.format.defaultConfig": {
         "quote_style": "single"
+    },
+    "[lua]": {
+        "editor.defaultFormatter": "JohnnyMorganz.stylua"
     }
 }
