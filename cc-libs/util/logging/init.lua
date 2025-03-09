@@ -52,7 +52,7 @@ function M.basic_config(args)
     args = args or {}
     if M.subsystems[ROOT_LOGGER_NAME] ~= nil then
         if args.force then
-            M.subsystems[ROOT_LOGGER_NAME].handler = {}
+            M.subsystems[ROOT_LOGGER_NAME].handlers = {}
         else
             return
         end
