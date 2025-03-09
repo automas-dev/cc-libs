@@ -15,6 +15,7 @@ end
 
 ---Patch a global object with MagicMock
 ---@param target string
+---@return Mock
 function patch(target)
     local parts = separate_parts(target)
     assert(#parts > 0, 'No parts found in target ' .. tostring(target))
@@ -29,6 +30,7 @@ end
 ---Patch an field with MagicMock
 ---@param obj table any object with a field to replace with MagicMock
 ---@param field string name of the field to replace
+---@return Mock
 function patch_local(obj, field)
     local old = obj[field]
     local mock = MagicMock()

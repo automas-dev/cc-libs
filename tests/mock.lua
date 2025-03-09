@@ -6,8 +6,17 @@ local function reset_mocks()
     end
 end
 
+---@class Mock
+---@field call_count number how many times was this function called
+---@field args any[] arguments of the last call
+---@field calls any[][] arguments of each call
+---@field return_value? any value to return when called
+---@field return_unpack? any[] value to unpack and return when called
+---@field return_sequence? any[] sequence of values to return on each call, last will be re-used
+---@field return_sequence_unpack? any[][] sequence of values to unpack and return on each call, last will be re-used
+
 ---@param args? {return_value?: any, return_unpack?: any[], return_sequence?: any[], return_sequence_unpack?: any[][]}
----@return any
+---@return Mock
 function MagicMock(args)
     args = args or {}
     local mock = {
