@@ -31,10 +31,24 @@
         "expect_ne",
         "expect_float_eq",
         "expect_float_ne",
-        "store_check_fail"
+        "store_check_fail",
+        "expect_gt",
+        "expect_ge",
+        "expect_lt",
+        "expect_le",
+        "assert_gt",
+        "assert_ge",
+        "assert_lt",
+        "assert_le",
+        "patch",
+        "patch_local",
+        "reset_patches"
     ],
     "Lua.runtime.version": "Lua 5.2",
     "Lua.format.defaultConfig": {
         "quote_style": "single"
+    },
+    "[lua]": {
+        "editor.defaultFormatter": "JohnnyMorganz.stylua"
     }
 }

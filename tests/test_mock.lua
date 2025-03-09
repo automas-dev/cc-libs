@@ -1,5 +1,26 @@
 local test = {}
 
+function test.new_empty()
+    local mock = MagicMock()
+    expect_eq(nil, mock.return_value)
+    expect_eq(nil, mock.return_unpack)
+    expect_eq(nil, mock.return_sequence)
+    expect_eq(nil, mock.return_sequence_unpack)
+end
+
+function test.new()
+    local mock = MagicMock {
+        return_value = 'a',
+        return_unpack = { 'b' },
+        return_sequence = { 'c' },
+        return_sequence_unpack = { { 'd' } },
+    }
+    expect_eq('a', mock.return_value)
+    expect_eq('b', mock.return_unpack[1])
+    expect_eq('c', mock.return_sequence[1])
+    expect_eq('d', mock.return_sequence_unpack[1][1])
+end
+
 function test.no_return()
     local mock = MagicMock()
     expect_eq(nil, mock())
@@ -12,6 +33,15 @@ function test.return_value()
     expect_eq(1, mock())
 end
 
+function test.return_unpack()
+    local mock = MagicMock()
+    mock.return_unpack = { 1, 2 }
+    expect_eq(1, mock())
+    local a, b = mock()
+    expect_eq(1, a)
+    expect_eq(2, b)
+end
+
 function test.return_sequence()
     local mock = MagicMock()
     mock.return_sequence = { 1, 2 }
@@ -20,12 +50,41 @@ function test.return_sequence()
     expect_eq(2, mock())
 end
 
+function test.return_sequence_unpack()
+    local mock = MagicMock()
+    mock.return_sequence_unpack = { { 1, 'a' }, { 2, 'b' } }
+    local a, b = mock()
+    expect_eq(1, a)
+    expect_eq('a', b)
+    a, b = mock()
+    expect_eq(2, a)
+    expect_eq('b', b)
+    a, b = mock()
+    expect_eq(2, a)
+    expect_eq('b', b)
+end
+
 function test.return_value_priority()
     local mock = MagicMock()
+    assert_eq(nil, mock())
+    local a, b
+    mock.return_sequence_unpack = { { 6, 7 }, { 8, 9 } }
+    a, b = mock()
+    expect_eq(6, a)
+    expect_eq(7, b)
+    a, b = mock()
+    expect_eq(8, a)
+    expect_eq(9, b)
+    mock.return_sequence = { 4, 5 }
+    expect_eq(4, mock())
+    expect_eq(5, mock())
+    mock.return_unpack = { 2, 3 }
+    a, b = mock()
+    expect_eq(2, a)
+    expect_eq(3, b)
     mock.return_value = 1
-    mock.return_sequence = { 2, 3 }
-    expect_eq(1, mock())
-    expect_eq(1, mock())
+    a, b = mock()
+    expect_eq(1, a)
 end
 
 function test.call_count()

@@ -41,10 +41,7 @@ local length = tonumber(args[2])
 local torch = tonumber(args[3] or 8)
 local skip = tonumber(args[4] or 0)
 
-log:info('Starting with parameters shafts=', shafts,
-    'length=', length,
-    'torc=', torch,
-    'skip=', skip)
+log:info('Starting with parameters shafts=', shafts, 'length=', length, 'torc=', torch, 'skip=', skip)
 
 local map = Map:new()
 if fs.exists(map_file) then
@@ -60,13 +57,19 @@ end
 
 local function assert_torch()
     local data = turtle.getItemDetail(1)
-    if not data then log:fatal('No torches in 1st slot') end
+    if not data then
+        log:fatal('No torches in 1st slot')
+    end
     local total_shafts = shafts - skip
     local total_distance = total_shafts * 3 + total_shafts * length * 2
     local torch_need = math.ceil(total_distance / torch)
     log:debug('Torches needed is', torch_need)
-    if data.count < torch_need then log:fatal('Not enough torches, need', torch_need) end
-    if data.name ~= 'minecraft:torch' then log:fatal('Item in slot 1 is not torch') end
+    if data.count < torch_need then
+        log:fatal('Not enough torches, need', torch_need)
+    end
+    if data.name ~= 'minecraft:torch' then
+        log:fatal('Item in slot 1 is not torch')
+    end
     turtle.select(1)
 end
 
@@ -279,7 +282,9 @@ local function run()
         if i == 1 then
             log:debug('First shaft, starting at center in tunnel')
 
-            if not mine_tunnel() then return end
+            if not mine_tunnel() then
+                return
+            end
 
             -- Mine right half of shaft
             nav:face(Compass.E)
@@ -288,7 +293,9 @@ local function run()
             -- Mine left half of shaft
             nav:face(Compass.W)
             try_forward(length)
-            if not mine_shaft() then return end
+            if not mine_shaft() then
+                return
+            end
         else
             -- Turn to face next shaft
             if i % 2 == 0 then
@@ -299,8 +306,12 @@ local function run()
                 nav:face(Compass.W)
             end
 
-            if not mine_shaft() then return end
-            if not mine_tunnel() then return end
+            if not mine_shaft() then
+                return
+            end
+            if not mine_tunnel() then
+                return
+            end
 
             if i % 2 == 0 then
                 log:debug('Shaft is even so facing East')
@@ -310,7 +321,9 @@ local function run()
                 nav:face(Compass.W)
             end
 
-            if not mine_shaft() then return end
+            if not mine_shaft() then
+                return
+            end
         end
 
         -- Mine to start of next shaft and push
