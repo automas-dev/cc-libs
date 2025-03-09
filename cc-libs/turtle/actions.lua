@@ -51,6 +51,9 @@ function M.select_slot(item_name)
     return item_slot
 end
 
+---Check turtle has the needed fuel. Raises error through log:fatal if there is
+---not enough fuel.
+---@param need number amount of fuel needed
 function M.assert_fuel(need)
     log:info('Starting fuel level', turtle.getFuelLevel())
     log:debug('Fuel needed is', need)
