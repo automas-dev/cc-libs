@@ -42,4 +42,14 @@ function test.find_slot_second()
     expect_eq(2, turtle.getItemDetail.call_count)
 end
 
+function test.find_torch()
+    local mock = patch_local(actions, 'find_slot')
+    mock.return_value = 2
+    local slot = actions.find_torch()
+    expect_eq(2, slot)
+    expect_eq(1, mock.call_count)
+    expect_eq('minecraft:torch', mock.args[1])
+    expect_eq(1, mock.args[2])
+end
+
 return test
