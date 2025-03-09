@@ -5,6 +5,7 @@ local test_file_prefix = 'test_'
 
 require 'asserts'
 require 'mock'
+require 'patch'
 
 local json = require 'cc-libs.util.json'
 
@@ -89,6 +90,7 @@ local function find_run_tests(test, test_module)
             if test.teardown then
                 test.teardown()
             end
+            reset_patches()
             table.insert(cases, {
                 name = fn_name,
                 status = status and 'pass' or 'fail',
