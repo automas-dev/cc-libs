@@ -41,7 +41,7 @@ function expect_eq(lhs, rhs, msg)
 end
 
 function expect_ne(lhs, rhs, msg)
-    if lhs == rhs then
+    if lhs ~= rhs then
         local error_msg = 'expect failed (' .. tostring(lhs) .. ') == (' .. tostring(rhs) .. ')'
         if msg then
             error_msg = error_msg .. '\n  ' .. msg
@@ -71,62 +71,6 @@ end
 function expect_float_ne(lhs, rhs, msg)
     if math.abs(lhs - rhs) <= float_error then
         local error_msg = 'expect failed float (' .. tostring(lhs) .. ') == (' .. tostring(rhs) .. ')'
-        if msg then
-            error_msg = error_msg .. '\n  ' .. msg
-        end
-        store_check_fail({
-            msg = error_msg,
-            lhs = lhs,
-            rhs = rhs,
-        })
-    end
-end
-
-function expect_gt(lhs, rhs, msg)
-    if lhs <= rhs then
-        local error_msg = 'expect failed (' .. tostring(lhs) .. ') <= (' .. tostring(rhs) .. ')'
-        if msg then
-            error_msg = error_msg .. '\n  ' .. msg
-        end
-        store_check_fail({
-            msg = error_msg,
-            lhs = lhs,
-            rhs = rhs,
-        })
-    end
-end
-
-function expect_ge(lhs, rhs, msg)
-    if lhs < rhs then
-        local error_msg = 'expect failed (' .. tostring(lhs) .. ') < (' .. tostring(rhs) .. ')'
-        if msg then
-            error_msg = error_msg .. '\n  ' .. msg
-        end
-        store_check_fail({
-            msg = error_msg,
-            lhs = lhs,
-            rhs = rhs,
-        })
-    end
-end
-
-function expect_lt(lhs, rhs, msg)
-    if lhs >= rhs then
-        local error_msg = 'expect failed (' .. tostring(lhs) .. ') >= (' .. tostring(rhs) .. ')'
-        if msg then
-            error_msg = error_msg .. '\n  ' .. msg
-        end
-        store_check_fail({
-            msg = error_msg,
-            lhs = lhs,
-            rhs = rhs,
-        })
-    end
-end
-
-function expect_le(lhs, rhs, msg)
-    if lhs > rhs then
-        local error_msg = 'expect failed (' .. tostring(lhs) .. ') > (' .. tostring(rhs) .. ')'
         if msg then
             error_msg = error_msg .. '\n  ' .. msg
         end
@@ -182,7 +126,7 @@ function assert_eq(lhs, rhs, msg)
 end
 
 function assert_ne(lhs, rhs, msg)
-    if lhs == rhs then
+    if lhs ~= rhs then
         local error_msg = 'assert failed (' .. tostring(lhs) .. ') == (' .. tostring(rhs) .. ')'
         if msg then
             error_msg = error_msg .. '\n  ' .. msg
@@ -214,66 +158,6 @@ end
 function assert_float_ne(lhs, rhs, msg)
     if math.abs(lhs - rhs) <= float_error then
         local error_msg = 'assert failed float (' .. tostring(lhs) .. ') == (' .. tostring(rhs) .. ')'
-        if msg then
-            error_msg = error_msg .. '\n  ' .. msg
-        end
-        store_check_fail({
-            msg = error_msg,
-            lhs = lhs,
-            rhs = rhs,
-        })
-        error({ type = 'test assert' })
-    end
-end
-
-function assert_gt(lhs, rhs, msg)
-    if lhs <= rhs then
-        local error_msg = 'expect failed (' .. tostring(lhs) .. ') <= (' .. tostring(rhs) .. ')'
-        if msg then
-            error_msg = error_msg .. '\n  ' .. msg
-        end
-        store_check_fail({
-            msg = error_msg,
-            lhs = lhs,
-            rhs = rhs,
-        })
-        error({ type = 'test assert' })
-    end
-end
-
-function assert_ge(lhs, rhs, msg)
-    if lhs < rhs then
-        local error_msg = 'expect failed (' .. tostring(lhs) .. ') < (' .. tostring(rhs) .. ')'
-        if msg then
-            error_msg = error_msg .. '\n  ' .. msg
-        end
-        store_check_fail({
-            msg = error_msg,
-            lhs = lhs,
-            rhs = rhs,
-        })
-        error({ type = 'test assert' })
-    end
-end
-
-function assert_lt(lhs, rhs, msg)
-    if lhs >= rhs then
-        local error_msg = 'expect failed (' .. tostring(lhs) .. ') >= (' .. tostring(rhs) .. ')'
-        if msg then
-            error_msg = error_msg .. '\n  ' .. msg
-        end
-        store_check_fail({
-            msg = error_msg,
-            lhs = lhs,
-            rhs = rhs,
-        })
-        error({ type = 'test assert' })
-    end
-end
-
-function assert_le(lhs, rhs, msg)
-    if lhs > rhs then
-        local error_msg = 'expect failed (' .. tostring(lhs) .. ') > (' .. tostring(rhs) .. ')'
         if msg then
             error_msg = error_msg .. '\n  ' .. msg
         end

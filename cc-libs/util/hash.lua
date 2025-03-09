@@ -10,8 +10,8 @@ local function hash(str)
 
     local h = 5381
 
-    for i = 1, #str do
-        h = h * 32 + h + str:byte(i)
+    for c in str:gmatch '.' do
+        h = ((h << 5) + h) + string.byte(c)
     end
 
     return h

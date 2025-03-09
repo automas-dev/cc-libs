@@ -15,7 +15,7 @@
 ---@operator pow(number): vec2
 ---@operator len(): integer
 local vec2 = {
-    mt = {},
+    mt = {}
 }
 setmetatable(vec2, vec2.mt)
 
@@ -24,8 +24,8 @@ vec2.mt.__call = function(_, x, y)
 end
 
 ---Create a new vec2
----@param x? number
----@param y? number
+---@param x number
+---@param y number
 ---@return vec2
 function vec2:new(x, y)
     if y == nil then
@@ -279,7 +279,7 @@ end
 ---@operator pow(number): vec3
 ---@operator len(): integer
 local vec3 = {
-    mt = {},
+    mt = {}
 }
 setmetatable(vec3, vec3.mt)
 
@@ -287,10 +287,11 @@ vec3.mt.__call = function(_, x, y, z)
     return vec3:new(x, y, z)
 end
 
+
 ---Create a new vec3
----@param x? number
----@param y? number
----@param z? number
+---@param x number
+---@param y number
+---@param z number
 ---@return vec3
 function vec3:new(x, y, z)
     assert(z ~= nil or y == nil, 'Only 2 values provided, need 1 or 3')

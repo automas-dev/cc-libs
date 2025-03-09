@@ -1,3 +1,5 @@
+---@meta ccl_motion
+
 ---@module 'ccl_logging'
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('motion')

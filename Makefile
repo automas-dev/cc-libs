@@ -1,14 +1,5 @@
 
-LUA?=lua
-
-lint:
-	luacheck --codes .
-	stylua --check .
-
-format:
-	stylua .
-
 test:
-	cd tests && $(LUA) runtests.lua
+	cd tests && lua runtests.lua
 
 .PHONY: test

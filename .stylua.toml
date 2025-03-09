@@ -1,4 +1,0 @@
-syntax = "Lua52"
-indent_type = "Spaces"
-quote_style = "AutoPreferSingle"
-call_parentheses = "Input"

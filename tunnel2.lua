@@ -19,7 +19,8 @@ end
 local length = tonumber(args[1])
 local end_return = args[2] == 'true' or args[2] == 'yes'
 
-log:info('Starting with parameters length=', length, 'return=', end_return)
+log:info('Starting with parameters length=', length,
+    'return=', end_return)
 
 turtle.up()
 

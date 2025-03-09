@@ -1,3 +1,5 @@
+---@meta ccl_nav
+
 ---@module 'ccl_logging'
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('nav')
@@ -126,7 +128,9 @@ function Nav:trace_step(step)
     end
 
     local end_pos = self.gps.pos
-    local at_end_pos = end_pos.x == step.x and end_pos.y == step.y and end_pos.z == step.z
+    local at_end_pos = end_pos.x == step.x
+        and end_pos.y == step.y
+        and end_pos.z == step.z
 
     assert(at_end_pos, 'trace_step did not reach step position')
 end
@@ -160,7 +164,8 @@ function Nav:back_follow()
 end
 
 function Nav:find_path(start, goal)
-    log:debug('Searching for path between', start.x, start.y, start.z, 'and', goal.x, goal.y, goal.z)
+    log:debug('Searching for path between', start.x, start.y, start.z,
+        'and', goal.x, goal.y, goal.z)
 
     log:debug('Start pos is', start.x, start.y, start.z)
     local p_start = self.map:point(start.x, start.y, start.z)

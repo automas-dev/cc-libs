@@ -2,10 +2,10 @@ local function astar(start, goal, get_neighbors, cost_fn, heuristic_fn, start_to
     local open = { start }
     local parent = {}
     local f_score = {
-        [start] = 0,
+        [start] = 0
     }
     local h_score = {
-        [start] = f_score[start] + heuristic_fn(start, goal),
+        [start] = f_score[start] + heuristic_fn(start, goal)
     }
 
     local function pop_lowest_h()

@@ -13,7 +13,7 @@ local args = { ... }
 if #args < 2 then
     print('Usage: tunnel3 <length> <block_floor> [block_ceiling]')
     print()
-    print("Dig forwards and lay a bridge on the way back if there isn't one already")
+    print('Dig forwards and lay a bridge on the way back if there isn\'t one already')
     print()
     print('Options:')
     print('    length: length of the tunnel')
