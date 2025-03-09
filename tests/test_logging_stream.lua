@@ -1,4 +1,5 @@
 ---@diagnostic disable: inject-field, undefined-field
+-- luacheck: ignore 143 142
 
 local stream = require 'cc-libs.util.logging.stream'
 local ConsoleStream = stream.ConsoleStream

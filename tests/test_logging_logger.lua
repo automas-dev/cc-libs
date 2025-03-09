@@ -1,4 +1,5 @@
 ---@diagnostic disable: inject-field, undefined-field
+-- luacheck: ignore 143 142
 
 local logger = require 'cc-libs.util.logging.logger'
 local Logger = logger.Logger
