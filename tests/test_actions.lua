@@ -7,10 +7,11 @@ function test.setup()
 end
 
 function test.find_slot()
-    turtle.getItemDetail.return_sequence = {
-        { name = 'fake' },
-        nil,
-        { name = 'name' },
+    -- Using unpack to allow nil in middle of array for lua 5.2
+    turtle.getItemDetail.return_sequence_unpack = {
+        { { name = 'fake' } },
+        { nil },
+        { { name = 'name' } },
     }
     turtle.getItemCount.return_value = 1
     local slot = actions.find_slot('name', 1)
