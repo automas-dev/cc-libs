@@ -39,7 +39,10 @@
         "assert_gt",
         "assert_ge",
         "assert_lt",
-        "assert_le"
+        "assert_le",
+        "patch",
+        "patch_local",
+        "reset_patches"
     ],
     "Lua.runtime.version": "Lua 5.2",
     "Lua.format.defaultConfig": {
