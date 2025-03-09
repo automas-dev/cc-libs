@@ -1,5 +1,3 @@
----@meta ccl_actions
-
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('actions')
 

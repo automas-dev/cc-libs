@@ -1,5 +1,3 @@
----@meta ccl_rgps
-
 ---@module 'ccl_logging'
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('rgps')
