@@ -1,6 +1,6 @@
 ---@class Stream
 ---@field level number|LogLevel minimum message level
----@field send(string): boolean
+---@field send fun(message: string): boolean
 
 ---@class ConsoleStream : Stream
 local ConsoleStream = {}
