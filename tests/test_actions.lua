@@ -116,4 +116,25 @@ function test.dump_slot()
     expect_eq(2, turtle.drop.call_count)
 end
 
+function test.place_torch()
+    turtle.getSelectedSlot.return_value = 2
+    local mock = patch_local(actions, 'find_torch')
+    mock.return_value = 1
+    local res = actions.place_torch()
+    expect_true(res)
+    assert_eq(2, turtle.select.call_count)
+    expect_eq(1, turtle.select.calls[1][1])
+    expect_eq(2, turtle.select.calls[2][1])
+    expect_eq(1, turtle.placeDown.call_count)
+end
+
+function test.place_torch_empty()
+    turtle.getSelectedSlot.return_value = 2
+    local mock = patch_local(actions, 'find_torch')
+    mock.return_value = nil
+    local res = actions.place_torch()
+    expect_false(res)
+    expect_eq(0, turtle.select.call_count)
+end
+
 return test
