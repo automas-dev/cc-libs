@@ -1,5 +1,6 @@
 local all_mocks = {}
 
+---Call reset on all Mock's that have been created
 local function reset_mocks()
     for _, mock in ipairs(all_mocks) do
         mock.reset()
