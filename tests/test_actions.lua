@@ -105,4 +105,15 @@ function test.inventory_full()
     expect_eq(16, turtle.getItemCount.call_count)
 end
 
+function test.dump_slot()
+    -- Extra 2 for log call
+    turtle.getItemCount.return_sequence = { 2, 2, 1, 0 }
+    local count = actions.dump_slot(1)
+    expect_eq(2, count)
+    assert_eq(1, turtle.select.call_count)
+    expect_eq(1, turtle.select.args[1])
+    expect_eq(4, turtle.getItemCount.call_count)
+    expect_eq(2, turtle.drop.call_count)
+end
+
 return test
