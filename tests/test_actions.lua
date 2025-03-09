@@ -52,4 +52,16 @@ function test.find_torch()
     expect_eq(1, mock.args[2])
 end
 
+function test.assert_fuel()
+    turtle.getFuelLevel.return_value = 2
+    local success, err = pcall(actions.assert_fuel, 2)
+    expect_true(success, err)
+end
+
+function test.assert_fuel_fail()
+    turtle.getFuelLevel.return_value = 1
+    local success, _ = pcall(actions.assert_fuel, 2)
+    expect_false(success)
+end
+
 return test
