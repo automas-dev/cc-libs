@@ -52,6 +52,29 @@ function test.find_torch()
     expect_eq(1, mock.args[2])
 end
 
+function test.select_slot()
+    local mock = patch_local(actions, 'find_slot')
+    mock.return_value = 2
+    local slot = actions.select_slot('name')
+    expect_eq(2, slot)
+    assert_eq(1, mock.call_count)
+    expect_eq('name', mock.args[1])
+    expect_eq(1, mock.args[2])
+    assert_eq(1, turtle.select.call_count)
+    expect_eq(2, turtle.select.args[1])
+end
+
+function test.select_slot_empty()
+    local mock = patch_local(actions, 'find_slot')
+    mock.return_value = nil
+    local slot = actions.select_slot('name')
+    expect_eq(nil, slot)
+    assert_eq(1, mock.call_count)
+    expect_eq('name', mock.args[1])
+    expect_eq(1, mock.args[2])
+    expect_eq(0, turtle.select.call_count)
+end
+
 function test.assert_fuel()
     turtle.getFuelLevel.return_value = 2
     local success, err = pcall(actions.assert_fuel, 2)
