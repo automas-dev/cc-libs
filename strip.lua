@@ -2,7 +2,7 @@ local logging = require 'cc-libs.util.logging'
 logging.basic_config{
     level = logging.Level.INFO,
     file_level = logging.Level.DEBUG,
-    filepath = 'log/strip.log'
+    filepath = 'logs/strip.log'
 }
 local log = logging.get_logger('main')
 
