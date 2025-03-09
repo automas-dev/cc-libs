@@ -11,15 +11,8 @@ local Record = log_formatter.Record
 
 local test = {}
 
-local _old_os
-
 function test.setup()
-    _old_os = os
-    os = MagicMock()
-end
-
-function test.teardown()
-    os = _old_os
+    patch('os')
 end
 
 function test.new()

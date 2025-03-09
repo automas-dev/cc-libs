@@ -4,21 +4,11 @@ local stream = require 'cc-libs.util.logging.stream'
 local ConsoleStream = stream.ConsoleStream
 local FileStream = stream.FileStream
 
-local _old_io
-local _old_print
-
 local test = {}
 
 function test.setup()
-    _old_io = io
-    io = MagicMock()
-    _old_print = print
-    print = MagicMock()
-end
-
-function test.teardown()
-    io = _old_io
-    print = _old_print
+    patch('io')
+    patch('print')
 end
 
 function test.console_new_empty()
