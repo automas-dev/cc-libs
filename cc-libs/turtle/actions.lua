@@ -23,7 +23,7 @@ function M.find_slot(item_name, need)
         end
     end
 
-    log:warning('Item', item_name, 'was not found in inventory')
+    log:warning('Item', item_name, 'with', need, 'items was not found in inventory')
     return nil
 end
 
