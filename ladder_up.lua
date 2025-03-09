@@ -1,8 +1,8 @@
 local logging = require 'cc-libs.util.logging'
-logging.basic_config{
+logging.basic_config {
     level = logging.Level.INFO,
     file_level = logging.Level.DEBUG,
-    filepath = 'logs/ladder_up.log'
+    filepath = 'logs/ladder_up.log',
 }
 local log = logging.get_logger('main')
 

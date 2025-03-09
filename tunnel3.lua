@@ -1,8 +1,8 @@
 local logging = require 'cc-libs.util.logging'
-logging.basic_config{
+logging.basic_config {
     level = logging.Level.INFO,
     file_level = logging.Level.DEBUG,
-    filepath = 'logs/tunnel3.log'
+    filepath = 'logs/tunnel3.log',
 }
 local log = logging.get_logger('main')
 

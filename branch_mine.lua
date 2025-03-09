@@ -1,8 +1,8 @@
 local logging = require 'cc-libs.util.logging'
-logging.basic_config{
+logging.basic_config {
     level = logging.Level.INFO,
     file_level = logging.Level.DEBUG,
-    filepath = 'logs/branch_mine.log'
+    filepath = 'logs/branch_mine.log',
 }
 logging.get_logger('map').level = logging.Level.WARNING
 logging.get_logger('nav').file_level = logging.Level.TRACE
