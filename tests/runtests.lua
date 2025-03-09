@@ -4,6 +4,7 @@ local disable_color = os.getenv('DISABLE_COLOR_TEST')
 local test_file_prefix = 'test_'
 
 require 'asserts'
+require 'asserts_extra'
 require 'mock'
 require 'patch'
 
