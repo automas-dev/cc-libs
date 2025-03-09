@@ -19,22 +19,21 @@ local M = {
     level_name = log_level.level_name,
     level_from_name = log_level.level_from_name,
     Logger = log_logger.Logger,
+    subsystems = {},
 }
-
-local subsystems = {}
 
 ---Get the logger object for the give subsystem name
 ---@param subsystem? string name of the subsystem
 ---@return Logger
 function M.get_logger(subsystem)
     subsystem = subsystem or ROOT_LOGGER_NAME
-    local exists = subsystems[subsystem]
+    local exists = M.subsystems[subsystem]
     if exists == nil then
         exists = log_logger.Logger:new(subsystem)
         if subsystem ~= ROOT_LOGGER_NAME then
             exists.parent = M.get_logger(ROOT_LOGGER_NAME)
         end
-        subsystems[subsystem] = exists
+        M.subsystems[subsystem] = exists
     end
     return exists
 end
@@ -51,9 +50,9 @@ end
 ---@param args? BasicConfigArgs
 function M.basic_config(args)
     args = args or {}
-    if subsystems[ROOT_LOGGER_NAME] ~= nil then
+    if M.subsystems[ROOT_LOGGER_NAME] ~= nil then
         if args.force then
-            subsystems[ROOT_LOGGER_NAME].handler = {}
+            M.subsystems[ROOT_LOGGER_NAME].handler = {}
         else
             return
         end
