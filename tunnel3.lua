@@ -1,7 +1,9 @@
 local logging = require 'cc-libs.util.logging'
-logging.file = 'logs/tunnel3.log'
-logging.level = logging.Level.INFO
-logging.file_level = logging.Level.DEBUG
+logging.basic_config{
+    level = logging.Level.INFO,
+    file_level = logging.Level.DEBUG,
+    filepath = 'log/tunnel3.log'
+}
 local log = logging.get_logger('main')
 
 local ccl_motion = require 'cc-libs.turtle.motion'
