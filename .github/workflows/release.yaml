@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  create_release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    needs: lint_test
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Archive library
+        uses: actions/upload-artifact@v4
+        with:
+          name: cc-libs
+          path: |
+            cc-libs
+
+      - name: Create Archive
+        run: |
+          tar -cf cc-libs.tar cc-libs
+          tar -czf cc-libs.tar,gz cc-libs
+          zip -r cc-libs.zip cc-libs
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1.14.0
+        with:
+          artifacts: cc-libs.*
+          makeLatest: true
+          generateReleaseNotes: true
