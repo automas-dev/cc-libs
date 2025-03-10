@@ -43,6 +43,17 @@ Stylua is used for formatting in cli and vs-code.
 make format
 ```
 
+## ComputerCraft Mod Config
+
+This repo is too big for the default computer disk size. In your .minecraft
+folder, edit the file `.minecraft/config/computercraft-server.toml` and increase
+the `computer_space_limit` line. The default is 10000000.
+
+```toml
+#The disk space limit for computers and turtles, in bytes.
+computer_space_limit = 100000000 # added another 0
+```
+
 ## Planning
 
 - Need a motion controller independent of rgps
