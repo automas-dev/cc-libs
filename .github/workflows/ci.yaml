@@ -78,7 +78,14 @@ jobs:
           path: |
             cc-libs
 
-      - name: Create Archive
+      - name: Archive apps
+        uses: actions/upload-artifact@v4
+        with:
+          name: cc-apps
+          path: |
+            cc-apps
+
+      - name: Create Library Archive
         run: |
           tar -cf cc-libs.tar cc-libs
           tar -czf cc-libs.tar,gz cc-libs
@@ -86,10 +93,18 @@ jobs:
           cp cc-libs.tar,gz cc-libs-${{ steps.version.outputs.version }}.tar,gz
           cp cc-libs.zip cc-libs-${{ steps.version.outputs.version }}.zip
 
+      - name: Create Apps Archive
+        run: |
+          tar -cf cc-apps.tar cc-apps
+          tar -czf cc-apps.tar,gz cc-apps
+          zip -r cc-apps.zip cc-apps
+          cp cc-apps.tar,gz cc-apps-${{ steps.version.outputs.version }}.tar,gz
+          cp cc-apps.zip cc-apps-${{ steps.version.outputs.version }}.zip
+
       - name: Create Release
         uses: ncipollo/release-action@v1.14.0
         with:
-          artifacts: cc-libs.*,cc-libs-*
+          artifacts: cc-libs.*,cc-libs-*,cc-apps.*,cc-apps-*
           makeLatest: true
           generateReleaseNotes: true
           tag: ${{ steps.version.outputs.version }}

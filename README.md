@@ -7,6 +7,38 @@ Helper functions and programs for computers and turtles.
 
 ## Usage
 
+This repo includes two helper scripts to install the library and apps from the
+latest release. The fastest way to get started is downloading one of these
+scripts on a turtle or computer using `wget` and running it to install. If the
+library or apps are already installed, the script will update them to the latest
+release.
+
+### Library
+
+The library install script [install_cc-libs.lua](install/install_cc-libs.lua),
+can be found under the install folder.
+
+```sh
+wget https://raw.githubusercontent.com/twh2898/cc-libs/refs/heads/main/install/install_cc-libs.lua
+```
+
+### Apps
+
+The apps install script [install_cc-apps.lua](install/install_cc-apps.lua), can
+be found under the install folder. Most of the apps require the library to be
+installed.
+
+```sh
+wget https://raw.githubusercontent.com/twh2898/cc-libs/refs/heads/main/install/install_cc-apps.lua
+```
+
+Apps can be used via the `cc/` prefix (eg. `cc/dig_down` or `cc/branch_mine`).
+
+## Development
+
+If you choose to clone this repo, there are a few things you will need to do
+first. See the **ComputerCraft Mod Config** section bellow.
+
 Clone the repo into a computer or turtle directory (`cc-libs` should be in the
 root directory). Lua scripts in the project root can be executed on a turtle or
 computer, or the `cc-libs` directory can be used in other projects.
@@ -14,8 +46,6 @@ computer, or the `cc-libs` directory can be used in other projects.
 ```sh
 git clone git@github.com:twh2898/cc-libs.git # <computer_or_turtle_dir>
 ```
-
-## Development
 
 ### Test
 
@@ -44,24 +74,6 @@ make format
 ```
 
 ## ComputerCraft Mod Config
-
-There are 2 options for using this library.
-
-```sh
-https://github.com/twh2898/cc-libs/blob/main/install/install_cc-libs.lua
-```
-
-1. Copy the script [install_cc-libs.lua](install/install_cc-libs.lua) from the `install/`
-   folder onto your computer or turtle and run it to get the latest release. Run
-   this script again later to install updates from newer releases.
-2. Using `wget` on the computer or turtle
-    ```sh
-    wget https://raw.githubusercontent.com/twh2898/cc-libs/refs/heads/main/install/install_cc-libs.lua
-    ```
-3. Clone this repo and use it as the computer or turtle directory.
-
-If you choose to clone this repo, there are a few things you will need to do
-first.
 
 This repo is too big for the default computer disk size. In your .minecraft
 folder, edit the file `.minecraft/config/computercraft-server.toml` and increase
