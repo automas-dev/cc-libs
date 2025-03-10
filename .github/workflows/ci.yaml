@@ -83,6 +83,8 @@ jobs:
           tar -cf cc-libs.tar cc-libs
           tar -czf cc-libs.tar,gz cc-libs
           zip -r cc-libs.zip cc-libs
+          cp cc-libs.tar,gz cc-libs-${{ steps.version.outputs.version }}.tar,gz
+          cp cc-libs.zip cc-libs-${{ steps.version.outputs.version }}.zip
 
       - name: Create Release
         uses: ncipollo/release-action@v1.14.0
