@@ -4,6 +4,7 @@ local test = {}
 
 function test.setup()
     patch('turtle')
+    patch('os.epoch').return_value = 0
 end
 
 function test.find_slot()

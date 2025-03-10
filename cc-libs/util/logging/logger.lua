@@ -75,7 +75,7 @@ function Logger:log(level, ...)
         return
     end
     local args = { ... }
-    local log_time = os.time()
+    local log_time = os.epoch('local') / 1000 -- luacheck: ignore
     local msg = ''
     for i = 1, #args do
         if i == 1 then
