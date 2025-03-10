@@ -45,6 +45,16 @@ make format
 
 ## ComputerCraft Mod Config
 
+There are 2 options for using this library.
+
+1. Copy the script [install_cc-libs.lua](install/install_cc-libs.lua) from the `install/`
+   folder onto your computer or turtle and run it to get the latest release. Run
+   this script again later to install updates from newer releases.
+2. Clone this repo and use it as the computer or turtle directory.
+
+If you choose to clone this repo, there are a few things you will need to do
+first.
+
 This repo is too big for the default computer disk size. In your .minecraft
 folder, edit the file `.minecraft/config/computercraft-server.toml` and increase
 the `computer_space_limit` line. The default is 10000000.
