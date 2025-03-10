@@ -2,6 +2,8 @@
 -- everything in a single file. Changes have been made to the tar library for
 -- compatibility with ComputerCraft.
 
+-- From https://github.com/mimetic/tar.lua
+
 -- Tar extraction module based off LUARocks : github.com/keplerproject/luarocks
 -- By Danny @ anscamobile
 --
