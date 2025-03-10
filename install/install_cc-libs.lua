@@ -217,7 +217,7 @@ local resp = assert(http.get(PACKAGE_URL), 'Failed to fetch package from github'
 local tar_file = assert(io.open('cc-libs.tar', 'wb'), 'Failed to open tar file')
 
 repeat
-    local chunk = resp:read(CHUNK_SIZE)
+    local chunk = resp.read(CHUNK_SIZE)
     if chunk then
         tar_file:write(chunk)
     end
@@ -239,7 +239,7 @@ end
 print('Extraction complete')
 
 fs.delete('cc-libs')
-fs.move('_extract/cc-libs', '.')
+fs.move('_extract/cc-libs', 'cc-libs')
 fs.delete('_extract')
 
 print('Finished installing cc-libs')
