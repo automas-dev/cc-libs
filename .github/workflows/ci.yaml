@@ -95,9 +95,9 @@ jobs:
 
       - name: Create Apps Archive
         run: |
-          tar -cf cc-apps.tar cc-apps
-          tar -czf cc-apps.tar,gz cc-apps
-          zip -r cc-apps.zip cc-apps
+          tar -cf cc-apps.tar cc
+          tar -czf cc-apps.tar,gz cc
+          zip -r cc-apps.zip cc
           cp cc-apps.tar,gz cc-apps-${{ steps.version.outputs.version }}.tar,gz
           cp cc-apps.zip cc-apps-${{ steps.version.outputs.version }}.zip
 
