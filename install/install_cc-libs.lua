@@ -241,5 +241,6 @@ print('Extraction complete')
 fs.delete('cc-libs')
 fs.move('_extract/cc-libs', 'cc-libs')
 fs.delete('_extract')
+fs.delete('cc-libs.tar')
 
 print('Finished installing cc-libs')

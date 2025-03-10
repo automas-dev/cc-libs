@@ -241,5 +241,6 @@ print('Extraction complete')
 fs.delete('cc')
 fs.move('_extract/cc-apps', 'cc')
 fs.delete('_extract')
+fs.delete('cc-apps.tar')
 
 print('Finished installing cc-apps')
