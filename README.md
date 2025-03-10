@@ -47,10 +47,18 @@ make format
 
 There are 2 options for using this library.
 
+```sh
+https://github.com/twh2898/cc-libs/blob/main/install/install_cc-libs.lua
+```
+
 1. Copy the script [install_cc-libs.lua](install/install_cc-libs.lua) from the `install/`
    folder onto your computer or turtle and run it to get the latest release. Run
    this script again later to install updates from newer releases.
-2. Clone this repo and use it as the computer or turtle directory.
+2. Using `wget` on the computer or turtle
+    ```sh
+    wget https://raw.githubusercontent.com/twh2898/cc-libs/refs/heads/main/install/install_cc-libs.lua
+    ```
+3. Clone this repo and use it as the computer or turtle directory.
 
 If you choose to clone this repo, there are a few things you will need to do
 first.
