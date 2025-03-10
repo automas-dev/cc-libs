@@ -89,7 +89,7 @@ jobs:
       - name: Create Release
         uses: ncipollo/release-action@v1.14.0
         with:
-          artifacts: cc-libs.*
+          artifacts: cc-libs.*,cc-libs-*
           makeLatest: true
           generateReleaseNotes: true
           tag: ${{ steps.version.outputs.version }}
