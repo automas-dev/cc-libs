@@ -14,6 +14,7 @@ local test = {}
 
 function test.setup()
     patch('os')
+    patch('os.epoch').return_value = 0
 end
 
 function test.new()
@@ -90,9 +91,9 @@ function test.log()
     Record.new = MagicMock {
         return_value = mock_record,
     }
-    os.time.return_value = 12
+    os.epoch.return_value = 12000 -- epoch returns ms
     l:log(1, 'a')
-    expect_eq(1, os.time.call_count)
+    expect_eq(1, os.epoch.call_count)
     assert_eq(1, Record.new.call_count)
     expect_eq('ss', Record.new.args[2])
     expect_eq(1, Record.new.args[3])
@@ -121,7 +122,7 @@ function test.log_logger_block()
     local h = MagicMock()
     l.handlers[1] = h
     Record.new = MagicMock()
-    os.time.return_value = 12
+    os.epoch.return_value = 12
     l:log(0, 'a')
     expect_eq(0, l.handlers[1].call_count)
 end
@@ -133,7 +134,7 @@ function test.log_handler_block()
     h.stream.level = 0
     l.handlers[1] = h
     Record.new = MagicMock()
-    os.time.return_value = 12
+    os.epoch.return_value = 12
     l:log(0, 'a')
     expect_eq(0, l.handlers[1].call_count)
 end
@@ -145,7 +146,7 @@ function test.log_stream_block()
     h.stream.level = 1
     l.handlers[1] = h
     Record.new = MagicMock()
-    os.time.return_value = 12
+    os.epoch.return_value = 12
     l:log(0, 'a')
     expect_eq(0, l.handlers[1].call_count)
 end
@@ -157,7 +158,7 @@ function test.log_handler_stream_block()
     h.stream.level = 1
     l.handlers[1] = h
     Record.new = MagicMock()
-    os.time.return_value = 12
+    os.epoch.return_value = 12
     l:log(0, 'a')
     expect_eq(0, l.handlers[1].call_count)
 end
