@@ -56,8 +56,7 @@ https://github.com/twh2898/cc-libs/blob/main/install/install_cc-libs.lua
    this script again later to install updates from newer releases.
 2. Using `wget` on the computer or turtle
     ```sh
-    wget https://github.com/twh2898/cc-libs/blob/main/install/install_cc-libs.lua
-    install_cc-libs.lua
+    wget https://raw.githubusercontent.com/twh2898/cc-libs/refs/heads/main/install/install_cc-libs.lua
     ```
 3. Clone this repo and use it as the computer or turtle directory.
 
