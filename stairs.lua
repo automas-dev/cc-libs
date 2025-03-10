@@ -1,7 +1,9 @@
 local logging = require 'cc-libs.util.logging'
-logging.file = 'logs/stairs.log'
-logging.level = logging.Level.INFO
-logging.file_level = logging.Level.DEBUG
+logging.basic_config {
+    level = logging.Level.INFO,
+    file_level = logging.Level.DEBUG,
+    filepath = 'logs/stairs.log',
+}
 local log = logging.get_logger('main')
 
 ---@module 'ccl_motion'
