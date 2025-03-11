@@ -19,3 +19,18 @@ log:error('Error Level Message')
 
 local log2 = logging.get_logger('second')
 log2:set_level(logging.Level.WARNING)
+
+log2:trace('Trace Level Message')
+log2:debug('Debug Level Message')
+log2:info('Info Level Message')
+log2:warning('Warning Level Message')
+log2:error('Error Level Message')
+
+local log3 = logging.Logger:new('to_remote', 0, logging.get_logger('root'))
+log3:new_handler(logging.JsonFormatter:new(), logging.RemoteStream:new(0))
+
+log3:trace('Trace Level Message')
+log3:debug('Debug Level Message')
+log3:info('Info Level Message')
+log3:warning('Warning Level Message')
+log3:error('Error Level Message')

@@ -81,57 +81,26 @@ function FileStream:send(message)
 end
 
 ---@class RemoteStream : Stream
----@field filename string
----@field modem? table
 local RemoteStream = {}
 
 ---Create a new RemoteStream instance
----@param filename string path to the log file, opened in first call to send
 ---@param level? number|LogLevel stream level or default 0
 ---@return RemoteStream
-function RemoteStream:new(filename, level)
-    assert(filename ~= nil, 'filename must not be nil')
+function RemoteStream:new(level)
     local o = {
-        filename = filename,
         level = level or 0,
-        modem = nil,
     }
     setmetatable(o, self)
     self.__index = self
+    peripheral.find("modem", rednet.open)
     return o
-end
-
----@param filename string
----@return boolean success was the file opened
----@return string? error error message if success is false
-function RemoteStream:open_file(filename)
-    -- Close any open file
-    if self.file ~= nil then
-        self.file:close()
-        self.file = nil
-    end
-
-    -- Open the file in append mode
-    local file, err = io.open(filename, 'a')
-    if file then
-        self.file = file
-        return true
-    else
-        print('Error opening log file: ' .. err)
-        return false, err
-    end
 end
 
 ---Write the message to the open file. Open a file if one is not yet open.
 ---@param message string the log message as a single string
 ---@return boolean success was the message send successful
 function RemoteStream:send(message)
-    if self.file == nil and not self:open_file(self.filename) then
-        return false
-    end
-    self.file:write(message)
-    self.file:write('\n')
-    self.file:flush()
+    rednet.broadcast(message, 'remote_log')
     return true
 end
 
