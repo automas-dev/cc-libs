@@ -9,13 +9,11 @@ local fmt = logging.ShortFormatter:new()
 local stream = logging.ConsoleStream:new()
 
 while true do
-    ---@type number, string
     local id, message = rednet.receive('remote_log')
-    ---@type boolean, Record
     local success, data = pcall(json.decode, message)
     if not success then
         print('Failed to decode message from ' .. id)
-    else
+    elseif logging.level_from_name(data['level']) >= logging.Level.WARNING then
         stream:send('[' .. data['host'] .. '] ' .. fmt:format_record(data))
     end
 end
