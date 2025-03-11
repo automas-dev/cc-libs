@@ -1,3 +1,4 @@
+-- luacheck: ignore 143 142
 local json = require 'cc-libs.util.json'
 
 local formatter = require 'cc-libs.util.logging.formatter'
@@ -9,7 +10,7 @@ local JsonFormatter = formatter.JsonFormatter
 local test = {}
 
 function test.setup()
-    patch('os.getComputerID').return_value = 1
+    patch('os.getComputerID').return_value = 7
     patch('os.getComputerLabel').return_value = 'name'
 end
 
@@ -20,6 +21,20 @@ function test.record()
     expect_eq('lc', r.location)
     expect_eq('msg', r.message)
     expect_eq(1234, r.time)
+    expect_eq(7, r.host_id)
+    expect_eq('name', r.host_name)
+end
+
+function test.record_no_label()
+    os.getComputerLabel.return_value = nil
+    local r = Record:new('ss', 1, 'lc', 'msg', 1234)
+    expect_eq('ss', r.subsystem)
+    expect_eq(1, r.level)
+    expect_eq('lc', r.location)
+    expect_eq('msg', r.message)
+    expect_eq(1234, r.time)
+    expect_eq(7, r.host_id)
+    expect_eq('', r.host_name)
 end
 
 function test.short_formatter()
