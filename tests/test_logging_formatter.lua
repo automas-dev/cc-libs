@@ -2,7 +2,6 @@ local json = require 'cc-libs.util.json'
 
 local formatter = require 'cc-libs.util.logging.formatter'
 local Record = formatter.Record
-local Formatter = formatter.Formatter
 local ShortFormatter = formatter.ShortFormatter
 local LongFormatter = formatter.LongFormatter
 local JsonFormatter = formatter.JsonFormatter
@@ -21,12 +20,6 @@ function test.record()
     expect_eq('lc', r.location)
     expect_eq('msg', r.message)
     expect_eq(1234, r.time)
-end
-
-function test.formatter()
-    local f = Formatter:new()
-    local r = Record:new('ss', 1, 'lc', 'msg', 1234)
-    expect_eq('msg', f:format_record(r))
 end
 
 function test.short_formatter()

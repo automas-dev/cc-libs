@@ -54,15 +54,6 @@ end
 ---@class Formatter
 local Formatter = {}
 
----Create a new Formatter instance
----@return Formatter
-function Formatter:new()
-    local o = {}
-    setmetatable(o, self)
-    self.__index = self
-    return o
-end
-
 ---Format record into a string
 ---@param record Record the record to format
 ---@return string text the formatted message for record
@@ -71,14 +62,32 @@ function Formatter:format_record(record)
 end
 
 ---@class ShortFormatter : Formatter
-local ShortFormatter = Formatter:new()
+local ShortFormatter = {}
+
+---Create a new ShortFormatter instance
+---@return ShortFormatter
+function ShortFormatter:new()
+    local o = {}
+    setmetatable(o, self)
+    self.__index = self
+    return o
+end
 
 function ShortFormatter:format_record(record)
     return '[' .. record.subsystem .. '] ' .. record.message
 end
 
 ---@class LongFormatter : Formatter
-local LongFormatter = Formatter:new()
+local LongFormatter = {}
+
+---Create a new ShortFormatter instance
+---@return LongFormatter
+function LongFormatter:new()
+    local o = {}
+    setmetatable(o, self)
+    self.__index = self
+    return o
+end
 
 function LongFormatter:format_record(record)
     return '['
@@ -94,7 +103,16 @@ function LongFormatter:format_record(record)
 end
 
 ---@class JsonFormatter : Formatter
-local JsonFormatter = Formatter:new()
+local JsonFormatter = {}
+
+---Create a new ShortFormatter instance
+---@return JsonFormatter
+function JsonFormatter:new()
+    local o = {}
+    setmetatable(o, self)
+    self.__index = self
+    return o
+end
 
 function JsonFormatter:format_record(record)
     return json.encode({
@@ -109,7 +127,6 @@ function JsonFormatter:format_record(record)
 end
 
 return {
-    Formatter = Formatter,
     Record = Record,
     ShortFormatter = ShortFormatter,
     LongFormatter = LongFormatter,
