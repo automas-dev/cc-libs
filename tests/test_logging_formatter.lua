@@ -1,3 +1,4 @@
+---@diagnostic disable: undefined-field
 -- luacheck: ignore 143 142
 local json = require 'cc-libs.util.json'
 
