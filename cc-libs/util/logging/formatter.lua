@@ -66,7 +66,7 @@ end
 local ShortFormatter = {}
 
 ---Create a new ShortFormatter instance
----@param show_id boolean show the computer id in the message
+---@param show_id? boolean show the computer id in the message
 ---@return ShortFormatter
 function ShortFormatter:new(show_id)
     local o = {
@@ -80,7 +80,7 @@ end
 function ShortFormatter:format_record(record)
     local prefix = ''
     if self.show_id then
-        prefix = '[' .. record.host_id .. ':' .. record.host_name .. '] '
+        prefix = '[' .. tostring(record.host_id) .. ':' .. tostring(record.host_name) .. '] '
     end
     return prefix .. '[' .. record.subsystem .. '] ' .. record.message
 end
@@ -129,7 +129,6 @@ function JsonFormatter:format_record(record)
         location = record.location,
         level = _level.level_name(record.level),
         message = record.message,
-        host_id = record.host_id,
         host = record.host_id .. ':' .. record.host_name,
     })
 end
