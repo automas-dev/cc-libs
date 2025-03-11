@@ -92,7 +92,7 @@ function RemoteStream:new(level)
     }
     setmetatable(o, self)
     self.__index = self
-    peripheral.find("modem", rednet.open)
+    peripheral.find('modem', rednet.open)
     return o
 end
 

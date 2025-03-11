@@ -1,6 +1,8 @@
 globals = {
     "turtle",
     "fs",
+    "rednet",
+    "peripheral"
 }
 ignore = {
     "111",
