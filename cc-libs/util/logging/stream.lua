@@ -29,7 +29,7 @@ end
 
 ---@class FileStream : Stream
 ---@field filename string
----@field file? file*
+---@field file? file*|ccTweaked.fs.Handle
 local FileStream = {}
 
 ---Create a new FileStream instance

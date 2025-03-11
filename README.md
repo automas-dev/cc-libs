@@ -36,8 +36,8 @@ Apps can be used via the `cc/` prefix (eg. `cc/dig_down` or `cc/branch_mine`).
 
 ## Development
 
-If you choose to clone this repo, there are a few things you will need to do
-first. See the **ComputerCraft Mod Config** section bellow.
+> If you choose to clone this repo, there are a few things you will need to do
+> first. See the **ComputerCraft Mod Config** section bellow. I 
 
 Clone the repo into a computer or turtle directory (`cc-libs` should be in the
 root directory). Lua scripts in the project root can be executed on a turtle or
@@ -46,6 +46,10 @@ computer, or the `cc-libs` directory can be used in other projects.
 ```sh
 git clone git@github.com:twh2898/cc-libs.git # <computer_or_turtle_dir>
 ```
+
+> [lua-ls-cc-tweaked](https://github.com/nvim-computercraft/lua-ls-cc-tweaked)
+> is used to provide type hints / annotations in vscode. Download this repo and
+> place it somewhere in this repo. Add a `.gitignore` file with the line `*`.
 
 ### Test
 
