@@ -43,6 +43,12 @@ function test.short_formatter()
     expect_eq('[ss] msg', f:format_record(r))
 end
 
+function test.short_formatter_prefix()
+    local f = ShortFormatter:new(true)
+    local r = Record:new('ss', 1, 'lc', 'msg', 1234)
+    expect_eq('[7:name] [ss] msg', f:format_record(r))
+end
+
 function test.long_formatter()
     local f = LongFormatter:new()
     local r = Record:new('ss', 1, 'lc', 'msg', 1741354307)
@@ -61,6 +67,7 @@ function test.json_formatter()
     expect_eq('lc', decoded.location)
     expect_eq('debug', decoded.level)
     expect_eq('msg', decoded.message)
+    expect_eq('7:name', decoded.host)
 end
 
 return test
