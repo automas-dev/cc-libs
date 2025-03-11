@@ -4,12 +4,15 @@
 local stream = require 'cc-libs.util.logging.stream'
 local ConsoleStream = stream.ConsoleStream
 local FileStream = stream.FileStream
+local RemoteStream = stream.RemoteStream
 
 local test = {}
 
 function test.setup()
     patch('io')
     patch('print')
+    patch('rednet')
+    patch('peripheral')
 end
 
 function test.console_new_empty()
@@ -99,6 +102,29 @@ function test.file_send_open_file()
     expect_false(res)
     assert_eq(1, s.open_file.call_count)
     expect_eq('a.log', s.open_file.args[2])
+end
+
+function test.remote_new_empty()
+    local s = RemoteStream:new()
+    expect_eq(0, s.level)
+    expect_eq(1, peripheral.find.call_count)
+    expect_eq('modem', peripheral.find.args[1])
+    expect_eq(rednet.open, peripheral.find.args[2])
+end
+
+function test.remote_new_level()
+    local s = RemoteStream:new(2)
+    expect_eq(2, s.level)
+end
+
+function test.remote_send()
+    local s = RemoteStream:new()
+    local res = s:send('hi')
+    expect_true(res)
+    assert_eq(1, rednet.broadcast.call_count)
+    expect_eq(2, #rednet.broadcast.args)
+    expect_eq('hi', rednet.broadcast.args[1])
+    expect_eq('remote_log', rednet.broadcast.args[2])
 end
 
 return test

@@ -1,13 +1,19 @@
+---@diagnostic disable: undefined-field
+-- luacheck: ignore 143 142
 local json = require 'cc-libs.util.json'
 
 local formatter = require 'cc-libs.util.logging.formatter'
 local Record = formatter.Record
-local Formatter = formatter.Formatter
 local ShortFormatter = formatter.ShortFormatter
 local LongFormatter = formatter.LongFormatter
 local JsonFormatter = formatter.JsonFormatter
 
 local test = {}
+
+function test.setup()
+    patch('os.getComputerID').return_value = 7
+    patch('os.getComputerLabel').return_value = 'name'
+end
 
 function test.record()
     local r = Record:new('ss', 1, 'lc', 'msg', 1234)
@@ -16,18 +22,32 @@ function test.record()
     expect_eq('lc', r.location)
     expect_eq('msg', r.message)
     expect_eq(1234, r.time)
+    expect_eq(7, r.host_id)
+    expect_eq('name', r.host_name)
 end
 
-function test.formatter()
-    local f = Formatter:new()
+function test.record_no_label()
+    os.getComputerLabel.return_value = nil
     local r = Record:new('ss', 1, 'lc', 'msg', 1234)
-    expect_eq('msg', f:format_record(r))
+    expect_eq('ss', r.subsystem)
+    expect_eq(1, r.level)
+    expect_eq('lc', r.location)
+    expect_eq('msg', r.message)
+    expect_eq(1234, r.time)
+    expect_eq(7, r.host_id)
+    expect_eq('', r.host_name)
 end
 
 function test.short_formatter()
     local f = ShortFormatter:new()
     local r = Record:new('ss', 1, 'lc', 'msg', 1234)
     expect_eq('[ss] msg', f:format_record(r))
+end
+
+function test.short_formatter_prefix()
+    local f = ShortFormatter:new(true)
+    local r = Record:new('ss', 1, 'lc', 'msg', 1234)
+    expect_eq('[7:name] [ss] msg', f:format_record(r))
 end
 
 function test.long_formatter()
@@ -48,6 +68,7 @@ function test.json_formatter()
     expect_eq('lc', decoded.location)
     expect_eq('debug', decoded.level)
     expect_eq('msg', decoded.message)
+    expect_eq('7:name', decoded.host)
 end
 
 return test

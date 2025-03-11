@@ -15,6 +15,7 @@ local M = {
     Handler = log_handler.Handler,
     ConsoleStream = log_stream.ConsoleStream,
     FileStream = log_stream.FileStream,
+    RemoteStream = log_stream.RemoteStream,
     Level = log_level.Level,
     level_name = log_level.level_name,
     level_from_name = log_level.level_from_name,

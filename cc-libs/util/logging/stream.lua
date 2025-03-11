@@ -2,6 +2,8 @@
 ---@field level number|LogLevel minimum message level
 ---@field send fun(self: Stream, message: string): boolean
 
+local REDNET_PROTOCOL = 'remote_log'
+
 ---@class ConsoleStream : Stream
 local ConsoleStream = {}
 
@@ -80,7 +82,32 @@ function FileStream:send(message)
     return true
 end
 
+---@class RemoteStream : Stream
+local RemoteStream = {}
+
+---Create a new RemoteStream instance
+---@param level? number|LogLevel stream level or default 0
+---@return RemoteStream
+function RemoteStream:new(level)
+    local o = {
+        level = level or 0,
+    }
+    setmetatable(o, self)
+    self.__index = self
+    peripheral.find('modem', rednet.open)
+    return o
+end
+
+---Write the message to the open file. Open a file if one is not yet open.
+---@param message string the log message as a single string
+---@return boolean success was the message send successful
+function RemoteStream:send(message)
+    rednet.broadcast(message, REDNET_PROTOCOL)
+    return true
+end
+
 return {
     ConsoleStream = ConsoleStream,
     FileStream = FileStream,
+    RemoteStream = RemoteStream,
 }

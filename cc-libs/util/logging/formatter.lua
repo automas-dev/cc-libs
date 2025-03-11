@@ -24,6 +24,8 @@ end
 ---@field location string
 ---@field message string
 ---@field time number
+---@field host_id number
+---@field host_name string
 local Record = {}
 
 ---Create a new Record instance
@@ -39,6 +41,10 @@ function Record:new(subsystem, level, location, message, time)
         location = location,
         message = message,
         time = time,
+        -- luacheck: push ignore 143
+        host_id = os.getComputerID(),
+        host_name = os.getComputerLabel() or '',
+        --luacheck: pop
     }
     setmetatable(o, self)
     self.__index = self
@@ -48,15 +54,6 @@ end
 ---@class Formatter
 local Formatter = {}
 
----Create a new Formatter instance
----@return Formatter
-function Formatter:new()
-    local o = {}
-    setmetatable(o, self)
-    self.__index = self
-    return o
-end
-
 ---Format record into a string
 ---@param record Record the record to format
 ---@return string text the formatted message for record
@@ -65,14 +62,40 @@ function Formatter:format_record(record)
 end
 
 ---@class ShortFormatter : Formatter
-local ShortFormatter = Formatter:new()
+---@field show_id boolean show the computer id in the message
+local ShortFormatter = {}
+
+---Create a new ShortFormatter instance
+---@param show_id? boolean show the computer id in the message
+---@return ShortFormatter
+function ShortFormatter:new(show_id)
+    local o = {
+        show_id = show_id or false,
+    }
+    setmetatable(o, self)
+    self.__index = self
+    return o
+end
 
 function ShortFormatter:format_record(record)
-    return '[' .. record.subsystem .. '] ' .. record.message
+    local prefix = ''
+    if self.show_id then
+        prefix = '[' .. tostring(record.host_id) .. ':' .. tostring(record.host_name) .. '] '
+    end
+    return prefix .. '[' .. record.subsystem .. '] ' .. record.message
 end
 
 ---@class LongFormatter : Formatter
-local LongFormatter = Formatter:new()
+local LongFormatter = {}
+
+---Create a new ShortFormatter instance
+---@return LongFormatter
+function LongFormatter:new()
+    local o = {}
+    setmetatable(o, self)
+    self.__index = self
+    return o
+end
 
 function LongFormatter:format_record(record)
     return '['
@@ -88,7 +111,16 @@ function LongFormatter:format_record(record)
 end
 
 ---@class JsonFormatter : Formatter
-local JsonFormatter = Formatter:new()
+local JsonFormatter = {}
+
+---Create a new ShortFormatter instance
+---@return JsonFormatter
+function JsonFormatter:new()
+    local o = {}
+    setmetatable(o, self)
+    self.__index = self
+    return o
+end
 
 function JsonFormatter:format_record(record)
     return json.encode({
@@ -97,11 +129,11 @@ function JsonFormatter:format_record(record)
         location = record.location,
         level = _level.level_name(record.level),
         message = record.message,
+        host = record.host_id .. ':' .. record.host_name,
     })
 end
 
 return {
-    Formatter = Formatter,
     Record = Record,
     ShortFormatter = ShortFormatter,
     LongFormatter = LongFormatter,
