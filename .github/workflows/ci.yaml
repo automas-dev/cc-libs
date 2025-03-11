@@ -88,23 +88,15 @@ jobs:
       - name: Create Library Archive
         run: |
           tar -cf cc-libs.tar cc-libs
-          tar -czf cc-libs.tar,gz cc-libs
-          zip -r cc-libs.zip cc-libs
-          cp cc-libs.tar,gz cc-libs-${{ steps.version.outputs.version }}.tar,gz
-          cp cc-libs.zip cc-libs-${{ steps.version.outputs.version }}.zip
 
       - name: Create Apps Archive
         run: |
           tar -cf cc-apps.tar cc-apps
-          tar -czf cc-apps.tar,gz cc-apps
-          zip -r cc-apps.zip cc-apps
-          cp cc-apps.tar,gz cc-apps-${{ steps.version.outputs.version }}.tar,gz
-          cp cc-apps.zip cc-apps-${{ steps.version.outputs.version }}.zip
 
       - name: Create Release
         uses: ncipollo/release-action@v1.14.0
         with:
-          artifacts: cc-libs.*,cc-libs-*,cc-apps.*,cc-apps-*
+          artifacts: cc-libs.tar,cc-apps.tar
           makeLatest: true
           generateReleaseNotes: true
           tag: ${{ steps.version.outputs.version }}
