@@ -62,19 +62,27 @@ function Formatter:format_record(record)
 end
 
 ---@class ShortFormatter : Formatter
+---@field show_id boolean show the computer id in the message
 local ShortFormatter = {}
 
 ---Create a new ShortFormatter instance
+---@param show_id boolean show the computer id in the message
 ---@return ShortFormatter
-function ShortFormatter:new()
-    local o = {}
+function ShortFormatter:new(show_id)
+    local o = {
+        show_id = show_id or false,
+    }
     setmetatable(o, self)
     self.__index = self
     return o
 end
 
 function ShortFormatter:format_record(record)
-    return '[' .. record.subsystem .. '] ' .. record.message
+    local prefix = ''
+    if self.show_id then
+        prefix = '[' .. record.host_id .. ':' .. record.host_name .. '] '
+    end
+    return prefix .. '[' .. record.subsystem .. '] ' .. record.message
 end
 
 ---@class LongFormatter : Formatter
