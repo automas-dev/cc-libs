@@ -9,6 +9,11 @@ local JsonFormatter = formatter.JsonFormatter
 
 local test = {}
 
+function test.setup()
+    patch('os.getComputerID').return_value = 1
+    patch('os.getComputerLabel').return_value = 'name'
+end
+
 function test.record()
     local r = Record:new('ss', 1, 'lc', 'msg', 1234)
     expect_eq('ss', r.subsystem)

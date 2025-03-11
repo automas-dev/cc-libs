@@ -5,6 +5,8 @@ local test = {}
 function test.setup()
     patch('turtle')
     patch('os.epoch').return_value = 0
+    patch('os.getComputerID').return_value = 1
+    patch('os.getComputerLabel').return_value = 'name'
 end
 
 function test.find_slot()

@@ -24,6 +24,8 @@ end
 ---@field location string
 ---@field message string
 ---@field time number
+---@field host_id number
+---@field host_name string
 local Record = {}
 
 ---Create a new Record instance
@@ -39,6 +41,10 @@ function Record:new(subsystem, level, location, message, time)
         location = location,
         message = message,
         time = time,
+        -- luacheck: push ignore 143
+        host_id = os.getComputerID(),
+        host_name = os.getComputerLabel() or '',
+        --luacheck: pop
     }
     setmetatable(o, self)
     self.__index = self
@@ -97,6 +103,8 @@ function JsonFormatter:format_record(record)
         location = record.location,
         level = _level.level_name(record.level),
         message = record.message,
+        host_id = record.host_id,
+        host = record.host_id .. ':' .. record.host_name,
     })
 end
 
