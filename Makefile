@@ -1,5 +1,5 @@
 
-LUA?=lua
+LUA?=lua5.2
 
 lint:
 	luacheck --codes .
