@@ -2,6 +2,8 @@
 ---@field level number|LogLevel minimum message level
 ---@field send fun(self: Stream, message: string): boolean
 
+local REDNET_PROTOCOL = 'remote_log'
+
 ---@class ConsoleStream : Stream
 local ConsoleStream = {}
 
@@ -100,7 +102,7 @@ end
 ---@param message string the log message as a single string
 ---@return boolean success was the message send successful
 function RemoteStream:send(message)
-    rednet.broadcast(message, 'remote_log')
+    rednet.broadcast(message, REDNET_PROTOCOL)
     return true
 end
 
