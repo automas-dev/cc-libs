@@ -33,6 +33,38 @@ function test.basic_config()
     expect_eq(3, root.handlers[3].stream.level)
 end
 
+function test.basic_config_default_level()
+    logging.basic_config()
+
+    local root = logging.get_logger('root')
+    expect_eq(1, #root.handlers)
+    expect_eq(logging.Level.INFO, root.handlers[1].stream.level)
+    -- expect_eq(1, root.handlers[2].stream.level)
+    -- expect_eq(2, root.handlers[3].stream.level)
+end
+
+function test.basic_config_default_file_level()
+    logging.basic_config {
+        filepath = 'log.txt',
+    }
+
+    local root = logging.get_logger('root')
+    expect_eq(2, #root.handlers)
+    expect_eq(logging.Level.INFO, root.handlers[1].stream.level)
+    expect_eq(logging.Level.DEBUG, root.handlers[2].stream.level)
+end
+
+function test.basic_config_default_machine_file_level()
+    logging.basic_config {
+        machine_filepath = 'log.txt',
+    }
+
+    local root = logging.get_logger('root')
+    expect_eq(2, #root.handlers)
+    expect_eq(logging.Level.INFO, root.handlers[1].stream.level)
+    expect_eq(logging.Level.TRACE, root.handlers[2].stream.level)
+end
+
 function test.basic_config_force()
     logging.basic_config {
         level = 1,
