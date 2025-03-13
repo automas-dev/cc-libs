@@ -99,18 +99,37 @@ function ArgParse:print_help()
         message = message .. self.help .. '\n'
     end
 
-    message = message .. 'Options:\n'
+    if #self.args > 0 then
+        message = message .. 'Args:\n'
 
-    for _, opt in ipairs(self.options) do
-        message = message .. '    '
-        if opt.short then
-            message = message .. '-' .. opt.short .. '/'
+        for _, arg in ipairs(self.args) do
+            message = message .. '    '
+            message = message .. arg.name .. ':'
+            if arg.help then
+                message = message .. ' ' .. arg.help
+            end
+            message = message .. '\n'
         end
-        message = message .. '--' .. opt.name .. ':'
-        if opt.help then
-            message = message .. ' ' .. opt.help
+    end
+
+    if #self.options > 0 then
+        message = message .. 'Options:\n'
+
+        for _, opt in ipairs(self.options) do
+            message = message .. '    '
+            if opt.short then
+                message = message .. '-' .. opt.short .. '/'
+            end
+            message = message .. '--' .. opt.name
+            if opt.has_value then
+                message = message .. ' ' .. opt.name
+            end
+            message = message .. ':'
+            if opt.help then
+                message = message .. ' ' .. opt.help
+            end
+            message = message .. '\n'
         end
-        message = message .. '\n'
     end
 
     local _, height = term.getCursorPos()
