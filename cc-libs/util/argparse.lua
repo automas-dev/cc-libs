@@ -151,18 +151,21 @@ function ArgParse:parse_args(args)
     end
 
     local arg_i = 1
-    for i = 1, #args do
+    local i = 1
+    -- using while instead of for to double increment when option has value
+    while i <= #args do
         local v = args[i]
         local flag, is_short = is_flag(v)
 
         -- option / flag
         if flag then
+            if flag == 'h' or flag == 'help' then
+                self:print_help()
+                os.exit(0)
+            end
             local found_flag = false
             for _, opt in ipairs(self.options) do
-                if flag == 'h' or flag == 'help' then
-                    self:print_help()
-                    os.exit(0)
-                elseif (is_short and flag == opt.short) or (not is_short and flag == opt.name) then
+                if (is_short and flag == opt.short) or (not is_short and flag == opt.name) then
                     if opt.has_value then
                         if i == #args then
                             error('Missing value for option ' .. flag)
@@ -178,24 +181,30 @@ function ArgParse:parse_args(args)
                 end
             end
             if not found_flag then
-                error('Unexpected flag ' .. flag)
+                error('Unexpected option ' .. flag)
             end
 
         -- argument
         else
             if arg_i > #self.args then
-                error('Unexpected positional argument')
+                local sample = tostring(v)
+                if #sample > 30 then
+                    sample = sample:sub(1, 30) .. '...'
+                end
+                error('Unexpected value ' .. sample)
             else
                 result[self.args[arg_i].name] = v
             end
             arg_i = arg_i + 1
         end
+
+        i = i + 1
     end
 
     if arg_i <= self.args_required then
         local missing = ''
-        for i, arg in ipairs(self.args) do
-            if i >= arg_i then
+        for j, arg in ipairs(self.args) do
+            if j >= arg_i then
                 if arg.default ~= nil then
                     break
                 end
