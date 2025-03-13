@@ -209,6 +209,16 @@ function test.parse_options_value()
     expect_eq('val', args.opt1)
 end
 
+function test.parse_options_bad_short()
+    local ap = ArgParse:new('name')
+    ap:add_option('a', 'opt1')
+
+    local success, err = pcall(ap.parse_args, ap, { '--a' })
+    expect_false(success)
+    assert(err ~= nil, 'err is nil')
+    expect_true(err:find('Unexpected option %-%-a'), 'Unexpected error message ' .. tostring(err))
+end
+
 function test.parse_options_invalid_short()
     local ap = ArgParse:new('name')
     ap:add_option('a', 'opt1')
@@ -216,7 +226,7 @@ function test.parse_options_invalid_short()
     local success, err = pcall(ap.parse_args, ap, { '-a', '-i' })
     expect_false(success)
     assert(err ~= nil, 'err is nil')
-    expect_true(err:find('Unexpected option i$'), 'Unexpected error message ' .. tostring(err))
+    expect_true(err:find('Unexpected option %-i$'), 'Unexpected error message ' .. tostring(err))
 end
 
 function test.parse_options_invalid_long()
@@ -226,7 +236,7 @@ function test.parse_options_invalid_long()
     local success, err = pcall(ap.parse_args, ap, { '-a', '--invalid' })
     expect_false(success)
     assert(err ~= nil, 'err is nil')
-    expect_true(err:find('Unexpected option invalid$'), 'Unexpected error message ' .. tostring(err))
+    expect_true(err:find('Unexpected option %-%-invalid$'), 'Unexpected error message ' .. tostring(err))
 end
 
 function test.parse_options_unexpected_value()
@@ -246,7 +256,7 @@ function test.parse_options_missing_value()
     local success, err = pcall(ap.parse_args, ap, { '-a' })
     expect_false(success)
     assert(err ~= nil, 'err is nil')
-    expect_true(err:find('Missing value for option a$'), 'Unexpected error message ' .. tostring(err))
+    expect_true(err:find('Missing value for option %-a$'), 'Unexpected error message ' .. tostring(err))
 end
 
 function test.parse_mix()

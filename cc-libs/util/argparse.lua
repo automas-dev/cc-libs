@@ -168,7 +168,7 @@ function ArgParse:parse_args(args)
                 if (is_short and flag == opt.short) or (not is_short and flag == opt.name) then
                     if opt.has_value then
                         if i == #args then
-                            error('Missing value for option ' .. flag)
+                            error('Missing value for option ' .. v)
                         end
                         i = i + 1
                         v = args[i]
@@ -181,7 +181,7 @@ function ArgParse:parse_args(args)
                 end
             end
             if not found_flag then
-                error('Unexpected option ' .. flag)
+                error('Unexpected option ' .. v)
             end
 
         -- argument
