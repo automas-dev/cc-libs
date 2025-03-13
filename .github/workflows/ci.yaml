@@ -58,7 +58,8 @@ jobs:
           fi
 
       - name: Check
-        run: echo "Result is ${{ steps.level.outputs.level }}"
+        run: |
+          echo "Result is ${{ steps.level.outputs.level }}"
 
   create_release:
     name: Create Release
