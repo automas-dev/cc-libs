@@ -14,6 +14,7 @@
 ---@field name string program name
 ---@field help? string description of the program
 ---@field args Arg[] list of positional arguments
+---@field args_required number minimum number of positional arguments
 ---@field options Option[] list of optional arguments / flags
 local ArgParse = {}
 
@@ -28,6 +29,7 @@ function ArgParse:new(name, help)
         name = name,
         help = help,
         args = {},
+        args_required = 0,
         options = {},
     }
     setmetatable(o, self)
@@ -47,6 +49,9 @@ function ArgParse:add_arg(name, help, default, is_multi)
         elseif default == nil and self.args[#self.args].default ~= nil then
             error('Argument ' .. name .. ' cannot be evaluated after default arg ' .. self.args[#self.args].name)
         end
+    end
+    if default == nil then
+        self.args_required = self.args_required + 1
     end
     table.insert(self.args, {
         name = name,
@@ -131,6 +136,21 @@ end
 function ArgParse:parse_args(args)
     local result = {}
 
+    -- Default options without values to false
+    for _, opt in ipairs(self.options) do
+        if not opt.has_value then
+            result[opt.name] = false
+        end
+    end
+
+    -- Default value for positional arguments
+    for _, arg in ipairs(self.args) do
+        if arg.default ~= nil then
+            result[arg.name] = arg.default
+        end
+    end
+
+    local arg_i = 1
     for i = 1, #args do
         local v = args[i]
         local flag, is_short = is_flag(v)
@@ -147,7 +167,9 @@ function ArgParse:parse_args(args)
                         if i == #args then
                             error('Missing value for option ' .. flag)
                         end
-                        -- ...
+                        i = i + 1
+                        v = args[i]
+                        result[opt.name] = v
                     else
                         result[opt.name] = true
                     end
@@ -158,11 +180,29 @@ function ArgParse:parse_args(args)
             if not found_flag then
                 error('Unexpected flag ' .. flag)
             end
-        end
 
-        if not name then
-            -- ...
+        -- argument
+        else
+            if arg_i > #self.args then
+                error('Unexpected positional argument')
+            else
+                result[self.args[arg_i].name] = v
+            end
+            arg_i = arg_i + 1
         end
+    end
+
+    if arg_i <= self.args_required then
+        local missing = ''
+        for i, arg in ipairs(self.args) do
+            if i >= arg_i then
+                if arg.default ~= nil then
+                    break
+                end
+                missing = missing .. ' ' .. arg.name
+            end
+        end
+        error('Missing required positional arguments' .. missing)
     end
 
     return result
