@@ -14,13 +14,13 @@ local actions = require 'cc-libs.turtle.actions'
 
 local args = { ... }
 if #args < 2 then
-    print('Usage: tunnel3 <length> <block_floor> [block_ceiling]')
+    print('Usage: bridge <length> <block_floor> [block_ceiling]')
     print()
     print("Dig forwards and lay a bridge on the way back if there isn't one already")
     print()
     print('Options:')
     print('    length: length of the tunnel')
-    print('    block_floor: name of block to place as ceiling')
+    print('    block_floor: name of block to place as floor')
     print('    block_ceiling: name of block to place as ceiling (defaults to no ceiling)')
     return
 end
