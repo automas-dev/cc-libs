@@ -1,9 +1,7 @@
 package.path = '../?.lua;../?/init.lua;' .. package.path
 local logging = require 'cc-libs.util.logging'
 logging.basic_config {
-    level = logging.Level.INFO,
-    file_level = logging.Level.DEBUG,
-    filepath = 'logs/tunnel3.log',
+    filepath = 'logs/bridge.log',
 }
 local log = logging.get_logger('main')
 
