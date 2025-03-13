@@ -1,0 +1,150 @@
+---@class Arg
+---@field name string
+---@field help? string
+---@field default? any
+---@field is_multi boolean
+
+---@class Option
+---@field short? string
+---@field name string
+---@field help? string
+---@field has_value boolean
+
+---@class ArgParse
+---@field name string program name
+---@field help? string description of the program
+---@field args Arg[] list of positional arguments
+---@field options Option[] list of optional arguments / flags
+local ArgParse = {}
+
+---Create a new ArgParse instance
+---@param name string the application name
+---@param help? string description of the program
+---@return ArgParse
+function ArgParse:new(name, help)
+    local o = {
+        name = name,
+        help = help,
+        args = {},
+        options = {},
+    }
+    setmetatable(o, self)
+    self.__index = self
+    return o
+end
+
+---Add a positional argument
+---@param name string argument name
+---@param help? string message to display in help dialog
+---@param default? any default value
+---@param is_multi? boolean for the last argument, should it accept more than 1 value
+function ArgParse:add_arg(name, help, default, is_multi)
+    if #self.args > 0 then
+        if self.args[#self.args].is_multi then
+            error('Argument ' .. name .. ' cannot be evaluated after is_multi arg ' .. self.args[#self.args].name)
+        elseif default == nil and self.args[#self.args].default ~= nil then
+            error('Argument ' .. name .. ' cannot be evaluated after default arg ' .. self.args[#self.args].name)
+        end
+    end
+    table.insert(self.args, {
+        name = name,
+        help = help,
+        is_multi = is_multi or false,
+    })
+end
+
+---Add an optional argument / flag.
+---@param short? string short / single character option
+---@param name string long name of the option
+---@param help? string help message
+---@param has_value? boolean expect a value after this flag
+function ArgParse:add_option(short, name, help, has_value)
+    local option = {
+        short = short,
+        name = name,
+        help = help,
+        has_value = has_value or false,
+    }
+    table.insert(self.options, option)
+end
+
+---Print the help message
+function ArgParse:print_help()
+    local message = 'Usage: ' .. self.name
+    if #self.options > 0 then
+        message = message .. ' [options]'
+    end
+
+    for _, arg in ipairs(self.args) do
+        if arg.default ~= nil then
+            message = message .. ' [' .. arg.name .. '|' .. tostring(arg.default) .. ']'
+        else
+            message = message .. ' <' .. arg.name .. '>'
+        end
+    end
+
+    message = message .. '\n'
+
+    if self.help then
+        message = message .. self.help .. '\n'
+    end
+
+    message = message .. 'Options:\n'
+
+    for _, opt in ipairs(self.options) do
+        message = message .. '    '
+        if opt.short then
+            message = message .. '-' .. opt.short .. '/'
+        end
+        message = message .. '--' .. opt.name .. ':'
+        if opt.help then
+            message = message .. ' ' .. opt.help
+        end
+        message = message .. '\n'
+    end
+
+    local _, height = term.getCursorPos()
+    textutils.pagedPrint(message, height - 2)
+end
+
+---Check if an argument is a flag
+---@param arg string
+---@return string? flag name of this option / flag or nil if it is not
+---@return boolean is_short is this a short flag (ie. one char)
+local function is_flag(arg)
+    if arg:sub(1, 2) == '--' then
+        return arg:sub(3), false
+    elseif arg:sub(1, 1) == '-' then
+        assert(#arg == 2, 'short flag must be a single character')
+        return arg:sub(2, 2), true
+    else
+        return nil, false
+    end
+end
+
+---Parse arguments and return their values.
+---@param args string[] array of arguments to parse
+---@return table
+function ArgParse:parse_args(args)
+    for _, v in ipairs(args) do
+        local name, is_short = is_flag(v)
+
+        if name then
+            if self.options[name] then
+                -- ...
+            elseif name == 'h' or name == 'help' then
+                self:print_help()
+                os.exit(0)
+            end
+        end
+
+        if not name then
+            -- ...
+        end
+    end
+    return {}
+end
+
+return {
+    ArgParse = ArgParse,
+}
