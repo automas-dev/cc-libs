@@ -52,7 +52,7 @@ jobs:
           if ${{ contains(github.event.head_commit.message, 'version bump major') }}; then
             echo "level=major" >> $GITHUB_OUTPUT
           elif ${{ contains(github.event.head_commit.message, 'version bump minor') }}; then
-            echo "level=major" >> $GITHUB_OUTPUT
+            echo "level=minor" >> $GITHUB_OUTPUT
           else
             echo "level=patch" >> $GITHUB_OUTPUT
           fi
