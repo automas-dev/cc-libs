@@ -58,15 +58,15 @@ function M.basic_config(args)
             return
         end
     end
-    local level = args.level or M.Level.WARNING
+    local level = args.level or M.Level.INFO
     M.root = M.get_logger(ROOT_LOGGER_NAME)
     M.root:new_handler(M.ShortFormatter:new(), M.ConsoleStream:new(level))
     if args.filepath then
-        local file_level = args.file_level or M.Level.INFO
+        local file_level = args.file_level or M.Level.DEBUG
         M.root:new_handler(M.LongFormatter:new(), M.FileStream:new(args.filepath, file_level))
     end
     if args.machine_filepath then
-        local machine_level = args.machine_level or M.DEBUG
+        local machine_level = args.machine_level or M.TRACE
         M.root:new_handler(M.JsonFormatter:new(), M.FileStream:new(args.machine_filepath, machine_level))
     end
 end

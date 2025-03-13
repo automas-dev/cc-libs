@@ -2,8 +2,6 @@ name: ci
 
 on:
   push:
-    branches:
-    #   - main
 
 jobs:
   lint_test:
@@ -39,64 +37,3 @@ jobs:
       - name: Run Tests
         run: |
           cd tests && lua runtests.lua
-
-  create_release:
-    name: Create Release
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-
-    needs: lint_test
-
-    permissions:
-      contents: write
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Get next version
-        uses: reecetech/version-increment@2024.10.1
-        id: version
-        with:
-          scheme: semver
-          increment: patch
-
-      - name: Create tag
-        uses: actions/github-script@v5
-        with:
-          script: |
-            github.rest.git.createRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: 'refs/tags/${{ steps.version.outputs.version }}',
-              sha: context.sha
-            })
-
-      - name: Archive library
-        uses: actions/upload-artifact@v4
-        with:
-          name: cc-libs
-          path: |
-            cc-libs
-
-      - name: Archive apps
-        uses: actions/upload-artifact@v4
-        with:
-          name: cc-apps
-          path: |
-            cc-apps
-
-      - name: Create Library Archive
-        run: |
-          tar -cf cc-libs.tar cc-libs
-
-      - name: Create Apps Archive
-        run: |
-          tar -cf cc-apps.tar cc-apps
-
-      - name: Create Release
-        uses: ncipollo/release-action@v1.14.0
-        with:
-          artifacts: cc-libs.tar,cc-apps.tar
-          makeLatest: true
-          generateReleaseNotes: true
-          tag: ${{ steps.version.outputs.version }}
