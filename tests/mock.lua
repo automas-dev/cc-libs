@@ -15,10 +15,11 @@ end
 ---@field return_unpack? any[] value to unpack and return when called
 ---@field return_sequence? any[] sequence of values to return on each call, last will be re-used
 ---@field return_sequence_unpack? any[][] sequence of values to unpack and return on each call, last will be re-used
+---@field custom_function? fun(...): any? custom function to call when mock is called
 ---@field reset fun() reset mock
 ---@field reset_all fun() reset all mocks
 
----@param args? {return_value?: any, return_unpack?: any[], return_sequence?: any[], return_sequence_unpack?: any[][]}
+---@param args? {return_value?: any, return_unpack?: any[], return_sequence?: any[], return_sequence_unpack?: any[][], custom_function?: fun(...): any?}
 ---@return Mock
 function MagicMock(args)
     args = args or {}
@@ -29,6 +30,7 @@ function MagicMock(args)
                 'return_unpack',
                 'return_sequence',
                 'return_sequence_unpack',
+                'custom_function',
             },
         },
         call_count = 0,
@@ -47,7 +49,9 @@ function MagicMock(args)
         mock.call_count = mock.call_count + 1
         mock.args = { ... }
         table.insert(mock.calls, mock.args)
-        if mock.return_value ~= nil then
+        if mock.custom_function ~= nil then
+            return mock.custom_function(...)
+        elseif mock.return_value ~= nil then
             return mock.return_value
         elseif mock.return_unpack ~= nil then
             return table.unpack(mock.return_unpack)
