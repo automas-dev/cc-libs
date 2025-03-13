@@ -16,6 +16,4 @@ allow_defined = true
 exclude_files = {
     ".luarocks",
     "install",
-    "stub",
-    ".stub",
 }
