@@ -17,6 +17,8 @@
 ---@field options Option[] list of optional arguments / flags
 local ArgParse = {}
 
+-- TODO logging
+
 ---Create a new ArgParse instance
 ---@param name string the application name
 ---@param help? string description of the program
@@ -49,6 +51,7 @@ function ArgParse:add_arg(name, help, default, is_multi)
     table.insert(self.args, {
         name = name,
         help = help,
+        default = default,
         is_multi = is_multi or false,
     })
 end
