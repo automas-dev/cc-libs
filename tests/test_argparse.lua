@@ -293,7 +293,101 @@ function test.parse_mix()
     expect_false(args.opt3)
 end
 
--- help message
+function test.help_message_basic()
+    local ap = ArgParse:new('name')
+
+    local mock_textutils = patch('textutils')
+
+    ap:print_help()
+
+    assert_eq(1, mock_textutils.pagedPrint.call_count)
+    assert_eq('Usage: name\n', mock_textutils.pagedPrint.args[1])
+end
+
+function test.help_message_description()
+    local ap = ArgParse:new('name', 'description')
+
+    local mock_textutils = patch('textutils')
+
+    ap:print_help()
+
+    assert_eq(1, mock_textutils.pagedPrint.call_count)
+    assert_eq('Usage: name\ndescription\n', mock_textutils.pagedPrint.args[1])
+end
+
+function test.help_message_args()
+    local ap = ArgParse:new('name')
+    ap:add_arg('arg1')
+    ap:add_arg('arg2', 'arg help')
+    ap:add_arg('arg3', 'more arg help', 'def')
+
+    local mock_textutils = patch('textutils')
+
+    ap:print_help()
+
+    assert_eq(1, mock_textutils.pagedPrint.call_count)
+    assert_eq(
+        [[Usage: name <arg1> <arg2> [arg3|def]
+Args:
+    arg1:
+    arg2: arg help
+    arg3: more arg help
+]],
+        mock_textutils.pagedPrint.args[1]
+    )
+end
+
+function test.help_message_options()
+    local ap = ArgParse:new('name')
+    ap:add_option('o', 'output')
+    ap:add_option(nil, 'input', 'option help')
+    ap:add_option(nil, 'format', 'more help', true)
+
+    local mock_textutils = patch('textutils')
+
+    ap:print_help()
+
+    assert_eq(1, mock_textutils.pagedPrint.call_count)
+    assert_eq(
+        [[Usage: name [options]
+Options:
+    -o/--output:
+    --input: option help
+    --format format: more help
+]],
+        mock_textutils.pagedPrint.args[1]
+    )
+end
+
+function test.help_message_mixed()
+    local ap = ArgParse:new('name', 'description')
+    ap:add_arg('first', 'help string')
+    ap:add_arg('second')
+    ap:add_arg('third', 'third arg', 'abcd')
+    ap:add_option('a', 'opt1', nil, true)
+    ap:add_option('b', 'opt2', 'help here')
+    ap:add_option(nil, 'opt3')
+
+    local mock_textutils = patch('textutils')
+
+    ap:print_help()
+
+    assert_eq(1, mock_textutils.pagedPrint.call_count)
+    assert_eq(
+        [[Usage: name [options] <first> <second> [third|abcd]
+description
+Args:
+    first: help string
+    second:
+    third: third arg
+Options:
+    -a/--opt1 opt1:
+    -b/--opt2: help here
+    --opt3:
+]],
+        mock_textutils.pagedPrint.args[1]
+    )
+end
 
 -- logging
 
