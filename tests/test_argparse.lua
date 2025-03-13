@@ -111,9 +111,11 @@ function test.parse_help_short()
     local ap = ArgParse:new('name')
 
     local mock_exit = patch('os.exit')
+    mock_exit.custom_function = error
     local mock_print_help = patch_local(ap, 'print_help')
 
-    ap:parse_args({ '-h' })
+    local success, err = pcall(ap.parse_args, ap, { '-h' })
+    assert_false(success)
     expect_eq(1, mock_exit.call_count)
     assert_eq(1, #mock_exit.args)
     expect_eq(0, mock_exit.args[1])
@@ -125,9 +127,11 @@ function test.parse_help_long()
     local ap = ArgParse:new('name')
 
     local mock_exit = patch('os.exit')
+    mock_exit.custom_function = error
     local mock_print_help = patch_local(ap, 'print_help')
 
-    ap:parse_args({ '--help' })
+    local success, err = pcall(ap.parse_args, ap, { '--help' })
+    assert_false(success)
     expect_eq(1, mock_exit.call_count)
     assert_eq(1, #mock_exit.args)
     expect_eq(0, mock_exit.args[1])
@@ -214,6 +218,14 @@ function test.parse_options_unexpected_value()
     ap:add_option('a', 'opt1')
 
     local success, err = pcall(ap.parse_args, ap, { '-a', 'val' })
+    expect_false(success)
+end
+
+function test.parse_options_missing_value()
+    local ap = ArgParse:new('name')
+    ap:add_option('a', 'opt1', nil, true)
+
+    local success, err = pcall(ap.parse_args, ap, { '-a' })
     expect_false(success)
 end
 

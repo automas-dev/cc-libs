@@ -131,7 +131,8 @@ end
 function ArgParse:parse_args(args)
     local result = {}
 
-    for _, v in ipairs(args) do
+    for i = 1, #args do
+        local v = args[i]
         local flag, is_short = is_flag(v)
 
         -- option / flag
@@ -141,9 +142,11 @@ function ArgParse:parse_args(args)
                 if flag == 'h' or flag == 'help' then
                     self:print_help()
                     os.exit(0)
-                    return
                 elseif (is_short and flag == opt.short) or (not is_short and flag == opt.name) then
                     if opt.has_value then
+                        if i == #args then
+                            error('Missing value for option ' .. flag)
+                        end
                         -- ...
                     else
                         result[opt.name] = true
