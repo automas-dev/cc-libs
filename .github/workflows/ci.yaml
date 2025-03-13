@@ -39,6 +39,27 @@ jobs:
         run: |
           cd tests && lua runtests.lua
 
+  check_comment:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check version bump level
+        id: level
+        run: |
+          if ${{ !contains(github.event.head_commit.message, 'version bump major') }}; then
+            echo "level=major" >> $GITHUB_OUTPUT
+          elif ${{ !contains(github.event.head_commit.message, 'version bump minor') }}; then
+            echo "level=major" >> $GITHUB_OUTPUT
+          else
+            echo "level=patch" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check
+        run: Result is ${{ step.level.outputs.level }}
+
   create_release:
     name: Create Release
     runs-on: ubuntu-latest
