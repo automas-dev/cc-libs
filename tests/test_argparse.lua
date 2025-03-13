@@ -26,19 +26,44 @@ end
 
 function test.add_arg()
     local ap = ArgParse:new('name')
-    ap:add_arg('arg1', 'help string', 'def', true)
+    ap:add_arg('arg1', {
+        help = 'help string',
+        default = 'def',
+        is_multi = true,
+    })
     assert_eq(1, #ap.args)
     expect_eq('arg1', ap.args[1].name)
     expect_eq('help string', ap.args[1].help)
     expect_eq('def', ap.args[1].default)
+    expect_false(ap.args[1].required)
     expect_true(ap.args[1].is_multi)
 
     expect_eq(0, #ap.options)
 end
 
+--[[
+Cases
+- first
+    - required = pass
+    - optional = pass
+    - default = pass
+- after required
+    - required = pass
+    - optional = pass
+    - default = pass
+- after optional
+    - required = fail
+    - optional = pass
+    - default = pass
+- after default
+    - required = fail
+    - optional = fail
+    - default = pass
+]]
+
 function test.add_arg_after_multi()
     local ap = ArgParse:new('name')
-    ap:add_arg('arg1', nil, nil, true)
+    ap:add_arg('arg1', { is_multi = true })
     local success, err = pcall(ap.add_arg, ap, 'arg2')
     assert_false(success)
     assert(err ~= nil, 'err is nil')
@@ -48,16 +73,52 @@ function test.add_arg_after_multi()
     )
 end
 
+function test.add_arg_after_optional()
+    local ap = ArgParse:new('name')
+    ap:add_arg('arg1', { required = false })
+    local success, err = pcall(ap.add_arg, ap, 'arg2')
+    assert_false(success)
+    assert(err ~= nil, 'err is nil')
+    expect_true(
+        err:find('Argument arg2 cannot be evaluated after optional arg arg1$'),
+        'Unexpected error message ' .. tostring(err)
+    )
+end
+
 function test.add_arg_after_default()
     local ap = ArgParse:new('name')
-    ap:add_arg('arg1', nil, 'default')
-    assert_eq(1, #ap.args)
-    expect_eq('default', ap.args[1].default)
+    ap:add_arg('arg1', { default = 'def' })
     local success, err = pcall(ap.add_arg, ap, 'arg2')
     assert_false(success)
     assert(err ~= nil, 'err is nil')
     expect_true(
         err:find('Argument arg2 cannot be evaluated after default arg arg1$'),
+        'Unexpected error message ' .. tostring(err)
+    )
+end
+
+function test.add_arg_optional_after_default()
+    local ap = ArgParse:new('name')
+    ap:add_arg('arg1', { default = 'def' })
+    local success, err = pcall(ap.add_arg, ap, 'arg2', { required = false })
+    assert_false(success)
+    assert(err ~= nil, 'err is nil')
+    expect_true(
+        err:find('Argument arg2 cannot be evaluated after default arg arg1$'),
+        'Unexpected error message ' .. tostring(err)
+    )
+end
+
+function test.add_arg_after_optional_no_default()
+    local ap = ArgParse:new('name')
+    ap:add_arg('arg1', { required = false })
+    assert_eq(1, #ap.args)
+    expect_false(ap.args[1].required)
+    local success, err = pcall(ap.add_arg, ap, 'arg2')
+    assert_false(success)
+    assert(err ~= nil, 'err is nil')
+    expect_true(
+        err:find('Argument arg2 cannot be evaluated after optional arg arg1$'),
         'Unexpected error message ' .. tostring(err)
     )
 end
@@ -69,6 +130,7 @@ function test.add_arg_defaults()
     expect_eq('arg1', ap.args[1].name)
     expect_eq(nil, ap.args[1].help)
     expect_eq(nil, ap.args[1].default)
+    expect_true(ap.args[1].required)
     expect_false(ap.args[1].is_multi)
 
     expect_eq(0, #ap.options)
@@ -177,8 +239,8 @@ end
 
 function test.parse_args_default()
     local ap = ArgParse:new('name')
-    ap:add_arg('arg1', nil, 'def1')
-    ap:add_arg('arg2', nil, 'def2')
+    ap:add_arg('arg1', { default = 'def1' })
+    ap:add_arg('arg2', { default = 'def2' })
 
     local args = ap:parse_args({ 'a' })
     expect_eq('a', args.arg1)
@@ -318,8 +380,8 @@ end
 function test.help_message_args()
     local ap = ArgParse:new('name')
     ap:add_arg('arg1')
-    ap:add_arg('arg2', 'arg help')
-    ap:add_arg('arg3', 'more arg help', 'def')
+    ap:add_arg('arg2', { help = 'arg help', required = false })
+    ap:add_arg('arg3', { help = 'more arg help', default = 'def' })
 
     local mock_textutils = patch('textutils')
 
@@ -327,7 +389,7 @@ function test.help_message_args()
 
     assert_eq(1, mock_textutils.pagedPrint.call_count)
     assert_eq(
-        [[Usage: name <arg1> <arg2> [arg3|def]
+        [[Usage: name <arg1> [arg2] [arg3|def]
 Args:
     arg1:
     arg2: arg help
@@ -361,9 +423,9 @@ end
 
 function test.help_message_mixed()
     local ap = ArgParse:new('name', 'description')
-    ap:add_arg('first', 'help string')
-    ap:add_arg('second')
-    ap:add_arg('third', 'third arg', 'abcd')
+    ap:add_arg('first', { help = 'help string' })
+    ap:add_arg('second', { required = false })
+    ap:add_arg('third', { help = 'third arg', default = 'abcd' })
     ap:add_option('a', 'opt1', nil, true)
     ap:add_option('b', 'opt2', 'help here')
     ap:add_option(nil, 'opt3')
@@ -374,7 +436,7 @@ function test.help_message_mixed()
 
     assert_eq(1, mock_textutils.pagedPrint.call_count)
     assert_eq(
-        [[Usage: name [options] <first> <second> [third|abcd]
+        [[Usage: name [options] <first> [second] [third|abcd]
 description
 Args:
     first: help string

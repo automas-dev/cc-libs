@@ -2,6 +2,7 @@
 ---@field name string
 ---@field help? string
 ---@field default? any
+---@field required boolean
 ---@field is_multi boolean
 
 ---@class Option
@@ -37,27 +38,46 @@ function ArgParse:new(name, help)
     return o
 end
 
+---@class ArgOptions
+---@field help? string
+---@field default? any
+---@field required? boolean
+---@field is_multi? boolean
+
 ---Add a positional argument
 ---@param name string argument name
----@param help? string message to display in help dialog
----@param default? any default value
----@param is_multi? boolean for the last argument, should it accept more than 1 value
-function ArgParse:add_arg(name, help, default, is_multi)
+---@param options? ArgOptions additional parameters for the argument
+function ArgParse:add_arg(name, options)
+    options = options or {}
+
+    if options.required == nil then
+        options.required = true
+    end
+
+    if options.default ~= nil then
+        options.required = false
+    end
+
     if #self.args > 0 then
         if self.args[#self.args].is_multi then
             error('Argument ' .. name .. ' cannot be evaluated after is_multi arg ' .. self.args[#self.args].name)
-        elseif default == nil and self.args[#self.args].default ~= nil then
+        elseif options.required and not self.args[#self.args].required then
+            error('Argument ' .. name .. ' cannot be evaluated after optional arg ' .. self.args[#self.args].name)
+        elseif options.default == nil and self.args[#self.args].default ~= nil then
             error('Argument ' .. name .. ' cannot be evaluated after default arg ' .. self.args[#self.args].name)
         end
     end
-    if default == nil then
+
+    if options.required then
         self.args_required = self.args_required + 1
     end
+
     table.insert(self.args, {
         name = name,
-        help = help,
-        default = default,
-        is_multi = is_multi or false,
+        help = options.help,
+        default = options.default,
+        required = options.required,
+        is_multi = options.is_multi or false,
     })
 end
 

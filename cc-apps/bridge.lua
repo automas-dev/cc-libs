@@ -5,27 +5,35 @@ logging.basic_config {
 }
 local log = logging.get_logger('main')
 
+local argparse = require 'cc-libs.util.argparse'
+local parser =
+    argparse.ArgParse:new('bridge', "Dig forwards and lay a bridge on the way back if there isn't one already")
+parser:add_arg('length', 'length of bridge/tunnel')
+parser:add_arg('block_floor', 'name of block to place as floor')
+parser:add_arg('block_ceiling', 'name of block to place as ceiling (defaults to no ceiling)', '')
+local args = parser:parse_args({ ... })
+
 local ccl_motion = require 'cc-libs.turtle.motion'
 local Motion = ccl_motion.Motion
 
 local actions = require 'cc-libs.turtle.actions'
 
-local args = { ... }
-if #args < 2 then
-    print('Usage: bridge <length> <block_floor> [block_ceiling]')
-    print()
-    print("Dig forwards and lay a bridge on the way back if there isn't one already")
-    print()
-    print('Options:')
-    print('    length: length of the tunnel')
-    print('    block_floor: name of block to place as floor')
-    print('    block_ceiling: name of block to place as ceiling (defaults to no ceiling)')
-    return
-end
+-- local args = { ... }
+-- if #args < 2 then
+--     print('Usage: bridge <length> <block_floor> [block_ceiling]')
+--     print()
+--     print("Dig forwards and lay a bridge on the way back if there isn't one already")
+--     print()
+--     print('Options:')
+--     print('    length: length of the tunnel')
+--     print('    block_floor: name of block to place as floor')
+--     print('    block_ceiling: name of block to place as ceiling (defaults to no ceiling)')
+--     return
+-- end
 
-local length = tonumber(args[1])
-local block_floor = args[2]
-local block_ceiling = args[3]
+local length = tonumber(args.length)
+local block_floor = args.block_floor
+local block_ceiling = args.block_ceiling
 
 local tmc = Motion:new()
 tmc:enable_dig()
