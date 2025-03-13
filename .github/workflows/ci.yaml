@@ -58,7 +58,7 @@ jobs:
         with:
           scheme: conventional_commits
 
-      - name:
+      - name: Write version number to file
         run: |
           echo ${{ steps.version.outputs.version }} > cc-libs/.version
           echo ${{ steps.version.outputs.version }} > cc-apps/.version
