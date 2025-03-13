@@ -129,15 +129,31 @@ end
 ---@param args string[] array of arguments to parse
 ---@return table
 function ArgParse:parse_args(args)
-    for _, v in ipairs(args) do
-        local name, is_short = is_flag(v)
+    local result = {}
 
-        if name then
-            if self.options[name] then
-                -- ...
-            elseif name == 'h' or name == 'help' then
-                self:print_help()
-                os.exit(0)
+    for _, v in ipairs(args) do
+        local flag, is_short = is_flag(v)
+
+        -- option / flag
+        if flag then
+            local found_flag = false
+            for _, opt in ipairs(self.options) do
+                if flag == 'h' or flag == 'help' then
+                    self:print_help()
+                    os.exit(0)
+                    return
+                elseif (is_short and flag == opt.short) or (not is_short and flag == opt.name) then
+                    if opt.has_value then
+                        -- ...
+                    else
+                        result[opt.name] = true
+                    end
+                    found_flag = true
+                    break
+                end
+            end
+            if not found_flag then
+                error('Unexpected flag ' .. flag)
             end
         end
 
@@ -145,7 +161,8 @@ function ArgParse:parse_args(args)
             -- ...
         end
     end
-    return {}
+
+    return result
 end
 
 return {
