@@ -58,6 +58,11 @@ jobs:
         with:
           scheme: conventional_commits
 
+      - name:
+        run: |
+          echo ${{ steps.version.outputs.version }} > cc-libs/.version
+          echo ${{ steps.version.outputs.version }} > cc-apps/.version
+
       - name: Archive library
         uses: actions/upload-artifact@v4
         with:
