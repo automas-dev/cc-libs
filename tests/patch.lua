@@ -32,6 +32,11 @@ end
 ---@param field string name of the field to replace
 ---@return Mock
 function patch_local(obj, field)
+    for _, patch in ipairs(patches) do
+        if patch.obj == obj and patch.field == field then
+            return patch.mock
+        end
+    end
     local old = obj[field]
     local mock = MagicMock()
     obj[field] = mock

@@ -26,6 +26,18 @@ function test.no_return()
     expect_eq(nil, mock())
 end
 
+function test.custom_function()
+    local mock = MagicMock()
+    local custom_call = 0
+    mock.custom_function = function(a)
+        custom_call = custom_call + 1
+        return a + 1
+    end
+    expect_eq(3, mock(2))
+    expect_eq(3, mock(2))
+    expect_eq(2, custom_call)
+end
+
 function test.return_value()
     local mock = MagicMock()
     mock.return_value = 1
@@ -85,6 +97,11 @@ function test.return_value_priority()
     mock.return_value = 1
     a, b = mock()
     expect_eq(1, a)
+    mock.custom_function = function(a1)
+        return a1 + 1
+    end
+    a = mock(2)
+    expect_eq(3, a)
 end
 
 function test.call_count()

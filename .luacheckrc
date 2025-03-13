@@ -2,7 +2,9 @@ globals = {
     "turtle",
     "fs",
     "rednet",
-    "peripheral"
+    "peripheral",
+    "term",
+    "textutils",
 }
 ignore = {
     "111",
@@ -14,4 +16,6 @@ allow_defined = true
 exclude_files = {
     ".luarocks",
     "install",
+    "stub",
+    ".stub",
 }

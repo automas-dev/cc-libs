@@ -127,7 +127,15 @@ local function run_test_module(test, test_name)
     local n_pass = 0
     local cases = {}
 
-    for fn_name, fn in pairs(test) do
+    local test_names = {}
+    for name, _ in pairs(test) do
+        table.insert(test_names, name)
+    end
+
+    table.sort(test_names)
+
+    for _, fn_name in ipairs(test_names) do
+        local fn = test[fn_name]
         -- Do not run setup or teardown as test cases
         if fn_name ~= 'setup' and fn_name ~= 'teardown' then
             -- Call setup if it exists

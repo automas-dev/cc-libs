@@ -15,6 +15,12 @@ function test.patch_local()
     expect_eq('foo', foo.bar())
 end
 
+function test.patch_local_repeat()
+    local mock1 = patch_local(foo, 'bar')
+    local mock2 = patch_local(foo, 'bar')
+    expect_eq(mock1, mock2)
+end
+
 function test.patch()
     local old_print = print
     local mock = patch('print')
