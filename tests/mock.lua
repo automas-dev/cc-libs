@@ -15,6 +15,8 @@ end
 ---@field return_unpack? any[] value to unpack and return when called
 ---@field return_sequence? any[] sequence of values to return on each call, last will be re-used
 ---@field return_sequence_unpack? any[][] sequence of values to unpack and return on each call, last will be re-used
+---@field reset fun() reset mock
+---@field reset_all fun() reset all mocks
 
 ---@param args? {return_value?: any, return_unpack?: any[], return_sequence?: any[], return_sequence_unpack?: any[][]}
 ---@return Mock
