@@ -41,6 +41,8 @@ function test.add_arg_after_multi()
     ap:add_arg('arg1', nil, nil, true)
     local success, err = pcall(ap.add_arg, ap, 'arg2')
     assert_false(success)
+    assert(err ~= nil, 'err is nil')
+    expect_true(err:find('Argument arg2 cannot be evaluated after is_multi arg arg1$'))
 end
 
 function test.add_arg_after_default()
@@ -246,5 +248,9 @@ function test.parse_mix()
     expect_true(args.opt2)
     expect_false(args.opt3)
 end
+
+-- help message
+
+-- logging
 
 return test
