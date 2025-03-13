@@ -39,9 +39,15 @@ jobs:
         run: |
           cd tests && lua runtests.lua
 
-  check_comment:
+  create_release:
     name: Create Release
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    needs: lint_test
+
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -57,29 +63,12 @@ jobs:
             echo "level=patch" >> $GITHUB_OUTPUT
           fi
 
-      - name: Check
-        run: |
-          echo "Result is ${{ steps.level.outputs.level }}"
-
-  create_release:
-    name: Create Release
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-
-    needs: lint_test
-
-    permissions:
-      contents: write
-
-    steps:
-      - uses: actions/checkout@v4
-
       - name: Get next version
         uses: reecetech/version-increment@2024.10.1
         id: version
         with:
           scheme: semver
-          increment: patch
+          increment: ${{ steps.level.outputs.level }}
 
       - name: Create tag
         uses: actions/github-script@v5
