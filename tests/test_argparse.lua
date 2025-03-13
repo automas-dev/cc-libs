@@ -135,12 +135,104 @@ function test.parse_help_long()
     expect_eq(1, mock_print_help.call_count)
 end
 
--- parse args
+function test.parse_args()
+    local ap = ArgParse:new('name')
+    ap:add_arg('arg1')
+    ap:add_arg('arg2')
 
--- parse options
+    local args = ap:parse_args({ 'a', 'b' })
+    expect_eq('a', args.arg1)
+    expect_eq('b', args.arg2)
+end
 
--- parse mix
+function test.parse_args_default()
+    local ap = ArgParse:new('name')
+    ap:add_arg('arg1', nil, 'def1')
+    ap:add_arg('arg2', nil, 'def2')
 
--- parse errors (missing arg, invalid option, option with unexpected value)
+    local args = ap:parse_args({ 'a' })
+    expect_eq('a', args.arg1)
+    expect_eq('def2', args.arg2)
+end
+
+function test.parse_args_missing()
+    local ap = ArgParse:new('name')
+    ap:add_arg('arg1')
+
+    local success, err = pcall(ap.parse_args, ap, {})
+    expect_false(success)
+end
+
+function test.parse_options()
+    local ap = ArgParse:new('name')
+    ap:add_option('a', 'opt1')
+    ap:add_option(nil, 'opt2')
+    ap:add_option(nil, 'opt3')
+
+    local args = ap:parse_args({ '-a', '--opt2' })
+    expect_true(args.opt1)
+    expect_true(args.opt2)
+    expect_false(args.opt3)
+end
+
+function test.parse_options_out_of_order()
+    local ap = ArgParse:new('name')
+    ap:add_option('a', 'opt1')
+    ap:add_option(nil, 'opt2')
+
+    local args = ap:parse_args({ '--opt2', '-a' })
+    expect_true(args.opt1)
+    expect_true(args.opt2)
+end
+
+function test.parse_options_value()
+    local ap = ArgParse:new('name')
+    ap:add_option('a', 'opt1', nil, true)
+
+    local args = ap:parse_args({ '-a', 'val' })
+    expect_eq('val', args.opt1)
+end
+
+function test.parse_options_invalid_short()
+    local ap = ArgParse:new('name')
+    ap:add_option('a', 'opt1')
+
+    local success, err = pcall(ap.parse_args, ap, { '-a', '-i' })
+    expect_false(success)
+end
+
+function test.parse_options_invalid_long()
+    local ap = ArgParse:new('name')
+    ap:add_option('a', 'opt1')
+
+    local success, err = pcall(ap.parse_args, ap, { '-a', '--invalid' })
+    expect_false(success)
+end
+
+function test.parse_options_unexpected_value()
+    local ap = ArgParse:new('name')
+    ap:add_option('a', 'opt1')
+
+    local success, err = pcall(ap.parse_args, ap, { '-a', 'val' })
+    expect_false(success)
+end
+
+function test.parse_mix()
+    local ap = ArgParse:new('name')
+    ap:add_arg('first')
+    ap:add_arg('second')
+    ap:add_arg('third')
+    ap:add_option('a', 'opt1', nil, true)
+    ap:add_option('b', 'opt2')
+    ap:add_option(nil, 'opt3')
+
+    local args = ap:parse_args({ '-a', 'val', '1', '2', '--opt2', '3' })
+    expect_eq('1', args.first)
+    expect_eq('2', args.second)
+    expect_eq('3', args.third)
+    expect_eq('val', args.opt1)
+    expect_true(args.opt2)
+    expect_false(args.opt3)
+end
 
 return test
