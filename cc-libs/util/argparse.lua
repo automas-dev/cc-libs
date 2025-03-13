@@ -67,6 +67,8 @@ end
 ---@param help? string help message
 ---@param has_value? boolean expect a value after this flag
 function ArgParse:add_option(short, name, help, has_value)
+    assert(short == nil or short:sub(1, 1) ~= '-', 'Short cannot include -')
+    assert(name:sub(1, 1) ~= '-', 'Name cannot include -')
     local option = {
         short = short,
         name = name,

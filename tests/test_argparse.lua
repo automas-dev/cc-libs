@@ -110,6 +110,22 @@ function test.add_option_defaults()
     expect_eq(0, #ap.args)
 end
 
+function test.add_option_short_with_minus()
+    local ap = ArgParse:new('name')
+    local success, err = pcall(ap.add_option, ap, '-o', 'out')
+    assert_false(success)
+    assert(err ~= nil, 'err is nil')
+    expect_true(err:find('Short cannot include %-$'), 'Unexpected error message ' .. tostring(err))
+end
+
+function test.add_option_long_with_minus()
+    local ap = ArgParse:new('name')
+    local success, err = pcall(ap.add_option, ap, 'o', '-out')
+    assert_false(success)
+    assert(err ~= nil, 'err is nil')
+    expect_true(err:find('Name cannot include %-$'), 'Unexpected error message ' .. tostring(err))
+end
+
 function test.parse_no_args()
     local ap = ArgParse:new('name')
 
@@ -276,10 +292,6 @@ function test.parse_mix()
     expect_true(args.opt2)
     expect_false(args.opt3)
 end
-
--- long option with one -
-
--- - in short or long option name
 
 -- help message
 
