@@ -58,16 +58,10 @@ jobs:
         with:
           scheme: conventional_commits
 
-      - name: Create tag
-        uses: actions/github-script@v5
-        with:
-          script: |
-            github.rest.git.createRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: 'refs/tags/${{ steps.version.outputs.version }}',
-              sha: context.sha
-            })
+      - name:
+        run: |
+          echo ${{ steps.version.outputs.version }} > cc-libs/.version
+          echo ${{ steps.version.outputs.version }} > cc-apps/.version
 
       - name: Archive library
         uses: actions/upload-artifact@v4
@@ -90,6 +84,17 @@ jobs:
       - name: Create Apps Archive
         run: |
           tar -cf cc-apps.tar cc-apps
+
+      - name: Create tag
+        uses: actions/github-script@v5
+        with:
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/${{ steps.version.outputs.version }}',
+              sha: context.sha
+            })
 
       - name: Create Release
         uses: ncipollo/release-action@v1.14.0
