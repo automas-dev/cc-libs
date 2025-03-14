@@ -2,6 +2,7 @@
 ---@field name string
 ---@field help? string
 ---@field default? any
+---@field required boolean
 ---@field is_multi boolean
 
 ---@class Option
@@ -37,27 +38,58 @@ function ArgParse:new(name, help)
     return o
 end
 
+---@class ArgOptions
+---@field help? string
+---@field default? any
+---@field required? boolean
+---@field is_multi? boolean
+
 ---Add a positional argument
 ---@param name string argument name
----@param help? string message to display in help dialog
----@param default? any default value
----@param is_multi? boolean for the last argument, should it accept more than 1 value
-function ArgParse:add_arg(name, help, default, is_multi)
+---@param options? ArgOptions additional parameters for the argument
+function ArgParse:add_arg(name, options)
+    options = options or {}
+
+    for _, a in pairs(self.args) do
+        if a.name == name then
+            error('Argument ' .. name .. ' already exists')
+        end
+    end
+
+    for _, o in pairs(self.options) do
+        if o.name == name then
+            error('Argument ' .. name .. ' has the same name as option ' .. o.name)
+        end
+    end
+
+    if options.required == nil then
+        options.required = true
+    end
+
+    if options.default ~= nil then
+        options.required = false
+    end
+
     if #self.args > 0 then
         if self.args[#self.args].is_multi then
             error('Argument ' .. name .. ' cannot be evaluated after is_multi arg ' .. self.args[#self.args].name)
-        elseif default == nil and self.args[#self.args].default ~= nil then
+        elseif options.default == nil and self.args[#self.args].default ~= nil then
             error('Argument ' .. name .. ' cannot be evaluated after default arg ' .. self.args[#self.args].name)
+        elseif options.required and not self.args[#self.args].required then
+            error('Argument ' .. name .. ' cannot be evaluated after optional arg ' .. self.args[#self.args].name)
         end
     end
-    if default == nil then
+
+    if options.required then
         self.args_required = self.args_required + 1
     end
+
     table.insert(self.args, {
         name = name,
-        help = help,
-        default = default,
-        is_multi = is_multi or false,
+        help = options.help,
+        default = options.default,
+        required = options.required,
+        is_multi = options.is_multi or false,
     })
 end
 
@@ -69,6 +101,19 @@ end
 function ArgParse:add_option(short, name, help, has_value)
     assert(short == nil or short:sub(1, 1) ~= '-', 'Short cannot include -')
     assert(name:sub(1, 1) ~= '-', 'Name cannot include -')
+
+    for _, o in pairs(self.options) do
+        if o.name == name then
+            error('Option ' .. name .. ' already exists')
+        end
+    end
+
+    for _, a in pairs(self.args) do
+        if a.name == name then
+            error('Option ' .. name .. ' has the same name as arg ' .. a.name)
+        end
+    end
+
     local option = {
         short = short,
         name = name,
@@ -86,14 +131,18 @@ function ArgParse:print_help()
     end
 
     for _, arg in ipairs(self.args) do
-        if arg.default ~= nil then
-            message = message .. ' [' .. arg.name .. '|' .. tostring(arg.default) .. ']'
+        if not arg.required then
+            message = message .. ' [' .. arg.name
+            if arg.default ~= nil then
+                message = message .. '|' .. tostring(arg.default)
+            end
+            message = message .. ']'
         else
             message = message .. ' <' .. arg.name .. '>'
         end
     end
 
-    message = message .. '\n'
+    message = message .. '\n\n'
 
     if self.help then
         message = message .. self.help .. '\n'
@@ -153,7 +202,7 @@ end
 
 ---Parse arguments and return their values.
 ---@param args string[] array of arguments to parse
----@return table
+---@return table? table of args or nil for help message, must exit
 function ArgParse:parse_args(args)
     local result = {}
 
@@ -182,14 +231,16 @@ function ArgParse:parse_args(args)
         if flag then
             if flag == 'h' or flag == 'help' then
                 self:print_help()
-                os.exit(0)
+                return nil
             end
             local found_flag = false
             for _, opt in ipairs(self.options) do
                 if (is_short and flag == opt.short) or (not is_short and flag == opt.name) then
                     if opt.has_value then
                         if i == #args then
-                            error('Missing value for option ' .. v)
+                            self:print_help()
+                            print('Missing value for option ' .. v)
+                            return nil
                         end
                         i = i + 1
                         v = args[i]
@@ -202,21 +253,33 @@ function ArgParse:parse_args(args)
                 end
             end
             if not found_flag then
-                error('Unexpected option ' .. v)
+                self:print_help()
+                print('Unexpected option ' .. v)
+                return nil
             end
 
         -- argument
         else
             if arg_i > #self.args then
-                local sample = tostring(v)
-                if #sample > 30 then
-                    sample = sample:sub(1, 30) .. '...'
+                if #self.args > 0 and self.args[#self.args].is_multi then
+                    table.insert(result[self.args[#self.args].name], v)
+                else
+                    local sample = tostring(v)
+                    if #sample > 30 then
+                        sample = sample:sub(1, 30) .. '...'
+                    end
+                    self:print_help()
+                    print('Unexpected value ' .. sample)
+                    return nil
                 end
-                error('Unexpected value ' .. sample)
             else
-                result[self.args[arg_i].name] = v
+                if self.args[arg_i].is_multi then
+                    result[self.args[arg_i].name] = { v }
+                else
+                    result[self.args[arg_i].name] = v
+                end
+                arg_i = arg_i + 1
             end
-            arg_i = arg_i + 1
         end
 
         i = i + 1
@@ -232,7 +295,9 @@ function ArgParse:parse_args(args)
                 missing = missing .. ' ' .. arg.name
             end
         end
-        error('Missing required positional arguments' .. missing)
+        self:print_help()
+        print('Missing required positional arguments' .. missing)
+        return nil
     end
 
     return result
