@@ -77,7 +77,7 @@ function test.add_arg_duplicate()
     local success, err = pcall(ap.add_arg, ap, 'arg1')
     assert_false(success)
     assert(err ~= nil, 'err is nil')
-    expect_true(err:find('Argument arg1 already exists$'), 'Unexpected error message ' .. tostring(err))
+    expect_true(err:find('Argument arg1 already exists'), 'Unexpected error message ' .. tostring(err))
 end
 
 function test.add_arg_option_duplicate()
@@ -87,7 +87,7 @@ function test.add_arg_option_duplicate()
     assert_false(success)
     assert(err ~= nil, 'err is nil')
     expect_true(
-        err:find('Argument arg1 has the same name as option arg1$'),
+        err:find('Argument arg1 has the same name as option arg1'),
         'Unexpected error message ' .. tostring(err)
     )
 end
@@ -99,7 +99,7 @@ function test.add_arg_after_optional()
     assert_false(success)
     assert(err ~= nil, 'err is nil')
     expect_true(
-        err:find('Argument arg2 cannot be evaluated after optional arg arg1$'),
+        err:find('Argument arg2 cannot be evaluated after optional arg arg1'),
         'Unexpected error message ' .. tostring(err)
     )
 end
@@ -111,7 +111,7 @@ function test.add_arg_after_default()
     assert_false(success)
     assert(err ~= nil, 'err is nil')
     expect_true(
-        err:find('Argument arg2 cannot be evaluated after default arg arg1$'),
+        err:find('Argument arg2 cannot be evaluated after default arg arg1'),
         'Unexpected error message ' .. tostring(err)
     )
 end
@@ -123,7 +123,7 @@ function test.add_arg_after_multi()
     assert_false(success)
     assert(err ~= nil, 'err is nil')
     expect_true(
-        err:find('Argument arg2 cannot be evaluated after is_multi arg arg1$'),
+        err:find('Argument arg2 cannot be evaluated after is_multi arg arg1'),
         'Unexpected error message ' .. tostring(err)
     )
 end
@@ -135,7 +135,7 @@ function test.add_arg_optional_after_default()
     assert_false(success)
     assert(err ~= nil, 'err is nil')
     expect_true(
-        err:find('Argument arg2 cannot be evaluated after default arg arg1$'),
+        err:find('Argument arg2 cannot be evaluated after default arg arg1'),
         'Unexpected error message ' .. tostring(err)
     )
 end
@@ -147,7 +147,7 @@ function test.add_arg_optional_after_multi()
     assert_false(success)
     assert(err ~= nil, 'err is nil')
     expect_true(
-        err:find('Argument arg2 cannot be evaluated after is_multi arg arg1$'),
+        err:find('Argument arg2 cannot be evaluated after is_multi arg arg1'),
         'Unexpected error message ' .. tostring(err)
     )
 end
@@ -159,7 +159,7 @@ function test.add_arg_default_after_multi()
     assert_false(success)
     assert(err ~= nil, 'err is nil')
     expect_true(
-        err:find('Argument arg2 cannot be evaluated after is_multi arg arg1$'),
+        err:find('Argument arg2 cannot be evaluated after is_multi arg arg1'),
         'Unexpected error message ' .. tostring(err)
     )
 end
@@ -206,7 +206,7 @@ function test.add_option_duplicate()
     local success, err = pcall(ap.add_option, ap, nil, 'out')
     assert_false(success)
     assert(err ~= nil, 'err is nil')
-    expect_true(err:find('Option out already exists$'), 'Unexpected error message ' .. tostring(err))
+    expect_true(err:find('Option out already exists'), 'Unexpected error message ' .. tostring(err))
 end
 
 function test.add_option_arg_duplicate()
@@ -215,7 +215,7 @@ function test.add_option_arg_duplicate()
     local success, err = pcall(ap.add_option, ap, nil, 'arg1')
     assert_false(success)
     assert(err ~= nil, 'err is nil')
-    expect_true(err:find('Option arg1 has the same name as arg arg1$'), 'Unexpected error message ' .. tostring(err))
+    expect_true(err:find('Option arg1 has the same name as arg arg1'), 'Unexpected error message ' .. tostring(err))
 end
 
 function test.add_option_short_with_minus()
@@ -223,7 +223,7 @@ function test.add_option_short_with_minus()
     local success, err = pcall(ap.add_option, ap, '-o', 'out')
     assert_false(success)
     assert(err ~= nil, 'err is nil')
-    expect_true(err:find('Short cannot include %-$'), 'Unexpected error message ' .. tostring(err))
+    expect_true(err:find('Short cannot include -'), 'Unexpected error message ' .. tostring(err))
 end
 
 function test.add_option_long_with_minus()
@@ -231,7 +231,7 @@ function test.add_option_long_with_minus()
     local success, err = pcall(ap.add_option, ap, 'o', '-out')
     assert_false(success)
     assert(err ~= nil, 'err is nil')
-    expect_true(err:find('Name cannot include %-$'), 'Unexpected error message ' .. tostring(err))
+    expect_true(err:find('Name cannot include -'), 'Unexpected error message ' .. tostring(err))
 end
 
 function test.parse_no_args()
@@ -244,15 +244,10 @@ end
 function test.parse_help_short()
     local ap = ArgParse:new('name')
 
-    local mock_exit = patch('os.exit')
-    mock_exit.custom_function = error
     local mock_print_help = patch_local(ap, 'print_help')
 
-    local success, err = pcall(ap.parse_args, ap, { '-h' })
-    assert_false(success)
-    expect_eq(1, mock_exit.call_count)
-    assert_eq(1, #mock_exit.args)
-    expect_eq(0, mock_exit.args[1])
+    local args = ap:parse_args({ '-h' })
+    expect_eq(nil, args)
 
     expect_eq(1, mock_print_help.call_count)
 end
@@ -260,15 +255,10 @@ end
 function test.parse_help_long()
     local ap = ArgParse:new('name')
 
-    local mock_exit = patch('os.exit')
-    mock_exit.custom_function = error
     local mock_print_help = patch_local(ap, 'print_help')
 
-    local success, err = pcall(ap.parse_args, ap, { '--help' })
-    assert_false(success)
-    expect_eq(1, mock_exit.call_count)
-    assert_eq(1, #mock_exit.args)
-    expect_eq(0, mock_exit.args[1])
+    local args = ap:parse_args({ '--help' })
+    expect_eq(nil, args)
 
     expect_eq(1, mock_print_help.call_count)
 end
@@ -279,6 +269,8 @@ function test.parse_args()
     ap:add_arg('arg2')
 
     local args = ap:parse_args({ 'a', 'b' })
+    assert_ne(nil, args)
+    assert(args ~= nil, 'args was nil') -- to make linter happy
     expect_eq('a', args.arg1)
     expect_eq('b', args.arg2)
 end
@@ -289,6 +281,8 @@ function test.parse_args_default()
     ap:add_arg('arg2', { default = 'def2' })
 
     local args = ap:parse_args({ 'a' })
+    assert_ne(nil, args)
+    assert(args ~= nil, 'args was nil') -- to make linter happy
     expect_eq('a', args.arg1)
     expect_eq('def2', args.arg2)
 end
@@ -297,10 +291,12 @@ function test.parse_args_missing()
     local ap = ArgParse:new('name')
     ap:add_arg('arg1')
 
-    local success, err = pcall(ap.parse_args, ap, {})
-    expect_false(success)
-    assert(err ~= nil, 'err is nil')
-    expect_true(err:find('Missing required positional arguments arg1$'), 'Unexpected error message ' .. tostring(err))
+    local mock_print = patch('print')
+
+    local args = ap:parse_args({})
+    expect_eq(nil, args)
+    assert_eq(1, mock_print.call_count)
+    expect_eq('Missing required positional arguments arg1', mock_print.args[1])
 end
 
 function test.parse_options()
@@ -310,6 +306,8 @@ function test.parse_options()
     ap:add_option(nil, 'opt3')
 
     local args = ap:parse_args({ '-a', '--opt2' })
+    assert_ne(nil, args)
+    assert(args ~= nil, 'args was nil') -- to make linter happy
     expect_true(args.opt1)
     expect_true(args.opt2)
     expect_false(args.opt3)
@@ -321,6 +319,8 @@ function test.parse_options_out_of_order()
     ap:add_option(nil, 'opt2')
 
     local args = ap:parse_args({ '--opt2', '-a' })
+    assert_ne(nil, args)
+    assert(args ~= nil, 'args was nil') -- to make linter happy
     expect_true(args.opt1)
     expect_true(args.opt2)
 end
@@ -330,6 +330,8 @@ function test.parse_options_value()
     ap:add_option('z', 'opt1', nil, true)
 
     local args = ap:parse_args({ '-z', 'val' })
+    assert_ne(nil, args)
+    assert(args ~= nil, 'args was nil') -- to make linter happy
     expect_eq('val', args.opt1)
 end
 
@@ -337,50 +339,60 @@ function test.parse_options_bad_short()
     local ap = ArgParse:new('name')
     ap:add_option('a', 'opt1')
 
-    local success, err = pcall(ap.parse_args, ap, { '--a' })
-    expect_false(success)
-    assert(err ~= nil, 'err is nil')
-    expect_true(err:find('Unexpected option %-%-a'), 'Unexpected error message ' .. tostring(err))
+    local mock_print = patch('print')
+
+    local args = ap:parse_args({ '--a' })
+    expect_eq(nil, args)
+    assert_eq(1, mock_print.call_count)
+    expect_eq('Unexpected option --a', mock_print.args[1])
 end
 
 function test.parse_options_invalid_short()
     local ap = ArgParse:new('name')
     ap:add_option('a', 'opt1')
 
-    local success, err = pcall(ap.parse_args, ap, { '-a', '-i' })
-    expect_false(success)
-    assert(err ~= nil, 'err is nil')
-    expect_true(err:find('Unexpected option %-i$'), 'Unexpected error message ' .. tostring(err))
+    local mock_print = patch('print')
+
+    local args = ap:parse_args({ '-a', '-i' })
+    expect_eq(nil, args)
+    assert_eq(1, mock_print.call_count)
+    expect_eq('Unexpected option -i', mock_print.args[1])
 end
 
 function test.parse_options_invalid_long()
     local ap = ArgParse:new('name')
     ap:add_option('a', 'opt1')
 
-    local success, err = pcall(ap.parse_args, ap, { '-a', '--invalid' })
-    expect_false(success)
-    assert(err ~= nil, 'err is nil')
-    expect_true(err:find('Unexpected option %-%-invalid$'), 'Unexpected error message ' .. tostring(err))
+    local mock_print = patch('print')
+
+    local args = ap:parse_args({ '-a', '--invalid' })
+    expect_eq(nil, args)
+    assert_eq(1, mock_print.call_count)
+    expect_eq('Unexpected option --invalid', mock_print.args[1])
 end
 
 function test.parse_options_unexpected_value()
     local ap = ArgParse:new('name')
     ap:add_option('a', 'opt1')
 
-    local success, err = pcall(ap.parse_args, ap, { '-a', 'val' })
-    expect_false(success)
-    assert(err ~= nil, 'err is nil')
-    expect_true(err:find('Unexpected value val$'), 'Unexpected error message ' .. tostring(err))
+    local mock_print = patch('print')
+
+    local args = ap:parse_args({ '-a', 'val' })
+    expect_eq(nil, args)
+    assert_eq(1, mock_print.call_count)
+    expect_eq('Unexpected value val', mock_print.args[1])
 end
 
 function test.parse_options_missing_value()
     local ap = ArgParse:new('name')
     ap:add_option('a', 'opt1', nil, true)
 
-    local success, err = pcall(ap.parse_args, ap, { '-a' })
-    expect_false(success)
-    assert(err ~= nil, 'err is nil')
-    expect_true(err:find('Missing value for option %-a$'), 'Unexpected error message ' .. tostring(err))
+    local mock_print = patch('print')
+
+    local args = ap:parse_args({ '-a' })
+    expect_eq(nil, args)
+    assert_eq(1, mock_print.call_count)
+    expect_eq('Missing value for option -a', mock_print.args[1])
 end
 
 function test.parse_mix()
@@ -393,6 +405,8 @@ function test.parse_mix()
     ap:add_option(nil, 'opt3')
 
     local args = ap:parse_args({ '-a', 'val', '1', '2', '--opt2', '3', '4' })
+    assert_ne(nil, args)
+    assert(args ~= nil, 'args was nil') -- to make linter happy
     expect_eq('1', args.first)
     expect_eq('2', args.second)
     expect_eq('3', args.third[1])
@@ -410,7 +424,7 @@ function test.help_message_basic()
     ap:print_help()
 
     assert_eq(1, mock_textutils.pagedPrint.call_count)
-    assert_eq('Usage: name\n', mock_textutils.pagedPrint.args[1])
+    assert_eq('Usage: name\n\n', mock_textutils.pagedPrint.args[1])
 end
 
 function test.help_message_description()

@@ -202,7 +202,7 @@ end
 
 ---Parse arguments and return their values.
 ---@param args string[] array of arguments to parse
----@return table
+---@return table? table of args or nil for help message, must exit
 function ArgParse:parse_args(args)
     local result = {}
 
@@ -231,14 +231,16 @@ function ArgParse:parse_args(args)
         if flag then
             if flag == 'h' or flag == 'help' then
                 self:print_help()
-                os.exit(0)
+                return nil
             end
             local found_flag = false
             for _, opt in ipairs(self.options) do
                 if (is_short and flag == opt.short) or (not is_short and flag == opt.name) then
                     if opt.has_value then
                         if i == #args then
-                            error('Missing value for option ' .. v)
+                            self:print_help()
+                            print('Missing value for option ' .. v)
+                            return nil
                         end
                         i = i + 1
                         v = args[i]
@@ -251,7 +253,9 @@ function ArgParse:parse_args(args)
                 end
             end
             if not found_flag then
-                error('Unexpected option ' .. v)
+                self:print_help()
+                print('Unexpected option ' .. v)
+                return nil
             end
 
         -- argument
@@ -264,7 +268,9 @@ function ArgParse:parse_args(args)
                     if #sample > 30 then
                         sample = sample:sub(1, 30) .. '...'
                     end
-                    error('Unexpected value ' .. sample)
+                    self:print_help()
+                    print('Unexpected value ' .. sample)
+                    return nil
                 end
             else
                 if self.args[arg_i].is_multi then
@@ -289,7 +295,9 @@ function ArgParse:parse_args(args)
                 missing = missing .. ' ' .. arg.name
             end
         end
-        error('Missing required positional arguments' .. missing)
+        self:print_help()
+        print('Missing required positional arguments' .. missing)
+        return nil
     end
 
     return result
