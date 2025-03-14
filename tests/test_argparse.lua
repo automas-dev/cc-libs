@@ -41,24 +41,48 @@ function test.add_arg()
     expect_eq(0, #ap.options)
 end
 
+local function add_arg_pass(ap, options)
+    ap:add_arg('arg2', options)
+    assert_eq(2, #ap.args)
+    expect_eq('arg1', ap.args[1].name)
+    expect_eq('help string', ap.args[1].help)
+    expect_eq('def', ap.args[1].default)
+    expect_false(ap.args[1].required)
+    expect_true(ap.args[1].is_multi)
+end
+
+local function add_arg_fail(ap, options, err_msg)
+    local success, err = pcall(ap.add_arg, ap, 'arg2')
+    assert_false(success)
+    assert(err ~= nil, 'err is nil')
+    expect_true(err:find(err_msg .. '$'), 'Unexpected error message ' .. tostring(err))
+end
+
+-- duplicate args
+-- duplicate options
+
 --[[
 Cases
 - first
     - required = pass
     - optional = pass
     - default = pass
+    - multi = pass
 - after required
     - required = pass
     - optional = pass
     - default = pass
+    - multi = pass
 - after optional
     - required = fail
     - optional = pass
     - default = pass
+    - multi = pass
 - after default
     - required = fail
     - optional = fail
     - default = pass
+    - multi = pass
 ]]
 
 function test.add_arg_after_multi()
