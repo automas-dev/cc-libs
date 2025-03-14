@@ -11,4 +11,7 @@ format:
 test:
 	cd tests && $(LUA) runtests.lua
 
-.PHONY: test
+emulate:
+	craftos --mount-ro /cc-libs=cc-libs --mount-ro /cc=cc-apps --mount-rw /logs=logs
+
+.PHONY: lint format test emulate
