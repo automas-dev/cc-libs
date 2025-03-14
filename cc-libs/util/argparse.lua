@@ -56,6 +56,12 @@ function ArgParse:add_arg(name, options)
         end
     end
 
+    for _, o in pairs(self.options) do
+        if o.name == name then
+            error('Argument ' .. name .. ' has the same name as option ' .. o.name)
+        end
+    end
+
     if options.required == nil then
         options.required = true
     end
@@ -99,6 +105,12 @@ function ArgParse:add_option(short, name, help, has_value)
     for _, o in pairs(self.options) do
         if o.name == name then
             error('Option ' .. name .. ' already exists')
+        end
+    end
+
+    for _, a in pairs(self.args) do
+        if a.name == name then
+            error('Option ' .. name .. ' has the same name as arg ' .. a.name)
         end
     end
 

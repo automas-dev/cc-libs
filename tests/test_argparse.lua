@@ -80,6 +80,18 @@ function test.add_arg_duplicate()
     expect_true(err:find('Argument arg1 already exists$'), 'Unexpected error message ' .. tostring(err))
 end
 
+function test.add_arg_option_duplicate()
+    local ap = ArgParse:new('name')
+    ap:add_option(nil, 'arg1')
+    local success, err = pcall(ap.add_arg, ap, 'arg1')
+    assert_false(success)
+    assert(err ~= nil, 'err is nil')
+    expect_true(
+        err:find('Argument arg1 has the same name as option arg1$'),
+        'Unexpected error message ' .. tostring(err)
+    )
+end
+
 function test.add_arg_after_optional()
     local ap = ArgParse:new('name')
     ap:add_arg('arg1', { required = false })
@@ -195,6 +207,15 @@ function test.add_option_duplicate()
     assert_false(success)
     assert(err ~= nil, 'err is nil')
     expect_true(err:find('Option out already exists$'), 'Unexpected error message ' .. tostring(err))
+end
+
+function test.add_option_arg_duplicate()
+    local ap = ArgParse:new('name')
+    ap:add_arg('arg1')
+    local success, err = pcall(ap.add_option, ap, nil, 'arg1')
+    assert_false(success)
+    assert(err ~= nil, 'err is nil')
+    expect_true(err:find('Option arg1 has the same name as arg arg1$'), 'Unexpected error message ' .. tostring(err))
 end
 
 function test.add_option_short_with_minus()
