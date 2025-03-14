@@ -33,7 +33,7 @@ local tmc = Motion:new()
 tmc:enable_dig()
 
 local function ceiling()
-    if block_ceiling ~= nil and not turtle.inspectUp() then
+    if block_ceiling ~= nil and not turtle.detectUp() then
         if actions.select_slot(block_ceiling) then
             turtle.placeUp()
         else
@@ -43,7 +43,7 @@ local function ceiling()
 end
 
 local function floor()
-    if not turtle.inspectDown() then
+    if not turtle.detectDown() then
         if actions.select_slot(block_floor) then
             turtle.placeDown()
         else

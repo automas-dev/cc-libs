@@ -37,7 +37,7 @@ local function place_fill()
     if block_fill == nil then
         return
     end
-    if not turtle.inspect() then
+    if not turtle.detect() then
         if actions.select_slot(block_fill) then
             turtle.place()
         else
@@ -47,7 +47,7 @@ local function place_fill()
 end
 
 local function place_ladder()
-    if not turtle.inspectUp() then
+    if not turtle.detectUp() then
         if actions.select_slot('minecraft:ladder') then
             turtle.placeUp()
         else
