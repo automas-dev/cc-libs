@@ -41,61 +41,38 @@ function test.add_arg()
     expect_eq(0, #ap.options)
 end
 
-local function add_arg_pass(ap, options)
-    ap:add_arg('arg2', options)
-    assert_eq(2, #ap.args)
+function test.add_arg_optional()
+    local ap = ArgParse:new('name')
+    ap:add_arg('arg1', {
+        help = 'help string',
+        required = false,
+        is_multi = true,
+    })
+    assert_eq(1, #ap.args)
     expect_eq('arg1', ap.args[1].name)
     expect_eq('help string', ap.args[1].help)
-    expect_eq('def', ap.args[1].default)
+    expect_eq(nil, ap.args[1].default)
     expect_false(ap.args[1].required)
     expect_true(ap.args[1].is_multi)
+
+    expect_eq(0, #ap.options)
 end
 
-local function add_arg_fail(ap, options, err_msg)
-    local success, err = pcall(ap.add_arg, ap, 'arg2')
-    assert_false(success)
-    assert(err ~= nil, 'err is nil')
-    expect_true(err:find(err_msg .. '$'), 'Unexpected error message ' .. tostring(err))
+function test.add_arg_defaults()
+    local ap = ArgParse:new('name')
+    ap:add_arg('arg1')
+    assert_eq(1, #ap.args)
+    expect_eq('arg1', ap.args[1].name)
+    expect_eq(nil, ap.args[1].help)
+    expect_eq(nil, ap.args[1].default)
+    expect_true(ap.args[1].required)
+    expect_false(ap.args[1].is_multi)
+
+    expect_eq(0, #ap.options)
 end
 
 -- duplicate args
 -- duplicate options
-
---[[
-Cases
-- first
-    - required = pass
-    - optional = pass
-    - default = pass
-    - multi = pass
-- after required
-    - required = pass
-    - optional = pass
-    - default = pass
-    - multi = pass
-- after optional
-    - required = fail
-    - optional = pass
-    - default = pass
-    - multi = pass
-- after default
-    - required = fail
-    - optional = fail
-    - default = pass
-    - multi = pass
-]]
-
-function test.add_arg_after_multi()
-    local ap = ArgParse:new('name')
-    ap:add_arg('arg1', { is_multi = true })
-    local success, err = pcall(ap.add_arg, ap, 'arg2')
-    assert_false(success)
-    assert(err ~= nil, 'err is nil')
-    expect_true(
-        err:find('Argument arg2 cannot be evaluated after is_multi arg arg1$'),
-        'Unexpected error message ' .. tostring(err)
-    )
-end
 
 function test.add_arg_after_optional()
     local ap = ArgParse:new('name')
@@ -121,6 +98,18 @@ function test.add_arg_after_default()
     )
 end
 
+function test.add_arg_after_multi()
+    local ap = ArgParse:new('name')
+    ap:add_arg('arg1', { is_multi = true })
+    local success, err = pcall(ap.add_arg, ap, 'arg2')
+    assert_false(success)
+    assert(err ~= nil, 'err is nil')
+    expect_true(
+        err:find('Argument arg2 cannot be evaluated after is_multi arg arg1$'),
+        'Unexpected error message ' .. tostring(err)
+    )
+end
+
 function test.add_arg_optional_after_default()
     local ap = ArgParse:new('name')
     ap:add_arg('arg1', { default = 'def' })
@@ -133,31 +122,28 @@ function test.add_arg_optional_after_default()
     )
 end
 
-function test.add_arg_after_optional_no_default()
+function test.add_arg_optional_after_multi()
     local ap = ArgParse:new('name')
-    ap:add_arg('arg1', { required = false })
-    assert_eq(1, #ap.args)
-    expect_false(ap.args[1].required)
-    local success, err = pcall(ap.add_arg, ap, 'arg2')
+    ap:add_arg('arg1', { is_multi = true })
+    local success, err = pcall(ap.add_arg, ap, 'arg2', { required = false })
     assert_false(success)
     assert(err ~= nil, 'err is nil')
     expect_true(
-        err:find('Argument arg2 cannot be evaluated after optional arg arg1$'),
+        err:find('Argument arg2 cannot be evaluated after is_multi arg arg1$'),
         'Unexpected error message ' .. tostring(err)
     )
 end
 
-function test.add_arg_defaults()
+function test.add_arg_default_after_multi()
     local ap = ArgParse:new('name')
-    ap:add_arg('arg1')
-    assert_eq(1, #ap.args)
-    expect_eq('arg1', ap.args[1].name)
-    expect_eq(nil, ap.args[1].help)
-    expect_eq(nil, ap.args[1].default)
-    expect_true(ap.args[1].required)
-    expect_false(ap.args[1].is_multi)
-
-    expect_eq(0, #ap.options)
+    ap:add_arg('arg1', { is_multi = true })
+    local success, err = pcall(ap.add_arg, ap, 'arg2', { default = 'def' })
+    assert_false(success)
+    assert(err ~= nil, 'err is nil')
+    expect_true(
+        err:find('Argument arg2 cannot be evaluated after is_multi arg arg1$'),
+        'Unexpected error message ' .. tostring(err)
+    )
 end
 
 function test.add_option()

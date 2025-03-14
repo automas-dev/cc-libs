@@ -61,10 +61,10 @@ function ArgParse:add_arg(name, options)
     if #self.args > 0 then
         if self.args[#self.args].is_multi then
             error('Argument ' .. name .. ' cannot be evaluated after is_multi arg ' .. self.args[#self.args].name)
-        elseif options.required and not self.args[#self.args].required then
-            error('Argument ' .. name .. ' cannot be evaluated after optional arg ' .. self.args[#self.args].name)
         elseif options.default == nil and self.args[#self.args].default ~= nil then
             error('Argument ' .. name .. ' cannot be evaluated after default arg ' .. self.args[#self.args].name)
+        elseif options.required and not self.args[#self.args].required then
+            error('Argument ' .. name .. ' cannot be evaluated after optional arg ' .. self.args[#self.args].name)
         end
     end
 
@@ -106,8 +106,12 @@ function ArgParse:print_help()
     end
 
     for _, arg in ipairs(self.args) do
-        if arg.default ~= nil then
-            message = message .. ' [' .. arg.name .. '|' .. tostring(arg.default) .. ']'
+        if not arg.required then
+            message = message .. ' [' .. arg.name
+            if arg.default ~= nil then
+                message = message .. '|' .. tostring(arg.default)
+            end
+            message = message .. ']'
         else
             message = message .. ' <' .. arg.name .. '>'
         end
