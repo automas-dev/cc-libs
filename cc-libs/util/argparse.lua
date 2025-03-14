@@ -50,6 +50,12 @@ end
 function ArgParse:add_arg(name, options)
     options = options or {}
 
+    for _, a in pairs(self.args) do
+        if a.name == name then
+            error('Argument ' .. name .. ' already exists')
+        end
+    end
+
     if options.required == nil then
         options.required = true
     end
@@ -89,6 +95,13 @@ end
 function ArgParse:add_option(short, name, help, has_value)
     assert(short == nil or short:sub(1, 1) ~= '-', 'Short cannot include -')
     assert(name:sub(1, 1) ~= '-', 'Name cannot include -')
+
+    for _, o in pairs(self.options) do
+        if o.name == name then
+            error('Option ' .. name .. ' already exists')
+        end
+    end
+
     local option = {
         short = short,
         name = name,

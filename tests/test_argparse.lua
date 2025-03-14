@@ -71,8 +71,14 @@ function test.add_arg_defaults()
     expect_eq(0, #ap.options)
 end
 
--- duplicate args
--- duplicate options
+function test.add_arg_duplicate()
+    local ap = ArgParse:new('name')
+    ap:add_arg('arg1')
+    local success, err = pcall(ap.add_arg, ap, 'arg1')
+    assert_false(success)
+    assert(err ~= nil, 'err is nil')
+    expect_true(err:find('Argument arg1 already exists$'), 'Unexpected error message ' .. tostring(err))
+end
 
 function test.add_arg_after_optional()
     local ap = ArgParse:new('name')
@@ -180,6 +186,15 @@ function test.add_option_defaults()
     expect_false(ap.options[1].has_value)
 
     expect_eq(0, #ap.args)
+end
+
+function test.add_option_duplicate()
+    local ap = ArgParse:new('name')
+    ap:add_option(nil, 'out')
+    local success, err = pcall(ap.add_option, ap, nil, 'out')
+    assert_false(success)
+    assert(err ~= nil, 'err is nil')
+    expect_true(err:find('Option out already exists$'), 'Unexpected error message ' .. tostring(err))
 end
 
 function test.add_option_short_with_minus()
