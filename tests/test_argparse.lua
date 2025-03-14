@@ -421,7 +421,7 @@ function test.help_message_description()
     ap:print_help()
 
     assert_eq(1, mock_textutils.pagedPrint.call_count)
-    assert_eq('Usage: name\ndescription\n', mock_textutils.pagedPrint.args[1])
+    assert_eq('Usage: name\n\ndescription\n', mock_textutils.pagedPrint.args[1])
 end
 
 function test.help_message_args()
@@ -437,6 +437,7 @@ function test.help_message_args()
     assert_eq(1, mock_textutils.pagedPrint.call_count)
     assert_eq(
         [[Usage: name <arg1> [arg2] [arg3|def]
+
 Args:
     arg1:
     arg2: arg help
@@ -459,6 +460,7 @@ function test.help_message_options()
     assert_eq(1, mock_textutils.pagedPrint.call_count)
     assert_eq(
         [[Usage: name [options]
+
 Options:
     -o/--output:
     --input: option help
@@ -484,6 +486,7 @@ function test.help_message_mixed()
     assert_eq(1, mock_textutils.pagedPrint.call_count)
     assert_eq(
         [[Usage: name [options] <first> [second] [third|abcd]
+
 description
 Args:
     first: help string

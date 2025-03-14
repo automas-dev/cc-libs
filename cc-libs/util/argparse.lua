@@ -142,7 +142,7 @@ function ArgParse:print_help()
         end
     end
 
-    message = message .. '\n'
+    message = message .. '\n\n'
 
     if self.help then
         message = message .. self.help .. '\n'
