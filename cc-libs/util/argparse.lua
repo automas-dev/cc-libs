@@ -257,15 +257,23 @@ function ArgParse:parse_args(args)
         -- argument
         else
             if arg_i > #self.args then
-                local sample = tostring(v)
-                if #sample > 30 then
-                    sample = sample:sub(1, 30) .. '...'
+                if #self.args > 0 and self.args[#self.args].is_multi then
+                    table.insert(result[self.args[#self.args].name], v)
+                else
+                    local sample = tostring(v)
+                    if #sample > 30 then
+                        sample = sample:sub(1, 30) .. '...'
+                    end
+                    error('Unexpected value ' .. sample)
                 end
-                error('Unexpected value ' .. sample)
             else
-                result[self.args[arg_i].name] = v
+                if self.args[arg_i].is_multi then
+                    result[self.args[arg_i].name] = { v }
+                else
+                    result[self.args[arg_i].name] = v
+                end
+                arg_i = arg_i + 1
             end
-            arg_i = arg_i + 1
         end
 
         i = i + 1
