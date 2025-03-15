@@ -1,6 +1,3 @@
----@diagnostic disable: undefined-field
-package.path = '../?.lua;../?/init.lua;/cc-libs/?.lua;/cc-libs/?/init.lua;' .. package.path
-
 local paths = '?.lua;?/init.lua;'
 paths = paths .. '/?.lua;/?/init.lua;'
 paths = paths .. '/sys/modules/?.lua;/sys/modules/?/init.lua'
@@ -9,13 +6,29 @@ if _G.turtle then
     paths = paths .. '/rom/modules/turtle/?;/rom/modules/main/?.lua;/rom/modules/turtle/?/init.lua;'
 end
 
-local env = setmetatable({}, { __index = _G })
----@diagnostic disable-next-line: missing-fields
+local env = setmetatable({}, { __index = _ENV })
+
+local function search_preload(module)
+    if env.package.preload[module] ~= nil then
+        return env.package.preload[module](module, env)
+    end
+end
+
+local function search_path(module)
+    local module_path = module:gsub('%.', '/')
+
+    for path in env.package.path:gmatch('[^;]+') do
+        local filepath = path:gsub('%?', module_path)
+        if fs.exists(filepath) and not fs.isDir(filepath) then
+            return loadfile(filepath, 't', env)
+        end
+    end
+end
+
 env.package = {
     path = paths,
     cpath = '',
     config = '/\n;\n?\n!\n-',
-    loaders = _G.loaders,
     preload = {},
     loaded = {
         _G = _G,
@@ -29,8 +42,12 @@ env.package = {
         table = table,
         utf8 = _G.utf8,
     },
-    searchpath = _G.package.searchpath,
+    loaders = {
+        search_preload,
+        search_path,
+    },
 }
+env.package.preload.package = env.package
 
 local kernel = assert(loadfile('sys/kernel.lua', 't', env), 'Failed to load kernel')
 
