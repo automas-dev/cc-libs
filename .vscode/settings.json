@@ -50,5 +50,8 @@
     },
     "[lua]": {
         "editor.defaultFormatter": "JohnnyMorganz.stylua"
-    }
+    },
+    "files.associations": {
+        ".luacheckrc": "lua"
+    },
 }

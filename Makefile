@@ -14,4 +14,7 @@ test:
 emulate:
 	craftos --mount-ro /cc-libs=cc-libs --mount-ro /cc=cc-apps --mount-rw /logs=logs
 
-.PHONY: lint format test emulate
+boot:
+	craftos --mount /=cc-os
+
+.PHONY: lint format test emulate boot
