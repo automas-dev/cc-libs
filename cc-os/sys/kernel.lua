@@ -10,6 +10,16 @@ function _G.kernel.resetTerminal()
     term.setBackgroundColor(colors.black)
 end
 
+function kernel.run(path)
+    local env = setmetatable({}, { __index = _ENV })
+    local fn, err = loadfile(path, nil, env)
+    if fn then
+        fn()
+    else
+        error(err)
+    end
+end
+
 kernel.resetTerminal()
 print('start')
 
