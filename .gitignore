@@ -63,3 +63,4 @@ luac.out
 *.hex
 
 /wiki
+/logs
