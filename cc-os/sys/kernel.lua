@@ -1,6 +1,12 @@
--- error('yea')
+local proc = require 'sys.proc'
+local Process = proc.Process
 
-_G.kernel = {}
+local next_pid = 1
+
+_G.kernel = {
+    hooks = {},
+    procs = {},
+}
 
 function _G.kernel.resetTerminal()
     term.clear()
@@ -10,24 +16,63 @@ function _G.kernel.resetTerminal()
     term.setBackgroundColor(colors.black)
 end
 
+function kernel.hook(event, fn)
+    if kernel.hooks[event] == nil then
+        kernel.hooks[event] = {}
+    end
+    table.insert(kernel.hooks[event], fn)
+end
+
+function kernel.unhook(event, fn)
+    if kernel.hooks[event] == nil then
+        return
+    end
+    for i, v in ipairs(kernel.hooks[event]) do
+        if v == fn then
+            table.remove(kernel.hooks, i)
+            return
+        end
+    end
+end
+
 function kernel.run(path)
     local env = setmetatable({}, { __index = _ENV })
     local fn, err = loadfile(path, nil, env)
     if fn then
-        fn()
+        local p = Process:new(next_pid, fn, env)
+        table.insert(_G.kernel.procs, p)
+        next_pid = next_pid + 1
+        kernel.current = p
+        p:resume('start')
     else
         error(err)
+    end
+
+    kernel.current:resume()
+end
+
+function kernel.event(event, event_data)
+    local hooks = kernel.hooks['*']
+    if hooks then
+        for _, fn in ipairs(hooks) do
+            fn(event, event_data)
+        end
+    end
+    hooks = kernel.hooks[event]
+    if hooks then
+        for _, fn in ipairs(hooks) do
+            fn(event, event_data)
+        end
     end
 end
 
 kernel.resetTerminal()
 print('start')
 
-while true do
-    local event = { os.pullEventRaw() }
-    print('event', event[1])
-    if event[1] == 'terminate' then
-        print('Kernel got a terminate signal')
-        return
-    end
-end
+kernel.run('/sys/app/telemetry.lua')
+
+repeat
+    local eventData = { os.pullEventRaw() }
+    local event = table.remove(eventData, 1)
+    kernel.event(event, eventData)
+until event == 'terminate'

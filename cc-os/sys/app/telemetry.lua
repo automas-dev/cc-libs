@@ -1,6 +1,6 @@
-while true do
-    local event = os.pullEvent()
-    if event[1] == 'char' then
-        print('telem', event[1])
+repeat
+    local event, event_data = os.pullEvent('telem')
+    if event == 'telem' then
+        print('Telemetry got', event_data)
     end
-end
+until event == 'kill'
