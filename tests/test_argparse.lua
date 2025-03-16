@@ -246,8 +246,8 @@ function test.parse_help_short()
 
     local mock_print_help = patch_local(ap, 'print_help')
 
-    local args = ap:parse_args({ '-h' })
-    expect_eq(nil, args)
+    local success, err = pcall(ap.parse_args, ap, { '-h' })
+    expect_false(success)
 
     expect_eq(1, mock_print_help.call_count)
 end
@@ -257,8 +257,8 @@ function test.parse_help_long()
 
     local mock_print_help = patch_local(ap, 'print_help')
 
-    local args = ap:parse_args({ '--help' })
-    expect_eq(nil, args)
+    local success, err = pcall(ap.parse_args, ap, { '--help' })
+    expect_false(success)
 
     expect_eq(1, mock_print_help.call_count)
 end
@@ -291,12 +291,9 @@ function test.parse_args_missing()
     local ap = ArgParse:new('name')
     ap:add_arg('arg1')
 
-    local mock_print = patch('print')
-
-    local args = ap:parse_args({})
-    expect_eq(nil, args)
-    assert_eq(1, mock_print.call_count)
-    expect_eq('Missing required positional arguments arg1', mock_print.args[1])
+    local success, err = pcall(ap.parse_args, ap, {})
+    expect_false(success)
+    expect_eq('Missing required positional arguments arg1', err)
 end
 
 function test.parse_options()
@@ -339,60 +336,45 @@ function test.parse_options_bad_short()
     local ap = ArgParse:new('name')
     ap:add_option('a', 'opt1')
 
-    local mock_print = patch('print')
-
-    local args = ap:parse_args({ '--a' })
-    expect_eq(nil, args)
-    assert_eq(1, mock_print.call_count)
-    expect_eq('Unexpected option --a', mock_print.args[1])
+    local success, err = pcall(ap.parse_args, ap, { '--a' })
+    expect_false(success)
+    expect_eq('Unexpected option --a', err)
 end
 
 function test.parse_options_invalid_short()
     local ap = ArgParse:new('name')
     ap:add_option('a', 'opt1')
 
-    local mock_print = patch('print')
-
-    local args = ap:parse_args({ '-a', '-i' })
-    expect_eq(nil, args)
-    assert_eq(1, mock_print.call_count)
-    expect_eq('Unexpected option -i', mock_print.args[1])
+    local success, err = pcall(ap.parse_args, ap, { '-a', '-i' })
+    expect_false(success)
+    expect_eq('Unexpected option -i', err)
 end
 
 function test.parse_options_invalid_long()
     local ap = ArgParse:new('name')
     ap:add_option('a', 'opt1')
 
-    local mock_print = patch('print')
-
-    local args = ap:parse_args({ '-a', '--invalid' })
-    expect_eq(nil, args)
-    assert_eq(1, mock_print.call_count)
-    expect_eq('Unexpected option --invalid', mock_print.args[1])
+    local success, err = pcall(ap.parse_args, ap, { '-a', '--invalid' })
+    expect_false(success)
+    expect_eq('Unexpected option --invalid', err)
 end
 
 function test.parse_options_unexpected_value()
     local ap = ArgParse:new('name')
     ap:add_option('a', 'opt1')
 
-    local mock_print = patch('print')
-
-    local args = ap:parse_args({ '-a', 'val' })
-    expect_eq(nil, args)
-    assert_eq(1, mock_print.call_count)
-    expect_eq('Unexpected value val', mock_print.args[1])
+    local success, err = pcall(ap.parse_args, ap, { '-a', 'val' })
+    expect_false(success)
+    expect_eq('Unexpected value val', err)
 end
 
 function test.parse_options_missing_value()
     local ap = ArgParse:new('name')
     ap:add_option('a', 'opt1', nil, true)
 
-    local mock_print = patch('print')
-
-    local args = ap:parse_args({ '-a' })
-    expect_eq(nil, args)
-    assert_eq(1, mock_print.call_count)
-    expect_eq('Missing value for option -a', mock_print.args[1])
+    local success, err = pcall(ap.parse_args, ap, { '-a' })
+    expect_false(success)
+    expect_eq('Missing value for option -a', err)
 end
 
 function test.parse_mix()
