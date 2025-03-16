@@ -15,10 +15,6 @@ parser:add_arg(
     { help = 'name of block to place as ceiling (defaults to no ceiling)', required = false }
 )
 local args = parser:parse_args({ ... })
--- computercraft doesn't have an os.exit function
-if args == nil then
-    return
-end
 
 local ccl_motion = require 'cc-libs.turtle.motion'
 local Motion = ccl_motion.Motion

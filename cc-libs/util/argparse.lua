@@ -202,7 +202,7 @@ end
 
 ---Parse arguments and return their values.
 ---@param args string[] array of arguments to parse
----@return table? table of args or nil for help message, must exit
+---@return table table of args
 function ArgParse:parse_args(args)
     local result = {}
 
@@ -231,7 +231,7 @@ function ArgParse:parse_args(args)
         if flag then
             if flag == 'h' or flag == 'help' then
                 self:print_help()
-                return nil
+                error('', 0)
             end
             local found_flag = false
             for _, opt in ipairs(self.options) do
@@ -239,8 +239,7 @@ function ArgParse:parse_args(args)
                     if opt.has_value then
                         if i == #args then
                             self:print_help()
-                            print('Missing value for option ' .. v)
-                            return nil
+                            error('Missing value for option ' .. v, 0)
                         end
                         i = i + 1
                         v = args[i]
@@ -254,8 +253,7 @@ function ArgParse:parse_args(args)
             end
             if not found_flag then
                 self:print_help()
-                print('Unexpected option ' .. v)
-                return nil
+                error('Unexpected option ' .. v, 0)
             end
 
         -- argument
@@ -269,8 +267,7 @@ function ArgParse:parse_args(args)
                         sample = sample:sub(1, 30) .. '...'
                     end
                     self:print_help()
-                    print('Unexpected value ' .. sample)
-                    return nil
+                    error('Unexpected value ' .. sample, 0)
                 end
             else
                 if self.args[arg_i].is_multi then
@@ -296,8 +293,7 @@ function ArgParse:parse_args(args)
             end
         end
         self:print_help()
-        print('Missing required positional arguments' .. missing)
-        return nil
+        error('Missing required positional arguments' .. missing, 0)
     end
 
     return result
