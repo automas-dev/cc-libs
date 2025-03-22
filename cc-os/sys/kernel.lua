@@ -1,14 +1,13 @@
-local proc = require 'sys.proc'
-local Process = proc.Process
-
-local next_pid = 1
-
 _G.kernel = {
     hooks = {},
     procs = {},
 }
-
 local kernel = _G.kernel
+
+local proc = require 'sys.proc'
+local Process = proc.Process
+
+local next_pid = 1
 
 function kernel.resetTerminal()
     term.clear()
@@ -72,6 +71,7 @@ kernel.resetTerminal()
 print('start')
 
 kernel.run('/sys/app/telemetry.lua')
+kernel.run('/sys/app/keyboy.lua')
 
 repeat
     local eventData = { os.pullEventRaw() }
