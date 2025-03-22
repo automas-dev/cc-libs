@@ -1,3 +1,5 @@
+local kernel = _G.kernel
+
 ---@class Process
 ---@field pid number
 ---@field co thread

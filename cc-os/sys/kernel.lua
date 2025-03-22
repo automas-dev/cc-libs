@@ -8,7 +8,9 @@ _G.kernel = {
     procs = {},
 }
 
-function _G.kernel.resetTerminal()
+local kernel = _G.kernel
+
+function kernel.resetTerminal()
     term.clear()
     term.setCursorPos(1, 1)
     term.setCursorBlink(false)

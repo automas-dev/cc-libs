@@ -1,7 +1,7 @@
 package.path = '../?.lua;../?/init.lua;' .. package.path
 local json = require 'cc-libs.util.json'
 
-function table.copy(old_t, visited)
+local function table_copy(old_t, visited)
     visited = visited or {}
     local new_t = {}
     for k, v in pairs(old_t) do
@@ -15,7 +15,7 @@ function table.copy(old_t, visited)
             if type(v) == 'function' then
                 v = 'fun'
             elseif type(v) == 'table' then
-                v = table.copy(v, visited)
+                v = table_copy(v, visited)
             else
                 v = tostring(v)
             end
@@ -25,8 +25,8 @@ function table.copy(old_t, visited)
     return new_t
 end
 
-local g = table.copy(_G)
-g.package = table.copy(_G.package)
+local g = table_copy(_G)
+g.package = table_copy(_G.package)
 print(json.encode(g))
 
 io.open('logs/g.json', 'w'):write(json.encode(g))
