@@ -16,11 +16,12 @@ function Process:new(pid, f, env)
         co = coroutine.create(f),
         env = env,
         time = 0,
+        hooks = {},
     }
     setmetatable(o, self)
     self.__index = self
 
-    kernel.hook('*', function(e, e_d)
+    kernel.hook('*', o.pid, function(e, e_d)
         self.resume(o, e, e_d)
     end)
 
@@ -31,9 +32,14 @@ function Process:new(pid, f, env)
     return o
 end
 
+function Process:alive()
+    return coroutine.status(self.co) ~= 'dead'
+end
+
 function Process:resume(event, ...)
-    if coroutine.status(self.co) == 'dead' then
-        return
+    if not self:alive() then
+        error('Process ' .. self.pid .. ' is already dead')
+        return false
     end
 
     if not self.filter or self.filter == event or event == 'terminate' then

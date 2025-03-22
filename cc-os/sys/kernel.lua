@@ -17,11 +17,16 @@ function kernel.resetTerminal()
     term.setBackgroundColor(colors.black)
 end
 
-function kernel.hook(event, fn)
+function kernel.hook(event, pid, fn)
     if kernel.hooks[event] == nil then
         kernel.hooks[event] = {}
     end
-    table.insert(kernel.hooks[event], fn)
+    local h = table.insert(kernel.hooks[event], {
+        pid = pid,
+        event = event,
+        fn = fn,
+    })
+    return h
 end
 
 function kernel.unhook(event, fn)
@@ -37,19 +42,25 @@ function kernel.unhook(event, fn)
 end
 
 function kernel.run(path)
+    print('run', path)
     local env = setmetatable({}, { __index = _ENV })
     local fn, err = loadfile(path, nil, env)
     if fn then
         local p = Process:new(next_pid, fn, env)
-        table.insert(_G.kernel.procs, p)
+        kernel.procs[p.pid] = p
         next_pid = next_pid + 1
         kernel.current = p
-        p:resume('start')
+        local success, err = p:resume('start')
+        if not success then
+            print('Failed to launch process', path, err)
+            error(err)
+            -- TODO unhook process
+            -- kernel.procs[p.pid] = nil
+            table.remove(kernel.procs, #kernel.procs)
+        end
     else
         error(err)
     end
-
-    kernel.current:resume()
 end
 
 function kernel.event(event, event_data)
@@ -65,13 +76,30 @@ function kernel.event(event, event_data)
             fn(event, event_data)
         end
     end
+
+    local to_prune = {}
+
+    for _, proc in pairs(kernel.procs) do
+        if coroutine.status(proc.co) == 'dead' then
+            table.insert(to_prune, proc.pid)
+        end
+    end
+
+    for _, pid in ipairs(to_prune) do
+        for i, h in ipairs(kernel.hooks) do
+            if h.pid == pid then
+                table
+            end
+        end
+    end
 end
 
 kernel.resetTerminal()
 print('start')
 
 kernel.run('/sys/app/telemetry.lua')
-kernel.run('/sys/app/keyboy.lua')
+-- kernel.run('/sys/app/keyboy.lua')
+kernel.run('/sys/app/shell.lua')
 
 repeat
     local eventData = { os.pullEventRaw() }
