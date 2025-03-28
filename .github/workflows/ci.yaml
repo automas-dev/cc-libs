@@ -68,9 +68,10 @@ jobs:
           echo ${{ steps.version.outputs.version }} >> .version
           git config --global user.email "you@example.com"
           git config --global user.name "Your Name"
+          git checkout -b test
           git add .
           git commit -m "version bump"
-          git push
+          git push -u origin test
 
       - name: Archive library
         uses: actions/upload-artifact@v4
