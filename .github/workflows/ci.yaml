@@ -63,6 +63,12 @@ jobs:
           echo ${{ steps.version.outputs.version }} > cc-libs/.version
           echo ${{ steps.version.outputs.version }} > cc-apps/.version
 
+      - name: write file
+        run: |
+          echo ${{ steps.version.outputs.version }} >> .version
+          git commit -am "version bump"
+          git push
+
       - name: Archive library
         uses: actions/upload-artifact@v4
         with:
