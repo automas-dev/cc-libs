@@ -211,7 +211,7 @@ end
 
 print('Downloading library from github')
 
-local PACKAGE_URL = 'https://github.com/twh2898/cc-libs/releases/latest/download/cc-libs.tar'
+local PACKAGE_URL = 'https://github.com/automas-dev/cc-libs/releases/latest/download/cc-libs.tar'
 local CHUNK_SIZE = 8192
 local resp = assert(http.get(PACKAGE_URL), 'Failed to fetch package from github')
 local tar_file = assert(io.open('cc-libs.tar', 'wb'), 'Failed to open tar file')
