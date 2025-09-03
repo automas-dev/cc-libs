@@ -2,11 +2,9 @@ package.path = '../?.lua;../?/init.lua;' .. package.path
 local logging = require 'cc-libs.util.logging'
 logging.basic_config {
     level = logging.Level.INFO,
-    file_level = logging.Level.DEBUG,
+    file_level = logging.Level.TRACE,
     filepath = 'logs/branch_mine.log',
 }
-logging.get_logger('map').level = logging.Level.WARNING
-logging.get_logger('nav').file_level = logging.Level.TRACE
 local log = logging.get_logger('main')
 
 local FORWARD_MAX_TRIES = 10
