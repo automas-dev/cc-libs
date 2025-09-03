@@ -64,6 +64,7 @@ end
 ---@param pos2 vec3
 ---@return boolean
 local function is_inline(pos1, pos2)
+    log:trace('is inline', pos1, pos2)
     if pos1.x ~= pos2.x then
         return pos1.y == pos2.y and pos1.z == pos2.z
     elseif pos1.y ~= pos2.y then
