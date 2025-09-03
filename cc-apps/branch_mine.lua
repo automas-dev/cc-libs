@@ -23,17 +23,13 @@ local Compass = rgps.Compass
 local cc_nav = require('cc-libs.turtle.nav')
 local Nav = cc_nav.Nav
 
-local args = { ... }
-if #args < 2 then
-    print('Usage: branch_mine <shafts> <length> [torch|8] [skip|0]')
-    print()
-    print('Options:')
-    print('    shafts: number of shafts to mine')
-    print('    length: length of each shaft')
-    print('    torch:  interval to place torches')
-    print('    skip:   number of shafts to skip')
-    return
-end
+local argparse = require 'cc-libs.util.argparse'
+local parser = argparse.ArgParse:new('branch_mine', 'branch mine')
+parser:add_arg('shafts', { help = 'number of shafts to mine' })
+parser:add_arg('length', { help = 'length of each shaft' })
+parser:add_arg('torch', { help = 'interval to place torches', required = false })
+parser:add_arg('skip', { help = 'number of shafts to skip', required = false })
+local args = parser:parse_args({ ... })
 
 -- TODO don't crash if torch chest is empty
 
