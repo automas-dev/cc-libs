@@ -207,4 +207,26 @@ function test.level_methods()
     expect_eq('g', l.log.args[3])
 end
 
+function test.log_errors()
+    local l = Logger:new('ss')
+    l.log = MagicMock()
+
+    local function good()
+        return 'res'
+    end
+
+    local res = l:log_errors(good)
+    assert_eq('res', res)
+    l.log.reset()
+
+    local function bad()
+        error('fn error')
+    end
+
+    local err = l:log_errors(bad)
+    assert_eq(1, l.log.call_count)
+    expect_eq(Level.ERROR, l.log.args[2])
+    expect_true(string.find(l.log.args[3], 'fn error'))
+end
+
 return test
