@@ -27,16 +27,16 @@ local argparse = require 'cc-libs.util.argparse'
 local parser = argparse.ArgParse:new('branch_mine', 'branch mine')
 parser:add_arg('shafts', { help = 'number of shafts to mine' })
 parser:add_arg('length', { help = 'length of each shaft' })
-parser:add_arg('torch', { help = 'interval to place torches', required = false })
-parser:add_arg('skip', { help = 'number of shafts to skip', required = false })
+parser:add_arg('torch', { help = 'interval to place torches', required = false, default = 8 })
+parser:add_arg('skip', { help = 'number of shafts to skip', required = false, default = 0 })
 local args = parser:parse_args({ ... })
 
 -- TODO don't crash if torch chest is empty
 
-local shafts = tonumber(args[1])
-local length = tonumber(args[2])
-local torch = tonumber(args[3] or 8)
-local skip = tonumber(args[4] or 0)
+local shafts = tonumber(args.shafts)
+local length = tonumber(args.length)
+local torch = tonumber(args.torch)
+local skip = tonumber(args.skip)
 
 log:info('Starting with parameters shafts=', shafts, 'length=', length, 'torc=', torch, 'skip=', skip)
 
@@ -356,4 +356,4 @@ local function run()
     log:info('Done!')
 end
 
-run()
+log:log_errors(run)
