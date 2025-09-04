@@ -215,7 +215,8 @@ function test.log_errors()
         return 'res'
     end
 
-    local res = l:log_errors(good)
+    local status, res = l:log_errors(good)
+    assert_true(status)
     assert_eq('res', res)
     l.log.reset()
 
@@ -223,7 +224,8 @@ function test.log_errors()
         error('fn error')
     end
 
-    local err = l:log_errors(bad)
+    local status, err = l:log_errors(bad)
+    assert_false(status)
     assert_eq(1, l.log.call_count)
     expect_eq(Level.ERROR, l.log.args[2])
     expect_true(string.find(l.log.args[3], 'fn error'))

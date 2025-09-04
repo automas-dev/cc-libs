@@ -140,8 +140,9 @@ function Logger:fatal(...)
     error(table.concat({ ... }, ''))
 end
 
----Call a function and log any errors that occur
+---Call a function and log any errors that occur.
 ---@param fn fun() function to run catching and logging errors
+---@return boolean status true if an error was caught
 ---@return any result of `fn`
 function Logger:log_errors(fn)
     local status, res = xpcall(fn, debug.traceback)
@@ -150,7 +151,7 @@ function Logger:log_errors(fn)
         self:error(res)
     end
 
-    return res
+    return status, res
 end
 
 return {
