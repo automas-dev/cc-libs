@@ -49,9 +49,27 @@ function Point:link(other, weight)
     self.links[other.id] = weight
 end
 
+local function table_size(t)
+    local count = 0
+    for _ in pairs(t) do
+        count = count + 1
+    end
+    return count
+end
+
 ---String conversion overload
 function Point:__tostring()
-    return 'Point(' .. self.x .. ',' .. self.y .. ',' .. self.z .. ')'
+    return 'Point(id="'
+        .. self.id
+        .. '",x='
+        .. self.x
+        .. ',y='
+        .. self.y
+        .. ',z='
+        .. self.z
+        .. ',#inks='
+        .. table_size(self.links)
+        .. ')'
 end
 
 ---@class Map
