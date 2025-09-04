@@ -224,8 +224,8 @@ function test.log_errors()
         error('fn error')
     end
 
-    local status, err = l:log_errors(bad)
-    assert_false(status)
+    local status2, err = l:log_errors(bad)
+    assert_false(status2)
     assert_eq(1, l.log.call_count)
     expect_eq(Level.ERROR, l.log.args[2])
     expect_true(string.find(l.log.args[3], 'fn error'))
