@@ -153,13 +153,16 @@ end
 ---@param p2 vec3|Point the second point
 ---@param weight? number weight of the link
 function Map:add(p1, p2, weight)
-    log:debug('Add point', p1.x, p1.y, p1.y, 'and', p2.x, p2.y, p2.z)
+    log:debug('Add point', p1, 'and', p2)
     assert(is_inline(p1, p2), 'p1 is not inline with p2')
 
     local g_p1 = self:point(p1.x, p1.y, p1.z)
     local g_p2 = self:point(p2.x, p2.y, p2.z)
+
     g_p1:link(g_p2, weight)
-    g_p1:link(g_p1, weight)
+    g_p2:link(g_p1, weight)
+
+    log:trace('p1 becomes', g_p1, 'p2 becomes', g_p2)
 end
 
 local M = {
