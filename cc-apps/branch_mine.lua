@@ -40,9 +40,11 @@ local skip = tonumber(args.skip)
 
 log:info('Starting with parameters shafts=', shafts, 'length=', length, 'torc=', torch, 'skip=', skip)
 
+-- TODO fix link error when using loaded map
 local map = Map:new()
 if fs.exists(map_file) then
-    map:load(map_file)
+    log:warning('LOAD MAP IS DISABLED')
+    -- map:load(map_file)
 end
 local gps = RGPS:new(map)
 local tmc = Motion:new(gps)
