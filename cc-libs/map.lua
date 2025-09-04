@@ -12,7 +12,6 @@ local log = logging.get_logger('map')
 ---@param z number
 ---@return PointId
 local function point_id(x, y, z)
-    log:trace('Point id from pos', x, y, z)
     return x .. ',' .. y .. ',' .. z
 end
 
@@ -105,7 +104,6 @@ end
 ---@param pid PointId
 ---@return Point
 function Map:get(pid)
-    log:trace('Get point for id', pid)
     return self.graph[pid]
 end
 
@@ -115,12 +113,14 @@ end
 ---@param z number
 ---@return Point
 function Map:point(x, y, z)
-    log:trace('Get point for pos', x, y, z)
     local pid = point_id(x, y, z)
     local point = self:get(pid)
     if point == nil then
+        log:trace('Creating point for id', pid)
         point = Point:new(x, y, z)
         self.graph[point.id] = point
+    else
+        log:trace('Got point', point, 'for id', pid)
     end
     return point
 end
@@ -130,7 +130,7 @@ end
 ---@param p2 vec3|Point the second point
 ---@param weight? number weight of the link
 function Map:add(p1, p2, weight)
-    log:info('Add point', p1.x, p1.y, p1.y, 'and', p2.x, p2.y, p2.z)
+    log:debug('Add point', p1.x, p1.y, p1.y, 'and', p2.x, p2.y, p2.z)
     assert(is_inline(p1, p2), 'p1 is not inline with p2')
 
     local g_p1 = self:point(p1.x, p1.y, p1.z)
