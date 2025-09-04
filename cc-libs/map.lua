@@ -49,6 +49,11 @@ function Point:link(other, weight)
     self.links[other.id] = weight
 end
 
+---String conversion overload
+function Point:__tostring()
+    return 'Point(' .. self.x .. ',' .. self.y .. ',' .. self.z .. ')'
+end
+
 ---@class Map
 ---@field graph { [PointId]: Point }
 local Map = {}
