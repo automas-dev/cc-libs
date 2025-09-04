@@ -12,7 +12,7 @@ local Handler = log_handler.Handler
 ---@return debuginfo info name and debug
 local function traceback()
     local info = debug.getinfo(3, 'Slfn')
-    for _, check in ipairs({ 'trace', 'debug', 'info', 'warn', 'warning', 'error', 'fatal' }) do
+    for _, check in ipairs({ 'traceback', 'trace', 'debug', 'info', 'warn', 'warning', 'error', 'fatal' }) do
         if info.name == check then
             info = debug.getinfo(4, 'Slf')
             break
@@ -95,6 +95,14 @@ function Logger:log(level, ...)
             h:send(record)
         end
     end
+end
+
+-- TODO test traceback
+---Write a log message with TRACE level including a traceback
+---@param ... any message
+function Logger:traceback(...)
+    self:log(Level.TRACE, ...)
+    self:log(Level.TRACE, debug.traceback('', 2))
 end
 
 ---Write a log message with TRACE level
