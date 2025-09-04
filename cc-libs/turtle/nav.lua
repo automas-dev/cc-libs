@@ -64,6 +64,7 @@ end
 ---@param pos2 vec3
 ---@return boolean
 local function is_inline(pos1, pos2)
+    log:trace('is inline', pos1, pos2)
     if pos1.x ~= pos2.x then
         return pos1.y == pos2.y and pos1.z == pos2.z
     elseif pos1.y ~= pos2.y then
@@ -159,30 +160,35 @@ function Nav:back_follow()
     end
 end
 
+local function table_size(t)
+    local count = 0
+    for _ in pairs(t) do
+        count = count + 1
+    end
+    return count
+end
+
 function Nav:find_path(start, goal)
-    log:debug('Searching for path between', start.x, start.y, start.z, 'and', goal.x, goal.y, goal.z)
+    log:debug('Searching for path between', start, 'and', goal)
 
-    log:debug('Start pos is', start.x, start.y, start.z)
     local p_start = self.map:point(start.x, start.y, start.z)
-
-    log:debug('Goal pos is', goal.x, goal.y, goal.z)
     local p_goal = self.map:point(goal.x, goal.y, goal.z)
 
     local function neighbors(pid)
-        log:trace('neighbors', pid)
         local point = self.map:get(pid)
+        log:trace('neighbors', pid, table_size(point.links))
         return point.links
     end
 
     local function f(n1, n2)
-        log:trace('f', n1, n2)
+        log:trace('f n1=', n1, 'n2=', n2)
         local dx = math.abs(self.map:get(n1).x - self.map:get(n2).x)
         local dy = math.abs(self.map:get(n1).y - self.map:get(n2).y)
         return dx + dy
     end
 
     local function h(n1, n2)
-        log:trace('h', n1, n2)
+        log:trace('h n1=', n1, 'n2=', n2)
         local dx = math.abs(self.map:get(n1).x - self.map:get(n2).x)
         local dy = math.abs(self.map:get(n1).y - self.map:get(n2).y)
         return math.sqrt(dx * dx + dy * dy)

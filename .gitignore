@@ -64,3 +64,4 @@ luac.out
 
 /wiki
 /logs
+*.json

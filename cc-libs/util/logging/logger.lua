@@ -12,7 +12,7 @@ local Handler = log_handler.Handler
 ---@return debuginfo info name and debug
 local function traceback()
     local info = debug.getinfo(3, 'Slfn')
-    for _, check in ipairs({ 'trace', 'debug', 'info', 'warn', 'warning', 'error', 'fatal' }) do
+    for _, check in ipairs({ 'traceback', 'trace', 'debug', 'info', 'warn', 'warning', 'error', 'fatal' }) do
         if info.name == check then
             info = debug.getinfo(4, 'Slf')
             break
@@ -97,6 +97,14 @@ function Logger:log(level, ...)
     end
 end
 
+-- TODO test traceback
+---Write a log message with TRACE level including a traceback
+---@param ... any message
+function Logger:traceback(...)
+    self:log(Level.TRACE, ...)
+    self:log(Level.TRACE, debug.traceback('', 2))
+end
+
 ---Write a log message with TRACE level
 ---@param ... any message
 function Logger:trace(...)
@@ -138,6 +146,20 @@ end
 function Logger:fatal(...)
     self:log(Level.FATAL, ...)
     error(table.concat({ ... }, ''))
+end
+
+---Call a function and log any errors that occur.
+---@param fn fun() function to run catching and logging errors
+---@return boolean status true if an error was caught
+---@return any result of `fn`
+function Logger:log_errors(fn)
+    local status, res = xpcall(fn, debug.traceback)
+
+    if not status then
+        self:error(res)
+    end
+
+    return status, res
 end
 
 return {

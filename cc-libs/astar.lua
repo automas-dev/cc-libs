@@ -35,7 +35,7 @@ local function astar(start, goal, get_neighbors, cost_fn, heuristic_fn, start_to
 
         -- Iterate over all neighbors of current
         local neighbors = get_neighbors(current)
-        for _, neighbor in ipairs(neighbors) do
+        for neighbor, weight in pairs(neighbors) do
             -- Calculate f score for neighbor
             local dist = f_score[current] + cost_fn(current, neighbor)
 

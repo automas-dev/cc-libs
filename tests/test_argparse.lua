@@ -290,6 +290,7 @@ end
 function test.parse_args_missing()
     local ap = ArgParse:new('name')
     ap:add_arg('arg1')
+    ap:add_arg('arg2', { required = false })
 
     local success, err = pcall(ap.parse_args, ap, {})
     expect_false(success)

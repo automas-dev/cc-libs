@@ -2,15 +2,13 @@ package.path = '../?.lua;../?/init.lua;' .. package.path
 local logging = require 'cc-libs.util.logging'
 logging.basic_config {
     level = logging.Level.INFO,
-    file_level = logging.Level.DEBUG,
+    file_level = logging.Level.TRACE,
     filepath = 'logs/branch_mine.log',
 }
-logging.get_logger('map').level = logging.Level.WARNING
-logging.get_logger('nav').file_level = logging.Level.TRACE
 local log = logging.get_logger('main')
 
 local FORWARD_MAX_TRIES = 10
-local map_file = 'branch.map'
+local map_file = 'branch_map.json'
 
 local cc_motion = require 'cc-libs.turtle.motion'
 local Motion = cc_motion.Motion
@@ -25,30 +23,28 @@ local Compass = rgps.Compass
 local cc_nav = require('cc-libs.turtle.nav')
 local Nav = cc_nav.Nav
 
-local args = { ... }
-if #args < 2 then
-    print('Usage: branch_mine <shafts> <length> [torch|8] [skip|0]')
-    print()
-    print('Options:')
-    print('    shafts: number of shafts to mine')
-    print('    length: length of each shaft')
-    print('    torch:  interval to place torches')
-    print('    skip:   number of shafts to skip')
-    return
-end
+local argparse = require 'cc-libs.util.argparse'
+local parser = argparse.ArgParse:new('branch_mine', 'branch mine')
+parser:add_arg('shafts', { help = 'number of shafts to mine' })
+parser:add_arg('length', { help = 'length of each shaft' })
+parser:add_arg('torch', { help = 'interval to place torches', required = false, default = 8 })
+parser:add_arg('skip', { help = 'number of shafts to skip', required = false, default = 0 })
+local args = parser:parse_args({ ... })
 
 -- TODO don't crash if torch chest is empty
 
-local shafts = tonumber(args[1])
-local length = tonumber(args[2])
-local torch = tonumber(args[3] or 8)
-local skip = tonumber(args[4] or 0)
+local shafts = tonumber(args.shafts)
+local length = tonumber(args.length)
+local torch = tonumber(args.torch)
+local skip = tonumber(args.skip)
 
 log:info('Starting with parameters shafts=', shafts, 'length=', length, 'torc=', torch, 'skip=', skip)
 
+-- TODO fix link error when using loaded map
 local map = Map:new()
 if fs.exists(map_file) then
-    map:load(map_file)
+    log:warning('LOAD MAP IS DISABLED')
+    -- map:load(map_file)
 end
 local gps = RGPS:new(map)
 local tmc = Motion:new(gps)
@@ -362,4 +358,4 @@ local function run()
     log:info('Done!')
 end
 
-run()
+log:log_errors(run)
