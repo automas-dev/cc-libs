@@ -60,7 +60,7 @@ for layer_no, layer in ipairs(layers) do
                     log:warning('Failed to find block', col)
                 end
             else
-                log:trace("Skipping block")
+                log:trace('Skipping block')
             end
             if c < #row then
                 tmc:forward()
