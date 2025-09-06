@@ -39,7 +39,8 @@ globals = {
     "patch",
     "patch_local",
     "reset_patches",
-    "MagicMock"
+    "MagicMock",
+    "sleep",
 }
 ignore = {
     "111",
