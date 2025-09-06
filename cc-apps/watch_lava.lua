@@ -27,7 +27,6 @@ local function run()
             log:info('New block name', name)
             last_name = name
         end
-        log:trace('Sleeping until next check')
         sleep(1)
     end
 end
