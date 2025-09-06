@@ -39,8 +39,7 @@ local structure_size = structure.size
 
 log:info('Begin construction')
 
-for _layer_i, layer in ipairs(layers) do
-    local layer_no = layer.layer
+for layer_no, layer in ipairs(layers) do
     local pattern = layer.pattern
 
     log:debug('Begin layer', layer_no)
@@ -53,11 +52,15 @@ for _layer_i, layer in ipairs(layers) do
             if aliases[col] ~= nil then
                 col = aliases[col]
             end
-            if actions.select_slot(col) then
-                log:trace('Place block', col)
-                turtle.placeDown()
+            if col then
+                if actions.select_slot(col) then
+                    log:trace('Place block', col)
+                    turtle.placeDown()
+                else
+                    log:warning('Failed to find block', col)
+                end
             else
-                log:warning('Failed to find block', col)
+                log:trace("Skipping block")
             end
             if c < #row then
                 tmc:forward()
@@ -91,11 +94,10 @@ for _layer_i, layer in ipairs(layers) do
     tmc:left()
     tmc:forward(structure_size.z - 1)
     tmc:around()
-
-    if _layer_i < #layers then
-        log:trace('Going up for next layer')
-        tmc:up()
-    end
 end
+
+tmc:backward()
+tmc:around()
+tmc:down(structure_size.y)
 
 log:info('Done!')
