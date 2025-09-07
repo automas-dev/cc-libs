@@ -65,3 +65,4 @@ luac.out
 /wiki
 /logs
 *.json
+!structures/*.json

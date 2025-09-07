@@ -71,6 +71,7 @@ function Motion:forward(n)
     log:debug('move forward', n, 'blocks')
     for _ = 1, n do
         if not self:_attempt_move(turtle.forward, (self.can_dig and turtle.dig or nil)) then
+            -- TODO is this warn in the right place?
             log:warn('Failed to move forward after ' .. self.max_tries .. 'attempts')
             return false
         end
@@ -90,6 +91,7 @@ function Motion:backward(n)
     log:debug('move backward', n, 'blocks')
     for _ = 1, n do
         if not self:_attempt_move(turtle.back) then
+            -- TODO is this warn in the right place?
             log:warn('Failed to move back after ' .. self.max_tries .. 'attempts')
             return false
         end
@@ -109,6 +111,7 @@ function Motion:up(n)
     log:debug('move up', n, 'blocks')
     for _ = 1, n do
         if not self:_attempt_move(turtle.up, (self.can_dig and turtle.digUp or nil)) then
+            -- TODO is this warn in the right place?
             log:warn('Failed to move up after ' .. self.max_tries .. 'attempts')
             return false
         end
@@ -128,6 +131,7 @@ function Motion:down(n)
     log:debug('move down', n, 'blocks')
     for _ = 1, n do
         if not self:_attempt_move(turtle.down, (self.can_dig and turtle.digDown or nil)) then
+            -- TODO is this warn in the right place?
             log:warn('Failed to move down after ' .. self.max_tries .. 'attempts')
             return false
         end

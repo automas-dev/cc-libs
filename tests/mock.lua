@@ -20,7 +20,7 @@ end
 ---@field reset_all fun() reset all mocks
 
 ---@param args? {return_value?: any, return_unpack?: any[], return_sequence?: any[], return_sequence_unpack?: any[][], custom_function?: fun(...): any?}
----@return Mock
+---@return Mock | any
 function MagicMock(args)
     args = args or {}
     local mock = {

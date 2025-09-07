@@ -75,6 +75,7 @@ function Logger:log(level, ...)
         return
     end
     local args = { ... }
+    ---@diagnostic disable-next-line: undefined-field
     local log_time = os.epoch('local') / 1000 -- luacheck: ignore
     local msg = ''
     for i = 1, #args do

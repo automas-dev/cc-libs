@@ -7,7 +7,8 @@ local log = logging.get_logger('nav')
 ---@module 'ccl_vec'
 
 ---@module 'ccl_map'
-local world = require 'cc-libs.map'
+local cc_map = require 'cc-libs.map'
+local Map = cc_map.Map
 
 ---@module 'ccl_rgps'
 local rgps = require 'cc-libs.turtle.rgps'
@@ -31,7 +32,7 @@ local Nav = {}
 ---@param station? vec3 location of the station, if nil will be set to gps.pos
 ---@return Nav
 function Nav:new(motion, gps, map, station)
-    map = map or world:new()
+    map = map or Map:new()
     station = station or gps.pos
     local o = {
         map = map,
