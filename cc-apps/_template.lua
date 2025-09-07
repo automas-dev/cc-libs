@@ -35,4 +35,4 @@ local function run()
 end
 
 -- Call rnu and log an error if raised
-log:log_errors(run)
+log:catch_errors(run)

@@ -153,7 +153,7 @@ end
 ---@param fn fun() function to run catching and logging errors
 ---@return boolean status true if an error was caught
 ---@return any result of `fn`
-function Logger:log_errors(fn)
+function Logger:catch_errors(fn)
     local status, res = xpcall(fn, debug.traceback)
 
     if not status then

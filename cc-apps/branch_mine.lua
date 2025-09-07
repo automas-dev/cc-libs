@@ -358,4 +358,4 @@ local function run()
     log:info('Done!')
 end
 
-log:log_errors(run)
+log:catch_errors(run)
