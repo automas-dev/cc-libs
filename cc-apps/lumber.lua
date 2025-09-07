@@ -44,4 +44,4 @@ local function run()
     end
 end
 
-log:log_errors(run)
+log:catch_errors(run)
