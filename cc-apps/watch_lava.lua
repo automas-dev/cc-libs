@@ -10,22 +10,38 @@ logging.basic_config {
 }
 local log = logging.get_logger('main')
 
-local function get_block_name()
+local actions = require 'cc-libs.turtle.actions'
+
+local function cauldron_has_lava()
     local exists, data = turtle.inspect()
-    if exists then
-        local block_name = data['name']
-        return block_name
+    return exists and data.name == 'minecraft:lava_cauldron'
+end
+
+local function take_lava()
+    log:info('Taking lava from cauldron')
+
+    if not actions.select_slot('minecraft:bucket') then
+        log:fatal('No more buckets')
     end
-    return nil
+
+    if not turtle.place() then
+        log:fatal('Failed to extract lava')
+    end
+
+    log:trace('Got lava bucket')
+
+    if not actions.select_slot('minecraft:lava_bucket') then
+        log:error('Failed to select lava bucket')
+    else
+        turtle.dropDown()
+        log:debug('Pushed lava bucket into chest bellow')
+    end
 end
 
 local function run()
-    local last_name = nil
     while true do
-        local name = get_block_name()
-        if name ~= last_name then
-            log:info('New block name', name)
-            last_name = name
+        if cauldron_has_lava() then
+            take_lava()
         end
         sleep(1)
     end
