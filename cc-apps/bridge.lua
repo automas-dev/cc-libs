@@ -14,6 +14,7 @@ parser:add_arg(
     'block_ceiling',
     { help = 'name of block to place as ceiling (defaults to no ceiling)', required = false }
 )
+parser:add_option('r', 'replace_floor', 'Replace existing floor if it does not match')
 local args = parser:parse_args({ ... })
 
 local ccl_motion = require 'cc-libs.turtle.motion'
@@ -24,6 +25,15 @@ local actions = require 'cc-libs.turtle.actions'
 local length = tonumber(args.length)
 local block_floor = args.block_floor
 local block_ceiling = args.block_ceiling
+local replace_floor = args.replace_floor
+
+if not actions.find_slot(block_floor, 1) then
+    log:fatal('Could not find block', block_floor, 'in inventory')
+end
+
+if block_ceiling and not actions.find_slot(block_ceiling, 1) then
+    log:fatal('Could not find block', block_ceiling, 'in inventory')
+end
 
 local tmc = Motion:new()
 tmc:enable_dig()
@@ -39,7 +49,13 @@ local function ceiling()
 end
 
 local function floor()
-    if not turtle.detectDown() then
+    local exists, info = turtle.inspectDown()
+    if replace_floor and exists and info.name ~= block_floor then
+        log:trace('Replacing', info.name, 'floor')
+        turtle.digDown()
+        exists = false
+    end
+    if not exists then
         if actions.select_slot(block_floor) then
             turtle.placeDown()
         else
@@ -48,31 +64,34 @@ local function floor()
     end
 end
 
-log:info('Starting with parameters length=', length, 'floor=', block_floor, 'ceiling=', block_ceiling)
-
 local total_len = 0
 
-for _ = 1, length do
+local function run_out()
+    log:info('Starting with parameters length=', length, 'floor=', block_floor, 'ceiling=', block_ceiling)
+
+    for _ = 1, length do
+        floor()
+        tmc:forward()
+        total_len = total_len + 1
+    end
+
     floor()
-    tmc:forward()
-    total_len = total_len + 1
+    tmc:around()
 end
 
-floor()
-tmc:around()
+local function run_return()
+    log:info('Returning to station')
+    tmc:up()
 
--- Return
+    for _ = 1, total_len do
+        ceiling()
+        tmc:forward()
+    end
 
-log:info('Returning to station')
-tmc:up()
-
-for _ = 1, total_len do
     ceiling()
-    tmc:forward()
+    tmc:around()
+    tmc:down()
 end
 
-ceiling()
-tmc:around()
-tmc:down()
-
-log:info('Done!')
+log:catch_errors(run_out)
+log:catch_errors(run_return)
