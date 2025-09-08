@@ -125,4 +125,65 @@ function M.place_torch()
     return true
 end
 
+---Open an inventory peripheral and inspect it's contents. If side is front, top
+---or bottom, the block state will be reported with it's contents.
+---@param side string peripheral side
+---@return {size: integer, slots: table[], details: table, block: table | nil } | nil info inventory details if present
+function M.examine_inventory(side)
+    log:debug('Opening peripheral on side', side)
+
+    local is_inv = false
+    for _, t in ipairs({ peripheral.getType(side) }) do
+        is_inv = is_inv or t == 'inventory'
+    end
+
+    if not is_inv then
+        log:debug('Peripheral on side', side, 'is not an inventory')
+        return nil
+    end
+
+    local inv = peripheral.wrap(side)
+
+    if not inv then
+        log:debug('No inventory found')
+        return nil
+    end
+
+    local slots = {}
+
+    for slot in pairs(inv.list()) do
+        local detail = inv.getItemDetail(slot)
+        log:trace('Slot', k, 'has item', detail.name)
+        local limit = inv.getItemLimit(slot)
+
+        slots[slot] = {
+            slot = slot,
+            detail = detail,
+            limit = limit,
+        }
+    end
+
+    local info = {
+        size = inv.size(),
+        slots = slots,
+    }
+
+    local exists = false
+    local block = nil
+    if side == 'front' then
+        exists, block = turtle.inspect()
+    elseif side == 'top' then
+        exists, block = turtle.inspectUp()
+    elseif side == 'bottom' then
+        exists, block = turtle.inspectDown()
+    end
+
+    if exists then
+        log:debug('Adding block info')
+        info.block = block
+    end
+
+    return info
+end
+
 return M
