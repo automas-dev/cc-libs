@@ -81,10 +81,11 @@ end
 
 ---Drop all items from the given slot.
 ---@param slot integer 1 to 16
+---@param direction string|nil face to dorp, forward, up or down
 ---@return integer count number of items dropped
-function M.dump_slot(slot)
+function M.dump_slot(slot, direction)
     assert(slot > 0 and slot <= 16, 'slot must be a number between 1 and 16')
-    log:info('Dumping slot', slot)
+    log:debug('Dumping slot', slot)
 
     turtle.select(slot)
 
@@ -93,9 +94,16 @@ function M.dump_slot(slot)
     local count = 0
     while turtle.getItemCount() > 0 do
         log:trace('Dropping item', count)
-        turtle.drop()
+        if direction == 'up' then
+            turtle.dropUp()
+        elseif direction == 'down' then
+            turtle.dropDown()
+        else
+            turtle.drop()
+        end
         count = count + 1
     end
+
     log:debug('Finished dropping items')
     return count
 end
