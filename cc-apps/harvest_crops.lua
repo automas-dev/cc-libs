@@ -28,6 +28,7 @@ local tmc = Motion:new()
 local seed_name_map = {
     ['minecraft:wheat'] = 'minecraft:wheat_seeds',
     ['minecraft:potatoes'] = 'minecraft:potato',
+    ['minecraft:carrots'] = 'minecraft:carrot',
 }
 
 local function replant(name)
