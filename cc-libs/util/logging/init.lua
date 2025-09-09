@@ -45,6 +45,8 @@ end
 ---@field filepath? string
 ---@field machine_level? number|LogLevel
 ---@field machine_filepath? string
+---@field remote_enabled? boolean
+---@field remote_level? number|LogLevel
 ---@field force? boolean
 
 ---Setup root logger and default handlers
@@ -68,6 +70,10 @@ function M.basic_config(args)
     if args.machine_filepath then
         local machine_level = args.machine_level or M.TRACE
         M.root:new_handler(M.JsonFormatter:new(), M.FileStream:new(args.machine_filepath, machine_level))
+    end
+    if args.remote_enabled then
+        local remote_level = args.remote_level or M.DEBUG
+        M.root:new_handler(M.JsonFormatter:new(), M.RemoteStream:new(remote_level))
     end
 end
 
