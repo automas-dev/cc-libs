@@ -18,12 +18,13 @@ local length = tonumber(args.length)
 
 log:info('Start farm with width=', width, 'length=', length)
 
-local ccl_motion = require 'cc-libs.turtle.motion'
-local Motion = ccl_motion.Motion
+local ccl_motion = require 'cc-libs.turtle.controller'
+local MotionController = ccl_motion.MotionController
 
 local actions = require 'cc-libs.turtle.actions'
 
-local tmc = Motion:new()
+local tmc = MotionController:new()
+tmc.location.debug_location = true
 
 local seed_name_map = {
     ['minecraft:wheat'] = 'minecraft:wheat_seeds',
