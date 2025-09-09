@@ -68,15 +68,8 @@ function Logger:set_level(level)
     self.level = level
 end
 
----Write a log message to each handler
----@param level number|LogLevel message level
-function Logger:log(level, ...)
-    if level < self.level then
-        return
-    end
+local function table_to_string(...)
     local args = { ... }
-    ---@diagnostic disable-next-line: undefined-field
-    local log_time = os.epoch('local') / 1000 -- luacheck: ignore
     local msg = ''
     for i = 1, #args do
         if i == 1 then
@@ -85,6 +78,18 @@ function Logger:log(level, ...)
             msg = msg .. ' ' .. tostring(args[i])
         end
     end
+    return msg
+end
+
+---Write a log message to each handler
+---@param level number|LogLevel message level
+function Logger:log(level, ...)
+    if level < self.level then
+        return
+    end
+    ---@diagnostic disable-next-line: undefined-field
+    local log_time = os.epoch('local') / 1000 -- luacheck: ignore
+    local msg = table_to_string(...)
     local record = Record:new(self.subsystem, level, traceback(), msg, log_time)
     local handlers = self.handlers
     --- root should always have handlers after basic_config is called
@@ -146,7 +151,7 @@ end
 ---@param ... any message
 function Logger:fatal(...)
     self:log(Level.FATAL, ...)
-    error(table.concat({ ... }, ''))
+    error(table_to_string(...))
 end
 
 ---Call a function and log any errors that occur.
