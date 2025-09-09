@@ -187,6 +187,19 @@ function MotionController:around()
     self:right(2)
 end
 
+function MotionController:face(heading)
+    assert(heading >= 1 and heading <= 4, 'Heading is an unknown value ' .. heading)
+    log:trace('face', heading)
+
+    if heading == self.location.heading + 2 or heading == self.location.heading - 2 then
+        self:around()
+    elseif heading == self.location.heading + 1 or heading == self.location.heading - 3 then
+        self:right()
+    elseif heading == self.location.heading - 1 or heading == self.location.heading + 3 then
+        self:left()
+    end
+end
+
 local M = {
     MotionController = MotionController,
 }
