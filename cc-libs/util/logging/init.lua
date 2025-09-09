@@ -68,11 +68,11 @@ function M.basic_config(args)
         M.root:new_handler(M.LongFormatter:new(), M.FileStream:new(args.filepath, file_level))
     end
     if args.machine_filepath then
-        local machine_level = args.machine_level or M.TRACE
+        local machine_level = args.machine_level or M.Level.TRACE
         M.root:new_handler(M.JsonFormatter:new(), M.FileStream:new(args.machine_filepath, machine_level))
     end
     if args.remote_enabled then
-        local remote_level = args.remote_level or M.DEBUG
+        local remote_level = args.remote_level or M.Level.DEBUG
         M.root:new_handler(M.JsonFormatter:new(), M.RemoteStream:new(remote_level))
     end
 end
