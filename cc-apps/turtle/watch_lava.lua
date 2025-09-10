@@ -1,5 +1,5 @@
 -- Setup import paths
-package.path = '../?.lua;../?/init.lua;' .. package.path
+package.path = '../../?.lua;../../?/init.lua;' .. package.path
 
 -- Import and configure logging
 local logging = require 'cc-libs.util.logging'

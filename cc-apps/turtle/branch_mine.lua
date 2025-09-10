@@ -1,4 +1,4 @@
-package.path = '../?.lua;../?/init.lua;' .. package.path
+package.path = '../../?.lua;../../?/init.lua;' .. package.path
 local logging = require 'cc-libs.util.logging'
 logging.basic_config {
     level = logging.Level.INFO,
