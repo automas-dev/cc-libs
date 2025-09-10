@@ -31,6 +31,9 @@ local function proto_telemetry(id, message)
     for k, v in pairs(data) do
         turtle_states[id][k] = v
     end
+
+    ---@diagnostic disable-next-line: undefined-field
+    turtle_states[id].last_update = os.epoch('local') / 1000 -- luacheck: ignore
 end
 
 local function proto_report(id, message)
@@ -56,12 +59,16 @@ local function proto_report(id, message)
             err = 'Unknown id',
         }
     else
+        ---@diagnostic disable-next-line: undefined-field
+        local now = os.epoch('local') / 1000 -- luacheck: ignore
         response = {
             ok = true,
             id = data.id,
             status = turtle_states[data.id],
+            status_age = now - turtle_states[data.id].last_update,
         }
     end
+
     tel_log:debug('Respond to', id)
     rednet.send(id, json.encode(response), 'mainframe_response')
 end
@@ -90,6 +97,7 @@ end
 
 local function run_remote_log()
     log:info('Starting remote log thread')
+    peripheral.find('modem', rednet.open)
 
     local log_files = {}
 

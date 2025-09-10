@@ -10,6 +10,8 @@ local log = logging.get_logger('main')
 local vec = require 'cc-libs.util.vec'
 local vec3 = vec.vec3
 
+local telemetry = require 'cc-libs.telemetry'
+
 local argparse = require 'cc-libs.util.argparse'
 local parser = argparse.ArgParse:new('farm', 'Harvest crops from the bottom right corner')
 parser:add_arg('width', { help = 'plot width' })
@@ -41,6 +43,7 @@ local seed_name_map = {
 local home = vec3(1564, 69, -699)
 
 local function return_home()
+    telemetry.set_update_interval(1)
     local pos = tmc.location.pos
     local delta = home - pos
 
@@ -93,6 +96,7 @@ local function replant(name)
 end
 
 local function harvest_crops()
+    telemetry.set_update_interval(1)
     log:info('Harvesting crops')
 
     tmc:up()
@@ -161,8 +165,9 @@ local function run()
 
     while true do
         harvest_crops()
-        sleep(60 * 20)
+        telemetry.set_update_interval(60)
+        sleep(60 * 20) -- 20 minutes
     end
 end
 
-log:catch_errors(run)
+telemetry.run_with_telemetry(log.catch_errors, log, run)
