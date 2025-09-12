@@ -3,22 +3,6 @@
         "stub/"
     ],
     "Lua.diagnostics.globals": [
-        "colors",
-        "disk",
-        "fs",
-        "gps",
-        "http",
-        "io",
-        "keys",
-        "paintutils",
-        "parallel",
-        "peripheral",
-        "rednet",
-        "term",
-        "textutils",
-        "turtle",
-        "vector",
-        "window",
         "assert_true",
         "assert_false",
         "assert_eq",
@@ -51,5 +35,9 @@
     },
     "[lua]": {
         "editor.defaultFormatter": "JohnnyMorganz.stylua"
-    }
+    },
+    "Lua.workspace.userThirdParty": [
+        "stubs"
+    ],
+    "Lua.workspace.checkThirdParty": true
 }

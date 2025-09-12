@@ -10,7 +10,6 @@ local vec3 = vec.vec3
 
 local vert_norm = vec3:new(0, 1, 0)
 
----@enum Compass
 local Compass = {
     N = 1,
     E = 2,
@@ -18,7 +17,6 @@ local Compass = {
     W = 4,
 }
 
----@enum Action
 local Action = {
     FORWARD = 1,
     BACKWARD = 2,

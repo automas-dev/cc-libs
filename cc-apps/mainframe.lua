@@ -106,19 +106,23 @@ local function run_remote_log()
 
     while true do
         local id, message = rednet.receive('remote_log')
-        local success, data = pcall(json.decode, message)
-        if not success then
-            remote_log:error('Failed to decode message from', id)
+        if type(message) ~= 'string' then
+            log:warning('Message was not a string')
         else
-            if logging.level_from_name(data['level']) >= logging.Level.WARNING then
-                stream:send('[' .. data['host'] .. '] ' .. fmt:format_record(data))
+            local success, data = pcall(json.decode, message)
+            if not success then
+                remote_log:error('Failed to decode message from', id)
+            else
+                if logging.level_from_name(data['level']) >= logging.Level.WARNING then
+                    stream:send('[' .. data['host'] .. '] ' .. fmt:format_record(data))
+                end
+                local file_handle = log_files[data.host]
+                if not file_handle then
+                    file_handle = logging.FileStream:new('logs/remote/' .. data['host'] .. '.json')
+                    log_files[data.host] = file_handle
+                end
+                file_handle:send(message)
             end
-            local file_handle = log_files[data.host]
-            if not file_handle then
-                file_handle = logging.FileStream:new('logs/remote/' .. data['host'] .. '.json')
-                log_files[data.host] = file_handle
-            end
-            file_handle:send(message)
         end
     end
 end

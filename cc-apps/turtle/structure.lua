@@ -26,7 +26,7 @@ end
 log:info('Loading structure from', structure_path)
 
 local file = assert(io.open(structure_path, 'r'))
-local structure = json.decode(file:read('*all'))
+local structure = json.decode(file:read('a'))
 file:close()
 
 local tmc = Motion:new()

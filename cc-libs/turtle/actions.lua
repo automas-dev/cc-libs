@@ -161,6 +161,7 @@ function M.examine_inventory(side)
 
     for slot in pairs(inv.list()) do
         local detail = inv.getItemDetail(slot)
+        assert(detail ~= nil)
         log:trace('Slot', slot, 'has item', detail.name)
         local limit = inv.getItemLimit(slot)
 
