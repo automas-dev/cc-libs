@@ -13,6 +13,8 @@ local Motion = ccl_motion.Motion
 
 local actions = require 'cc-libs.turtle.actions'
 
+local telemetry = require 'cc-libs.telemetry'
+
 local args = { ... }
 if #args < 1 then
     print('Usage: shaft_down <n> <block_walls>')
@@ -58,20 +60,25 @@ local function place_all_sides()
 end
 
 local total = 0
-for _ = 1, n do
-    if not tmc:down() then
-        break
+
+local function run_out()
+    for _ = 1, n do
+        if not tmc:down() then
+            break
+        end
+        place_all_sides()
+        total = total + 1
     end
-    place_all_sides()
-    total = total + 1
 end
 
--- Return
+local function run_return()
+    log:info('Returning to station')
 
-log:info('Returning to station')
-
-for _ = 1, total do
-    tmc:up()
+    for _ = 1, total do
+        tmc:up()
+    end
+    log:info('Done!')
 end
 
-log:info('Done!')
+telemetry.run_with_telemetry(log.catch_errors, log, run_out)
+telemetry.run_with_telemetry(log.catch_errors, log, run_return)

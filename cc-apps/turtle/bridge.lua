@@ -22,6 +22,8 @@ local Motion = ccl_motion.Motion
 
 local actions = require 'cc-libs.turtle.actions'
 
+local telemetry = require 'cc-libs.telemetry'
+
 local length = tonumber(args.length)
 local block_floor = args.block_floor
 local block_ceiling = args.block_ceiling
@@ -93,5 +95,5 @@ local function run_return()
     tmc:down()
 end
 
-log:catch_errors(run_out)
-log:catch_errors(run_return)
+telemetry.run_with_telemetry(log.catch_errors, log, run_out)
+telemetry.run_with_telemetry(log.catch_errors, log, run_return)

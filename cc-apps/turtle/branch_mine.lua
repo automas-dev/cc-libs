@@ -23,6 +23,8 @@ local Compass = rgps.Compass
 local cc_nav = require('cc-libs.turtle.nav')
 local Nav = cc_nav.Nav
 
+local telemetry = require 'cc-libs.telemetry'
+
 local argparse = require 'cc-libs.util.argparse'
 local parser = argparse.ArgParse:new('branch_mine', 'branch mine')
 parser:add_arg('shafts', { help = 'number of shafts to mine' })
@@ -358,4 +360,4 @@ local function run()
     log:info('Done!')
 end
 
-log:catch_errors(run)
+telemetry.run_with_telemetry(log.catch_errors, log, run)

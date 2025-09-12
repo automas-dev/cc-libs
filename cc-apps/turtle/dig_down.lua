@@ -10,6 +10,8 @@ local log = logging.get_logger('main')
 ---@module 'ccl_motion'
 local ccl_motion = require 'cc-libs.turtle.motion'
 
+local telemetry = require 'cc-libs.telemetry'
+
 local args = { ... }
 if #args < 1 then
     print('Usage: dig_down <n>')
@@ -34,19 +36,25 @@ local tmc = ccl_motion.Motion:new()
 tmc:enable_dig()
 
 local total = 0
-for _ = 1, n do
-    if not tmc:down() then
-        break
+
+local function run_out()
+    for _ = 1, n do
+        if not tmc:down() then
+            break
+        end
+        total = total + 1
     end
-    total = total + 1
 end
 
--- Return
+local function run_return()
+    log:info('Returning to station')
 
-log:info('Returning to station')
+    for _ = 1, total do
+        tmc:up()
+    end
 
-for _ = 1, total do
-    tmc:up()
+    log:info('Done!')
 end
 
-log:info('Done!')
+telemetry.run_with_telemetry(log.catch_errors, log, run_out)
+telemetry.run_with_telemetry(log.catch_errors, log, run_return)

@@ -10,6 +10,8 @@ local log = logging.get_logger('main')
 local ccl_motion = require 'cc-libs.turtle.motion'
 local Motion = ccl_motion.Motion
 
+local telemetry = require 'cc-libs.telemetry'
+
 local tmc = Motion:new()
 tmc:enable_dig()
 
@@ -44,4 +46,4 @@ local function run()
     end
 end
 
-log:catch_errors(run)
+telemetry.run_with_telemetry(log.catch_errors, log, run)
