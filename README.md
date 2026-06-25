@@ -37,7 +37,7 @@ Apps can be used via the `cc/` prefix (eg. `cc/dig_down` or `cc/branch_mine`).
 ## Development
 
 > If you choose to clone this repo, there are a few things you will need to do
-> first. See the **ComputerCraft Mod Config** section bellow. I 
+> first. See the **ComputerCraft Mod Config** section bellow.
 
 Clone the repo into a computer or turtle directory (`cc-libs` should be in the
 root directory). Lua scripts in the project root can be executed on a turtle or
