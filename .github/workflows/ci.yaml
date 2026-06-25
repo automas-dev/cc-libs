@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, 'NO RELEASE')
 
-    needs: [increment_version]
+    needs: [lint_test, increment_version]
 
     permissions:
       contents: write
@@ -102,10 +102,16 @@ jobs:
           generateReleaseNotes: true
           tag: ${{ needs.increment_version.outputs.tag }}
 
-  ci-pass:
+  check:
     runs-on: ubuntu-latest
+    if: always()
 
     needs: [lint_test, increment_version]
 
+    timeout-minutes: 1
+
     steps:
-      - run: echo CI build passed
+      - name: Decide whether the needed jobs succeeded or failed
+        uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
