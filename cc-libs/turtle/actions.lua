@@ -81,10 +81,11 @@ end
 
 ---Drop all items from the given slot.
 ---@param slot integer 1 to 16
+---@param direction string|nil face to dorp, forward, up or down
 ---@return integer count number of items dropped
-function M.dump_slot(slot)
+function M.dump_slot(slot, direction)
     assert(slot > 0 and slot <= 16, 'slot must be a number between 1 and 16')
-    log:info('Dumping slot', slot)
+    log:debug('Dumping slot', slot)
 
     turtle.select(slot)
 
@@ -93,9 +94,16 @@ function M.dump_slot(slot)
     local count = 0
     while turtle.getItemCount() > 0 do
         log:trace('Dropping item', count)
-        turtle.drop()
+        if direction == 'up' then
+            turtle.dropUp()
+        elseif direction == 'down' then
+            turtle.dropDown()
+        else
+            turtle.drop()
+        end
         count = count + 1
     end
+
     log:debug('Finished dropping items')
     return count
 end
@@ -123,6 +131,67 @@ function M.place_torch()
     log:trace('Selected old slot', old_slot)
 
     return true
+end
+
+---Open an inventory peripheral and inspect it's contents. If side is front, top
+---or bottom, the block state will be reported with it's contents.
+---@param side string peripheral side
+---@return {size: integer, slots: table[], details: table, block: table | nil } | nil info inventory details if present
+function M.examine_inventory(side)
+    log:debug('Opening peripheral on side', side)
+
+    local is_inv = false
+    for _, t in ipairs({ peripheral.getType(side) }) do
+        is_inv = is_inv or t == 'inventory'
+    end
+
+    if not is_inv then
+        log:debug('Peripheral on side', side, 'is not an inventory')
+        return nil
+    end
+
+    local inv = peripheral.wrap(side)
+
+    if not inv then
+        log:debug('No inventory found')
+        return nil
+    end
+
+    local slots = {}
+
+    for slot in pairs(inv.list()) do
+        local detail = inv.getItemDetail(slot)
+        log:trace('Slot', slot, 'has item', detail.name)
+        local limit = inv.getItemLimit(slot)
+
+        slots[slot] = {
+            slot = slot,
+            detail = detail,
+            limit = limit,
+        }
+    end
+
+    local info = {
+        size = inv.size(),
+        slots = slots,
+    }
+
+    local exists = false
+    local block = nil
+    if side == 'front' then
+        exists, block = turtle.inspect()
+    elseif side == 'top' then
+        exists, block = turtle.inspectUp()
+    elseif side == 'bottom' then
+        exists, block = turtle.inspectDown()
+    end
+
+    if exists then
+        log:debug('Adding block info')
+        info.block = block
+    end
+
+    return info
 end
 
 return M

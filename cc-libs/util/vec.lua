@@ -13,6 +13,7 @@
 ---@operator mod(number): vec2
 ---@operator pow(vec2): vec2
 ---@operator pow(number): vec2
+---@operator unm(): vec2
 ---@operator len(): integer
 local vec2 = {
     mt = {},
@@ -277,6 +278,7 @@ end
 ---@operator mod(number): vec3
 ---@operator pow(vec3): vec3
 ---@operator pow(number): vec3
+---@operator unm(): vec3
 ---@operator len(): integer
 local vec3 = {
     mt = {},

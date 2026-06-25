@@ -1,6 +1,8 @@
 ---@diagnostic disable: undefined-field
 -- luacheck: ignore 143 142
 local json = require 'cc-libs.util.json'
+local vec = require 'cc-libs.util.vec'
+local vec3 = vec.vec3
 
 local formatter = require 'cc-libs.util.logging.formatter'
 local Record = formatter.Record
@@ -13,6 +15,7 @@ local test = {}
 function test.setup()
     patch('os.getComputerID').return_value = 7
     patch('os.getComputerLabel').return_value = 'name'
+    patch('_G.gps').locate.return_unpack = { 1, 2, 3 }
 end
 
 function test.record()
@@ -24,6 +27,7 @@ function test.record()
     expect_eq(1234, r.time)
     expect_eq(7, r.host_id)
     expect_eq('name', r.host_name)
+    expect_eq(vec3:new(1, 2, 3), r.gps)
 end
 
 function test.record_no_label()
@@ -36,6 +40,21 @@ function test.record_no_label()
     expect_eq(1234, r.time)
     expect_eq(7, r.host_id)
     expect_eq('', r.host_name)
+    expect_eq(vec3:new(1, 2, 3), r.gps)
+end
+
+function test.record_no_gps()
+    os.getComputerLabel.return_value = nil
+    _G.gps.locate.return_unpack = { nil, nil, nil }
+    local r = Record:new('ss', 1, 'lc', 'msg', 1234)
+    expect_eq('ss', r.subsystem)
+    expect_eq(1, r.level)
+    expect_eq('lc', r.location)
+    expect_eq('msg', r.message)
+    expect_eq(1234, r.time)
+    expect_eq(7, r.host_id)
+    expect_eq('', r.host_name)
+    expect_eq(nil, r.gps)
 end
 
 function test.short_formatter()
@@ -69,6 +88,10 @@ function test.json_formatter()
     expect_eq('debug', decoded.level)
     expect_eq('msg', decoded.message)
     expect_eq('7:name', decoded.host)
+    expect_eq('7:name', decoded.host)
+    expect_eq(1, decoded.gps.x)
+    expect_eq(2, decoded.gps.y)
+    expect_eq(3, decoded.gps.z)
 end
 
 return test

@@ -42,7 +42,8 @@
         "assert_le",
         "patch",
         "patch_local",
-        "reset_patches"
+        "reset_patches",
+        "sleep"
     ],
     "Lua.runtime.version": "Lua 5.2",
     "Lua.format.defaultConfig": {

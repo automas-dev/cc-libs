@@ -12,7 +12,7 @@ local Handler = log_handler.Handler
 ---@return debuginfo info name and debug
 local function traceback()
     local info = debug.getinfo(3, 'Slfn')
-    for _, check in ipairs({ 'trace', 'debug', 'info', 'warn', 'warning', 'error', 'fatal' }) do
+    for _, check in ipairs({ 'traceback', 'trace', 'debug', 'info', 'warn', 'warning', 'error', 'fatal' }) do
         if info.name == check then
             info = debug.getinfo(4, 'Slf')
             break
@@ -68,14 +68,8 @@ function Logger:set_level(level)
     self.level = level
 end
 
----Write a log message to each handler
----@param level number|LogLevel message level
-function Logger:log(level, ...)
-    if level < self.level then
-        return
-    end
+local function table_to_string(...)
     local args = { ... }
-    local log_time = os.epoch('local') / 1000 -- luacheck: ignore
     local msg = ''
     for i = 1, #args do
         if i == 1 then
@@ -84,6 +78,18 @@ function Logger:log(level, ...)
             msg = msg .. ' ' .. tostring(args[i])
         end
     end
+    return msg
+end
+
+---Write a log message to each handler
+---@param level number|LogLevel message level
+function Logger:log(level, ...)
+    if level < self.level then
+        return
+    end
+    ---@diagnostic disable-next-line: undefined-field
+    local log_time = os.epoch('local') / 1000 -- luacheck: ignore
+    local msg = table_to_string(...)
     local record = Record:new(self.subsystem, level, traceback(), msg, log_time)
     local handlers = self.handlers
     --- root should always have handlers after basic_config is called
@@ -95,6 +101,14 @@ function Logger:log(level, ...)
             h:send(record)
         end
     end
+end
+
+-- TODO test traceback
+---Write a log message with TRACE level including a traceback
+---@param ... any message
+function Logger:traceback(...)
+    self:log(Level.TRACE, ...)
+    self:log(Level.TRACE, debug.traceback('', 2))
 end
 
 ---Write a log message with TRACE level
@@ -137,7 +151,22 @@ end
 ---@param ... any message
 function Logger:fatal(...)
     self:log(Level.FATAL, ...)
-    error(table.concat({ ... }, ''))
+    error(table_to_string(...))
+end
+
+---Call a function and log any errors that occur.
+---@param fn fun() function to run catching and logging errors
+---@param ... any to the function
+---@return boolean status true if an error was caught
+---@return any result of `fn`
+function Logger:catch_errors(fn, ...)
+    local status, res = xpcall(fn, debug.traceback, ...)
+
+    if not status then
+        self:error(res)
+    end
+
+    return status, res
 end
 
 return {

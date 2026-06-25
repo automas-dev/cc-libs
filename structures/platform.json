@@ -1,0 +1,35 @@
+{
+    "aliases": {
+        "c": "minecraft:cobblestone"
+    },
+    "size": {
+        "x": 4,
+        "y": 1,
+        "z": 3
+    },
+    "layers": [
+        {
+            "layer": 1,
+            "pattern": [
+                [
+                    "c",
+                    "c",
+                    "c",
+                    "c"
+                ],
+                [
+                    "c",
+                    "c",
+                    "c",
+                    "c"
+                ],
+                [
+                    "c",
+                    "c",
+                    "c",
+                    "c"
+                ]
+            ]
+        }
+    ]
+}

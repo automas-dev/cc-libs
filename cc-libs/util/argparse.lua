@@ -289,7 +289,9 @@ function ArgParse:parse_args(args)
                 if arg.default ~= nil then
                     break
                 end
-                missing = missing .. ' ' .. arg.name
+                if arg.required then
+                    missing = missing .. ' ' .. arg.name
+                end
             end
         end
         self:print_help()

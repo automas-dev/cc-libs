@@ -4,17 +4,17 @@ local nodes = {
     a = {
         x = 0,
         y = 0,
-        neighbors = { 'b' },
+        neighbors = { ['b'] = 1 },
     },
     b = {
         x = 0,
         y = 3,
-        neighbors = { 'a', 'c' },
+        neighbors = { ['a'] = 1, ['c'] = 1 },
     },
     c = {
         x = 2,
         y = 3,
-        neighbors = { 'b' },
+        neighbors = { ['b'] = 1 },
     },
 }
 
