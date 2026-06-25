@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install Lua
         uses: leafo/gh-actions-lua@v11
@@ -28,12 +28,10 @@ jobs:
         uses: leafo/gh-actions-luarocks@v4
 
       - name: Install luacheck
-        run: |
-          luarocks install luacheck
+        run: luarocks install luacheck
 
       - name: Lint (luacheck)
-        run: |
-          luacheck .
+        run: luacheck .
 
       - name: Lint (stylua)
         uses: JohnnyMorganz/stylua-action@v4
@@ -43,65 +41,58 @@ jobs:
           args: --check .
 
       - name: Run Tests
-        run: |
-          cd tests && lua runtests.lua
+        run: cd tests && lua runtests.lua
+
+  increment_version:
+    name: Increment Version
+    uses: automas-dev/reusable-workflows/.github/workflows/increment_version.yml@v1.1
+    secrets: inherit
+    with:
+      dry-run: ${{ github.ref != 'refs/heads/main' }}
+      aliases: true
+
+    needs: [lint_test]
+
+    permissions:
+      contents: write
 
   create_release:
     name: Create Release
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, 'NO RELEASE')
 
-    needs: lint_test
+    needs: [lint_test, increment_version]
 
     permissions:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Get next version
-        uses: reecetech/version-increment@2024.10.1
-        id: version
-        with:
-          scheme: conventional_commits
+      - uses: actions/checkout@v6
 
       - name: Write version number to file
+        env:
+          VERSION: ${{ needs.increment_version.outputs.version }}
         run: |
-          echo ${{ steps.version.outputs.version }} > cc-libs/.version
-          echo ${{ steps.version.outputs.version }} > cc-apps/.version
+          echo $VERSION > cc-libs/.version
+          echo $VERSION > cc-apps/.version
 
       - name: Archive library
         uses: actions/upload-artifact@v4
         with:
           name: cc-libs
-          path: |
-            cc-libs
+          path: cc-libs
 
       - name: Archive apps
         uses: actions/upload-artifact@v4
         with:
           name: cc-apps
-          path: |
-            cc-apps
+          path: cc-apps
 
       - name: Create Library Archive
-        run: |
-          tar -cf cc-libs.tar cc-libs
+        run: tar -cf cc-libs.tar cc-libs
 
       - name: Create Apps Archive
-        run: |
-          tar -cf cc-apps.tar cc-apps
-
-      - name: Create tag
-        uses: actions/github-script@v5
-        with:
-          script: |
-            github.rest.git.createRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: 'refs/tags/${{ steps.version.outputs.version }}',
-              sha: context.sha
-            })
+        run: tar -cf cc-apps.tar cc-apps
 
       - name: Create Release
         uses: ncipollo/release-action@v1.14.0
@@ -109,4 +100,17 @@ jobs:
           artifacts: cc-libs.tar,cc-apps.tar
           makeLatest: true
           generateReleaseNotes: true
-          tag: ${{ steps.version.outputs.version }}
+          tag: ${{ needs.increment_version.outputs.tag }}
+
+  check:
+    runs-on: ubuntu-latest
+    if: always()
+
+    needs: [lint_test, increment_version]
+
+    timeout-minutes: 1
+
+    steps:
+      - uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
