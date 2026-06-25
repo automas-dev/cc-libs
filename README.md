@@ -19,7 +19,7 @@ The library install script [install_cc-libs.lua](install/install_cc-libs.lua),
 can be found under the install folder.
 
 ```sh
-wget https://raw.githubusercontent.com/twh2898/cc-libs/refs/heads/main/install/install_cc-libs.lua
+wget https://raw.githubusercontent.com/automas-dev/cc-libs/refs/heads/main/install/install_cc-libs.lua
 ```
 
 ### Apps
@@ -29,7 +29,7 @@ be found under the install folder. Most of the apps require the library to be
 installed.
 
 ```sh
-wget https://raw.githubusercontent.com/twh2898/cc-libs/refs/heads/main/install/install_cc-apps.lua
+wget https://raw.githubusercontent.com/automas-dev/cc-libs/refs/heads/main/install/install_cc-apps.lua
 ```
 
 Apps can be used via the `cc/` prefix (eg. `cc/dig_down` or `cc/branch_mine`).
@@ -44,7 +44,7 @@ root directory). Lua scripts in the project root can be executed on a turtle or
 computer, or the `cc-libs` directory can be used in other projects.
 
 ```sh
-git clone git@github.com:twh2898/cc-libs.git # <computer_or_turtle_dir>
+git clone git@github.com:automas-dev/cc-libs.git # <computer_or_turtle_dir>
 ```
 
 > [lua-ls-cc-tweaked](https://github.com/nvim-computercraft/lua-ls-cc-tweaked)
