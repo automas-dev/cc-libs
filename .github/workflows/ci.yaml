@@ -45,7 +45,7 @@ jobs:
 
   increment_version:
     name: Increment Version
-    uses: automas-dev/reusable-workflows/.github/workflows/increment_version.yml@fix_increment_verison_workflow
+    uses: automas-dev/reusable-workflows/.github/workflows/increment_version.yml@v1.1
     secrets: inherit
     with:
       dry-run: ${{ github.ref != 'refs/heads/main' }}
