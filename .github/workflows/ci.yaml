@@ -49,7 +49,6 @@ jobs:
     secrets: inherit
     with:
       dry-run: ${{ github.ref != 'refs/heads/main' }}
-      aliases: true
 
     needs: [lint_test]
 
