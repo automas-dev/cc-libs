@@ -50,7 +50,7 @@ function Record:new(subsystem, level, location, message, time)
         --luacheck: pop
     }
     if gps and gps.locate then
-        local x, y, z = gps.locate()
+        local x, y, z = gps.locate(0, false)
         if x ~= nil then
             o.gps = vec3:new(x, y, z)
         end

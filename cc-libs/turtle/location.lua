@@ -49,7 +49,7 @@ local Location = {}
 ---Create a new
 ---@return Location
 function Location:new()
-    local x, y, z = gps.locate()
+    local x, y, z = gps.locate(0, false)
 
     if x ~= nil then
         log:debug('Got gps starting location', vec3:new(x, y, z))
@@ -112,7 +112,7 @@ end
 function Location:update(action)
     -- Try to get heading from first move if gps is available
     if not self.has_heading and self.has_fix and (action == Action.FORWARD or action == Action.BACKWARD) then
-        local x, y, z = gps.locate()
+        local x, y, z = gps.locate(0, false)
         if x ~= nil then
             local pos = vec3:new(x, y, z)
             local delta = pos - self.pos
@@ -148,7 +148,7 @@ function Location:update(action)
     end
 
     if self.debug_location then
-        local x, y, z = gps.locate()
+        local x, y, z = gps.locate(0, false)
         local pos = vec3:new(x, y, z)
         if x == nil then
             log:error('Could not debug location, gps not available')

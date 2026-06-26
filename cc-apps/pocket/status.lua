@@ -12,7 +12,7 @@ local json = require 'cc-libs.util.json'
 local function run()
     peripheral.find('modem', rednet.open)
 
-    local x, y, z = gps.locate()
+    local x, y, z = gps.locate(0, false)
 
     log:info('Send telemetry')
     rednet.broadcast(json.encode({ position = { x = x, y = y, z = z } }), 'telemetry')
