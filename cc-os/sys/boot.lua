@@ -49,7 +49,14 @@ env.package = {
 }
 env.package.preload.package = env.package
 
-local kernel = assert(loadfile('sys/kernel.lua', 't', env), 'Failed to load kernel')
+local kernel, err = loadfile('sys/kernel.lua', 't', env)
+if not kernel then
+    term.setTextColor(colors.red)
+    print('Failed to load kernel')
+    term.setTextColor(colors.gray)
+    print(err)
+    term.setTextColor(colors.white)
+end
 
 local success, err = xpcall(kernel, debug.traceback)
 
