@@ -66,8 +66,8 @@ end
 function kernel.event(event, event_data)
     local hooks = kernel.hooks['*']
     if hooks then
-        for _, fn in ipairs(hooks) do
-            fn(event, event_data)
+        for _, h in ipairs(hooks) do
+            h.fn(event, event_data)
         end
     end
     hooks = kernel.hooks[event]
@@ -86,9 +86,10 @@ function kernel.event(event, event_data)
     end
 
     for _, pid in ipairs(to_prune) do
-        for i, h in ipairs(kernel.hooks) do
-            if h.pid == pid then
-                table
+        for i, proc in ipairs(kernel.procs) do
+            if proc.pid == pid then
+                table.remove(kernel.procs, i)
+                break
             end
         end
     end
