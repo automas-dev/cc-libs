@@ -58,6 +58,7 @@ local function assert_torch()
     local data = turtle.getItemDetail(1)
     if not data then
         log:fatal('No torches in 1st slot')
+        return -- not reachable, here for linter
     end
     local total_shafts = shafts - skip
     local total_distance = total_shafts * 3 + total_shafts * length * 2
