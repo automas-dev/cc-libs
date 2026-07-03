@@ -1,3 +1,4 @@
+-- Remember to update README.md with any changes here
 package.path = '../?.lua;../?/init.lua;' .. package.path
 local logging = require 'cc-libs.util.logging'
 logging.basic_config {
@@ -10,16 +11,12 @@ local log = logging.get_logger('main')
 ---@module 'ccl_motion'
 local ccl_motion = require 'cc-libs.turtle.motion'
 
-local args = { ... }
-if #args < 1 then
-    print('Usage: dig_down <n>')
-    print()
-    print('Options:')
-    print('    n: number of blocks to mine down')
-    return
-end
+local argparse = require 'cc-libs.util.argparse'
+local parser = argparse.ArgParse:new('dig_down', 'Dig a vertical shaft straight down')
+parser:add_arg('n', { help = 'number of blocks to mine down' })
+local args = parser:parse_args({ ... })
 
-local n = tonumber(args[1])
+local n = tonumber(args.n)
 
 log:info('Starting with parameters n=', n)
 
@@ -33,20 +30,24 @@ end
 local tmc = ccl_motion.Motion:new()
 tmc:enable_dig()
 
-local total = 0
-for _ = 1, n do
-    if not tmc:down() then
-        break
+local function main()
+    local total = 0
+    for _ = 1, n do
+        if not tmc:down() then
+            break
+        end
+        total = total + 1
     end
-    total = total + 1
+
+    -- Return
+
+    log:info('Returning to station')
+
+    for _ = 1, total do
+        tmc:up()
+    end
+
+    log:info('Done!')
 end
 
--- Return
-
-log:info('Returning to station')
-
-for _ = 1, total do
-    tmc:up()
-end
-
-log:info('Done!')
+log:catch_errors(main)

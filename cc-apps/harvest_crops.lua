@@ -143,7 +143,7 @@ local function harvest_crops()
     log:debug('Finished dumping inventory')
 end
 
-local function run()
+local function main()
     if tmc.location.has_fix and tmc.location.pos ~= home then
         log:warning('Did not start at home, may have been unloaded')
         if not turtle.detect() then
@@ -165,4 +165,4 @@ local function run()
     end
 end
 
-log:catch_errors(run)
+log:catch_errors(main)

@@ -1,3 +1,4 @@
+-- Remember to update README.md with any changes here
 package.path = '../?.lua;../?/init.lua;' .. package.path
 local logging = require 'cc-libs.util.logging'
 logging.basic_config {
@@ -35,7 +36,7 @@ local function harvest()
     tmc:down(height)
 end
 
-local function run()
+local function main()
     while true do
         if is_log() then
             harvest()
@@ -44,4 +45,4 @@ local function run()
     end
 end
 
-log:catch_errors(run)
+log:catch_errors(main)

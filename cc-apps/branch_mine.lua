@@ -1,3 +1,4 @@
+-- Remember to update README.md with any changes here
 package.path = '../?.lua;../?/init.lua;' .. package.path
 local logging = require 'cc-libs.util.logging'
 logging.basic_config {
@@ -24,7 +25,10 @@ local cc_nav = require('cc-libs.turtle.nav')
 local Nav = cc_nav.Nav
 
 local argparse = require 'cc-libs.util.argparse'
-local parser = argparse.ArgParse:new('branch_mine', 'branch mine')
+local parser = argparse.ArgParse:new(
+    'branch_mine',
+    'Starting on the floor, mine 3 block high branches to the left / right and place torches'
+)
 parser:add_arg('shafts', { help = 'number of shafts to mine' })
 parser:add_arg('length', { help = 'length of each shaft' })
 parser:add_arg('torch', { help = 'interval to place torches', required = false, default = 8 })
@@ -251,7 +255,7 @@ end
 -- Pickup fuel
 -- Mine through wall to last shaft for dump
 
-local function run()
+local function main()
     -- assert_torch() -- Disabled because of torch re-stock on dump
     assert_fuel()
 
@@ -359,4 +363,4 @@ local function run()
     log:info('Done!')
 end
 
-log:catch_errors(run)
+log:catch_errors(main)

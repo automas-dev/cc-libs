@@ -93,5 +93,6 @@ local function run_return()
     tmc:down()
 end
 
+-- Running as two functions so turtle will return if there is an error in run_out
 log:catch_errors(run_out)
 log:catch_errors(run_return)

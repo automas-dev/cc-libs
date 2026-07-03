@@ -1,3 +1,4 @@
+-- Remember to update README.md with any changes here
 package.path = '../?.lua;../?/init.lua;' .. package.path
 local logging = require 'cc-libs.util.logging'
 logging.basic_config {
@@ -13,20 +14,14 @@ local Motion = ccl_motion.Motion
 
 local actions = require 'cc-libs.turtle.actions'
 
-local args = { ... }
-if #args < 1 then
-    print('Usage: shaft_down <n> <block_walls>')
-    print()
-    print('Dig a shaft down and add walls if they are missing')
-    print()
-    print('Options:')
-    print('    n: number of blocks to mine down')
-    print('    block_walls: name of block to place as walls')
-    return
-end
+local argparse = require 'cc-libs.util.argparse'
+local parser = argparse.ArgParse:new('shaft_down', 'Dig a shaft down and add walls if they are missing')
+parser:add_arg('n', { help = 'number of blocks to mine down' })
+parser:add_arg('block_walls', { help = 'name of block to place as walls' })
+local args = parser:parse_args({ ... })
 
-local n = tonumber(args[1])
-local block_wall = args[2]
+local n = tonumber(args.n)
+local block_wall = args.block_wall
 
 log:info('Starting with parameters n=', n)
 
@@ -57,21 +52,25 @@ local function place_all_sides()
     end
 end
 
-local total = 0
-for _ = 1, n do
-    if not tmc:down() then
-        break
+local function main()
+    local total = 0
+    for _ = 1, n do
+        -- Can't move down, maybe we hit bedrock
+        if not tmc:down() then
+            break
+        end
+        place_all_sides()
+        total = total + 1
     end
-    place_all_sides()
-    total = total + 1
+
+    -- Return
+
+    log:info('Returning to station')
+
+    -- Using total instead of n in case we stopped early
+    tmc:up(total)
+
+    log:info('Done!')
 end
 
--- Return
-
-log:info('Returning to station')
-
-for _ = 1, total do
-    tmc:up()
-end
-
-log:info('Done!')
+log:catch_errors(main)
