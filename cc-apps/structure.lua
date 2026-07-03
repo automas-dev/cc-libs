@@ -26,6 +26,7 @@ end
 log:info('Loading structure from', structure_path)
 
 local file = assert(io.open(structure_path, 'r'))
+---@diagnostic disable-next-line: param-type-mismatch
 local structure = json.decode(file:read('*all'))
 file:close()
 
