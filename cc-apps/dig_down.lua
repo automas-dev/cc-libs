@@ -8,7 +8,6 @@ logging.basic_config {
 }
 local log = logging.get_logger('main')
 
----@module 'ccl_motion'
 local ccl_motion = require 'cc-libs.turtle.motion'
 
 local argparse = require 'cc-libs.util.argparse'
