@@ -7,7 +7,7 @@ local logging = require 'cc-libs.util.logging'
 logging.basic_config {
     level = logging.Level.INFO,
     file_level = logging.Level.TRACE,
-    filepath = 'logs/_template.log',
+    filepath = 'logs/lava_lake_refuel.log',
 }
 local log = logging.get_logger('main')
 
