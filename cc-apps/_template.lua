@@ -7,13 +7,16 @@ local logging = require 'cc-libs.util.logging'
 logging.basic_config {
     level = logging.Level.INFO,
     file_level = logging.Level.TRACE,
+    -- TODO update log file path
     filepath = 'logs/_template.log',
 }
 local log = logging.get_logger('main')
 
 -- Argument parsing
 local argparse = require 'cc-libs.util.argparse'
+-- TODO update app name & description
 local parser = argparse.ArgParse:new('_template', 'Fill this in with your program')
+-- TODO update args and options
 parser:add_arg('n', { help = 'count' })
 local args = parser:parse_args({ ... })
 
