@@ -110,7 +110,7 @@ local function run_remote_log()
                 file_handle = logging.FileStream:new('logs/remote/' .. data['host'] .. '.json')
                 log_files[data.host] = file_handle
             end
-            file_handle:send(message)
+            file_handle:send(tostring(message))
         end
     end
 end
