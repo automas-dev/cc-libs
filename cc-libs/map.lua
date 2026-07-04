@@ -92,6 +92,7 @@ function Map:load(path)
     log:info('Loading map from', path)
 
     local file = assert(io.open(path, 'r'))
+    ---@diagnostic disable-next-line: param-type-mismatch
     local data = json.decode(file:read('*all'))
     file:close()
     self.graph = data.graph

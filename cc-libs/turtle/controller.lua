@@ -50,7 +50,7 @@ function MotionController:_attempt_move(action, fail_cb)
             break
         elseif turtle.getFuelLevel() == 0 then
             -- NOTE getFuelLevel can return "unlimited" if fuel consumption is disabled
-            log:warn('Turtle is out of fuel')
+            log:warning('Turtle is out of fuel')
             return false
         elseif fail_cb then
             fail_cb()
@@ -70,7 +70,7 @@ function MotionController:forward(n)
     for _ = 1, n do
         if not self:_attempt_move(turtle.forward, (self.can_dig and turtle.dig or nil)) then
             -- TODO is this warn in the right place?
-            log:warn('Failed to move forward after ' .. self.max_tries .. 'attempts')
+            log:warning('Failed to move forward after ' .. self.max_tries .. 'attempts')
             return false
         end
         if self.location ~= nil then
@@ -90,7 +90,7 @@ function MotionController:backward(n)
     for _ = 1, n do
         if not self:_attempt_move(turtle.back) then
             -- TODO is this warn in the right place?
-            log:warn('Failed to move back after ' .. self.max_tries .. 'attempts')
+            log:warning('Failed to move back after ' .. self.max_tries .. 'attempts')
             return false
         end
         if self.location ~= nil then
@@ -110,7 +110,7 @@ function MotionController:up(n)
     for _ = 1, n do
         if not self:_attempt_move(turtle.up, (self.can_dig and turtle.digUp or nil)) then
             -- TODO is this warn in the right place?
-            log:warn('Failed to move up after ' .. self.max_tries .. 'attempts')
+            log:warning('Failed to move up after ' .. self.max_tries .. 'attempts')
             return false
         end
         if self.location ~= nil then
@@ -130,7 +130,7 @@ function MotionController:down(n)
     for _ = 1, n do
         if not self:_attempt_move(turtle.down, (self.can_dig and turtle.digDown or nil)) then
             -- TODO is this warn in the right place?
-            log:warn('Failed to move down after ' .. self.max_tries .. 'attempts')
+            log:warning('Failed to move down after ' .. self.max_tries .. 'attempts')
             return false
         end
         if self.location ~= nil then

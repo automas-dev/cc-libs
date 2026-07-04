@@ -1,26 +1,29 @@
----@module 'ccl_logging'
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('motion')
 
----@module 'ccl_rgps'
-local ccl_rgps = require 'cc-libs.turtle.rgps'
-local Action = ccl_rgps.Action
+local ccl_location = require 'cc-libs.turtle.location'
+local Action = ccl_location.Action
+local Location = ccl_location.Location
+local CompassName = ccl_location.CompassName
+-- TODO is this needed for types?
+local Compass = ccl_location.Compass
 
 ---@class Motion
----@field max_tries integer
----@field can_dig boolean
----@field rgps? RGPS
+---@field max_tries integer max attempts to move before failing
+---@field can_dig boolean turtle can mine blocks in it's path
+---@field location Location optional location tracking
 local Motion = {}
 
+-- TODO take map for updating
 ---Create a new motion controller
----@param rgps? RGPS rgps to be updated with motions
+---@param location? Location location to be updated with motions
 ---@return Motion
-function Motion:new(rgps)
+function Motion:new(location)
     log:trace('New Motion instance')
     local o = {
         max_tries = 10,
         can_dig = false,
-        rgps = rgps or nil,
+        location = location or Location:new(),
     }
     setmetatable(o, self)
     self.__index = self
@@ -52,7 +55,7 @@ function Motion:_attempt_move(action, fail_cb)
             break
         elseif turtle.getFuelLevel() == 0 then
             -- NOTE getFuelLevel can return "unlimited" if fuel consumption is disabled
-            log:warn('Turtle is out of fuel')
+            log:warning('Turtle is out of fuel')
             return false
         elseif fail_cb then
             fail_cb()
@@ -72,12 +75,12 @@ function Motion:forward(n)
     for _ = 1, n do
         if not self:_attempt_move(turtle.forward, (self.can_dig and turtle.dig or nil)) then
             -- TODO is this warn in the right place?
-            log:warn('Failed to move forward after ' .. self.max_tries .. 'attempts')
+            log:warning('Failed to move forward after ' .. self.max_tries .. 'attempts')
             return false
         end
-        if self.rgps ~= nil then
-            self.rgps:update(Action.FORWARD)
-        end
+
+        -- Update location after move
+        self.location:update(Action.FORWARD)
     end
     return true
 end
@@ -92,12 +95,12 @@ function Motion:backward(n)
     for _ = 1, n do
         if not self:_attempt_move(turtle.back) then
             -- TODO is this warn in the right place?
-            log:warn('Failed to move back after ' .. self.max_tries .. 'attempts')
+            log:warning('Failed to move back after ' .. self.max_tries .. 'attempts')
             return false
         end
-        if self.rgps ~= nil then
-            self.rgps:update(Action.BACKWARD)
-        end
+
+        -- Update location after move
+        self.location:update(Action.BACKWARD)
     end
     return true
 end
@@ -112,12 +115,12 @@ function Motion:up(n)
     for _ = 1, n do
         if not self:_attempt_move(turtle.up, (self.can_dig and turtle.digUp or nil)) then
             -- TODO is this warn in the right place?
-            log:warn('Failed to move up after ' .. self.max_tries .. 'attempts')
+            log:warning('Failed to move up after ' .. self.max_tries .. 'attempts')
             return false
         end
-        if self.rgps ~= nil then
-            self.rgps:update(Action.UP)
-        end
+
+        -- Update location after move
+        self.location:update(Action.UP)
     end
     return true
 end
@@ -132,12 +135,12 @@ function Motion:down(n)
     for _ = 1, n do
         if not self:_attempt_move(turtle.down, (self.can_dig and turtle.digDown or nil)) then
             -- TODO is this warn in the right place?
-            log:warn('Failed to move down after ' .. self.max_tries .. 'attempts')
+            log:warning('Failed to move down after ' .. self.max_tries .. 'attempts')
             return false
         end
-        if self.rgps ~= nil then
-            self.rgps:update(Action.DOWN)
-        end
+
+        -- Update location after move
+        self.location:update(Action.DOWN)
     end
     return true
 end
@@ -157,9 +160,9 @@ function Motion:left(n)
     for i = 1, n do
         log:trace('Turn number', i)
         turtle.turnLeft()
-        if self.rgps ~= nil then
-            self.rgps:update(Action.TURN_LEFT)
-        end
+
+        -- Update location after move
+        self.location:update(Action.TURN_LEFT)
     end
 end
 
@@ -178,15 +181,34 @@ function Motion:right(n)
     for i = 1, n do
         log:trace('Turn number', i)
         turtle.turnRight()
-        if self.rgps ~= nil then
-            self.rgps:update(Action.TURN_RIGHT)
-        end
+
+        -- Update location after move
+        self.location:update(Action.TURN_RIGHT)
     end
 end
 
 ---Turn around by turning right twice
 function Motion:around()
     self:right(2)
+end
+
+---Turn to face a direction based on heading from self.location
+---@param compass Compass
+function Motion:face(compass)
+    assert(compass >= 1 and compass <= 4, 'Direction is an unknown value ' .. self.location.heading)
+    log:trace('face', CompassName[compass])
+
+    if not self.location.has_heading then
+        log:warning('Location does not have a heading, this move is relative to the starting heading')
+    end
+
+    if compass == self.location.heading + 2 or compass == self.location.heading - 2 then
+        self:around()
+    elseif compass == self.location.heading + 1 or compass == self.location.heading - 3 then
+        self:right()
+    elseif compass == self.location.heading - 1 or compass == self.location.heading + 3 then
+        self:left()
+    end
 end
 
 local M = {

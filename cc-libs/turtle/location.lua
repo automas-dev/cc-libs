@@ -4,6 +4,9 @@ local log = logging.get_logger('location')
 local vec = require 'cc-libs.util.vec'
 local vec3 = vec.vec3
 
+-- Map is only used for types so does not need to be directly imported
+---@module 'ccl_map'
+
 local vert_norm = vec3:new(0, 1, 0)
 
 ---@enum Compass
@@ -39,16 +42,18 @@ local static_delta = {
 }
 
 ---@class Location
----@field pos vec3
----@field heading Compass
----@field has_fix boolean
----@field has_heading boolean
----@field debug_location boolean
+---@field pos vec3 current location
+---@field heading Compass current heading
+---@field has_fix boolean location is known
+---@field has_heading boolean heading is known
+---@field debug_location boolean use gps to validate location after updates
+---@field map? Map optional map to update
 local Location = {}
 
----Create a new
+---Create a new Location object with locate function.
+---@param map? Map
 ---@return Location
-function Location:new()
+function Location:new(map)
     local x, y, z = gps.locate(0, false)
 
     if x ~= nil then
@@ -61,6 +66,7 @@ function Location:new()
         has_fix = x ~= nil,
         has_heading = false,
         debug_location = false,
+        map = map,
     }
     setmetatable(o, self)
     self.__index = self
@@ -108,8 +114,12 @@ function Location:set_heading_from_delta(delta)
 end
 
 ---Update position or rotation based on action
+---Throws an error for invalid action or gps unavailable when debug_location is true
 ---@param action Action
 function Location:update(action)
+    -- Used to update map at end of function
+    local pos_before_move = self.pos
+
     -- Try to get heading from first move if gps is available
     if not self.has_heading and self.has_fix and (action == Action.FORWARD or action == Action.BACKWARD) then
         local x, y, z = gps.locate(0, false)
@@ -123,6 +133,7 @@ function Location:update(action)
         end
     end
 
+    -- Update position and heading from action
     if action == Action.FORWARD then
         local delta = self:delta()
         self.pos = self.pos + delta
@@ -144,9 +155,10 @@ function Location:update(action)
             self.heading = 1
         end
     else
-        log:error('Unknown action', action)
+        log:fatal('Unknown action', action)
     end
 
+    -- Validate new position using gps
     if self.debug_location then
         local x, y, z = gps.locate(0, false)
         local pos = vec3:new(x, y, z)
@@ -155,6 +167,11 @@ function Location:update(action)
         elseif pos ~= self.pos then
             log:fatal('Location error, position', pos, 'does not match expected', self.pos)
         end
+    end
+
+    -- Add a connection to the map
+    if self.map ~= nil then
+        self.map:add(pos_before_move, self.pos)
     end
 end
 

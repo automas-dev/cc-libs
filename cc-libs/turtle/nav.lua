@@ -1,19 +1,12 @@
----@module 'ccl_logging'
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('nav')
 
----@module 'ccl_motion'
-
----@module 'ccl_vec'
-
----@module 'ccl_map'
 local cc_map = require 'cc-libs.map'
 local Map = cc_map.Map
 
----@module 'ccl_rgps'
-local rgps = require 'cc-libs.turtle.rgps'
-local Compass = rgps.Compass
-local CompassName = rgps.CompassName
+local ccl_location = require 'cc-libs.turtle.location'
+local Compass = ccl_location.Compass
+local CompassName = ccl_location.CompassName
 
 local astar = require 'cc-libs.astar'
 
@@ -102,9 +95,9 @@ function Nav:trace_step(step)
         local delta = math.abs(step.x - pos.x)
 
         if pos.x < step.x then
-            self:face(Compass.E)
+            self:face(Compass.EAST)
         else
-            self:face(Compass.W)
+            self:face(Compass.WEST)
         end
 
         self.motion:forward(delta)
@@ -120,9 +113,9 @@ function Nav:trace_step(step)
         local delta = math.abs(step.z - pos.z)
 
         if pos.z < step.z then
-            self:face(Compass.N)
+            self:face(Compass.NORTH)
         else
-            self:face(Compass.S)
+            self:face(Compass.SOUTH)
         end
         self.motion:forward(delta)
     end

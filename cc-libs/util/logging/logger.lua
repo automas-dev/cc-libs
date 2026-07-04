@@ -131,6 +131,7 @@ end
 
 ---Write a log message with WARNING level
 ---@param ... any message
+---@deprecated
 function Logger:warn(...)
     self:log(Level.WARNING, ...)
 end
