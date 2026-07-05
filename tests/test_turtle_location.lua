@@ -77,20 +77,20 @@ function test.location()
     expect_eq(Compass.EAST, heading)
 end
 
-function test.direction_name()
+function test.heading_name()
     local loc = Location:new()
 
     loc.heading = Compass.NORTH
-    expect_eq(CompassName[Compass.NORTH], loc:direction_name())
+    expect_eq(CompassName[Compass.NORTH], loc:heading_name())
 
     loc.heading = Compass.EAST
-    expect_eq(CompassName[Compass.EAST], loc:direction_name())
+    expect_eq(CompassName[Compass.EAST], loc:heading_name())
 
     loc.heading = Compass.SOUTH
-    expect_eq(CompassName[Compass.SOUTH], loc:direction_name())
+    expect_eq(CompassName[Compass.SOUTH], loc:heading_name())
 
     loc.heading = Compass.WEST
-    expect_eq(CompassName[Compass.WEST], loc:direction_name())
+    expect_eq(CompassName[Compass.WEST], loc:heading_name())
 end
 
 function test.delta()

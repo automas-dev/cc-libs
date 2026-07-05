@@ -55,7 +55,7 @@ local tmc = Motion:new(location)
 local nav = Nav:new(tmc, location, map)
 
 local function debug_location()
-    log:debug('Location is x=', location.pos.x, 'z=', location.pos.z, 'heading=', location:direction_name())
+    log:debug('Location is x=', location.pos.x, 'z=', location.pos.z, 'heading=', location:heading_name())
 end
 
 local function assert_torch()
@@ -207,7 +207,7 @@ local function place_torch()
 end
 
 local function mine_shaft()
-    log:debug('Mining shaft at z=', location.pos.z, 'heading=', location:direction_name())
+    log:debug('Mining shaft at z=', location.pos.z, 'heading=', location:heading_name())
 
     for i = 1, length do
         dig_forward()

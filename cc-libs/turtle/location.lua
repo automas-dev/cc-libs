@@ -82,15 +82,15 @@ end
 
 ---Get a string name representing the current heading
 ---@return string heading name
-function Location:direction_name()
-    assert(self.heading >= 1 and self.heading <= 4, 'Direction is an unknown value ' .. self.heading)
+function Location:heading_name()
+    assert(self.heading >= 1 and self.heading <= 4, 'Heading is an unknown value ' .. self.heading)
     return static_name[self.heading]
 end
 
 ---Get the delta vector for forwards
 ---@return Vec3 forwards vector
 function Location:delta()
-    assert(self.heading >= 1 and self.heading <= 4, 'Direction is an unknown value ' .. self.heading)
+    assert(self.heading >= 1 and self.heading <= 4, 'Heading is an unknown value ' .. self.heading)
     return static_delta[self.heading]
 end
 
@@ -102,12 +102,12 @@ function Location:set_heading_from_delta(delta)
         log:trace('Delta x', delta.x)
         self.heading = delta.x > 0 and Compass.EAST or Compass.WEST
         self.has_heading = true
-        log:debug('Got heading', self:direction_name(), 'from delta', delta)
+        log:debug('Got heading', self:heading_name(), 'from delta', delta)
     elseif delta.z ~= 0 then
         log:trace('Delta z', delta.z)
         self.heading = delta.z > 0 and Compass.SOUTH or Compass.NORTH
         self.has_heading = true
-        log:debug('Got heading', self:direction_name(), 'from delta', delta)
+        log:debug('Got heading', self:heading_name(), 'from delta', delta)
     else
         log:error('Could not find delta direction')
     end
