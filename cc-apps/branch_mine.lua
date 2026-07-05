@@ -14,14 +14,14 @@ local map_file = 'branch_map.json'
 local ccl_motion = require 'cc-libs.turtle.motion'
 local Motion = ccl_motion.Motion
 
-local ccl_map = require('cc-libs.map')
+local ccl_map = require 'cc-libs.map'
 local Map = ccl_map.Map
 
-local rgps = require('cc-libs.turtle.rgps')
-local RGPS = rgps.RGPS
-local Compass = rgps.Compass
+local ccl_location = require 'cc-libs.turtle.location'
+local Location = ccl_location.Location
+local Compass = ccl_location.Compass
 
-local ccl_nav = require('cc-libs.turtle.nav')
+local ccl_nav = require 'cc-libs.turtle.nav'
 local Nav = ccl_nav.Nav
 
 local argparse = require 'cc-libs.util.argparse'
@@ -50,12 +50,12 @@ if fs.exists(map_file) then
     log:warning('LOAD MAP IS DISABLED')
     -- map:load(map_file)
 end
-local gps = RGPS:new(map)
-local tmc = Motion:new(gps)
-local nav = Nav:new(tmc, gps, map)
+local location = Location:new(map)
+local tmc = Motion:new(location)
+local nav = Nav:new(tmc, location, map)
 
 local function debug_location()
-    log:debug('Location is x=', gps.pos.x, 'z=', gps.pos.z, 'dir=', gps:direction_name())
+    log:debug('Location is x=', location.pos.x, 'z=', location.pos.z, 'heading=', location:direction_name())
 end
 
 local function assert_torch()
@@ -103,17 +103,17 @@ end
 
 local function dump()
     local state = {
-        dir = gps.dir,
+        heading = location.heading,
     }
 
     log:info('Inventory is full, dumping')
-    log:debug('Current state is dir=', state.dir)
+    log:debug('Current state is heading=', state.heading)
 
     return_to_station()
 
     -- Dump
 
-    nav:face(Compass.E)
+    nav:face(Compass.EAST)
 
     log:debug('At station, dumping inventory')
     for i = 2, 16 do
@@ -125,7 +125,7 @@ local function dump()
     turtle.select(1)
 
     log:info('Collecting more torches')
-    nav:face(Compass.W)
+    nav:face(Compass.WEST)
     local success, err = turtle.suck(turtle.getItemSpace())
     log:debug('When sucking torches, got return', tostring(success))
     if not success then
@@ -136,7 +136,7 @@ local function dump()
 
     log:info('Returning to mining')
     nav:follow()
-    nav:face(state.dir)
+    nav:face(state.heading)
 end
 
 local function try_forward(n)
@@ -197,7 +197,7 @@ local function place_torch()
     if data.name ~= 'minecraft:torch' then
         log:error('Item in slot 1 is not torch')
         return_to_station()
-        nav:face(Compass.N)
+        nav:face(Compass.NORTH)
         tmc:down()
         return false
     end
@@ -207,7 +207,7 @@ local function place_torch()
 end
 
 local function mine_shaft()
-    log:debug('Mining shaft at z=', gps.pos.z, 'dir=', gps:direction_name())
+    log:debug('Mining shaft at z=', location.pos.z, 'heading=', location:direction_name())
 
     for i = 1, length do
         dig_forward()
@@ -215,7 +215,7 @@ local function mine_shaft()
         if i > 0 and i % torch == 0 then -- > 0 to prevent placing in tunnel
             if not place_torch() then
                 return_to_station()
-                nav:face(Compass.N)
+                nav:face(Compass.NORTH)
                 tmc:down()
                 return false
             end
@@ -225,16 +225,16 @@ local function mine_shaft()
 end
 
 local function mine_tunnel()
-    log:debug('Mining tunnel at z=', gps.pos.z)
-    assert(gps.pos.x == 0, 'Mining tunnel but not at x=0')
+    log:debug('Mining tunnel at z=', location.pos.z)
+    assert(location.pos.x == 0, 'Mining tunnel but not at x=0')
 
-    nav:face(Compass.N)
+    nav:face(Compass.NORTH)
 
     for _ = 1, 3 do
-        if gps.pos.z % torch == 1 then -- 1 is fix for gps starting a block behind
+        if location.pos.z % torch == 1 then -- 1 is fix for gps starting a block behind
             if not place_torch() then
                 return_to_station()
-                nav:face(Compass.N)
+                nav:face(Compass.NORTH)
                 tmc:down()
                 return false
             end
@@ -243,7 +243,7 @@ local function mine_tunnel()
         dig_forward()
     end
 
-    nav:face(Compass.S)
+    nav:face(Compass.SOUTH)
     try_forward(3)
     return true
 end
@@ -291,11 +291,11 @@ local function main()
             end
 
             -- Mine right half of shaft
-            nav:face(Compass.E)
+            nav:face(Compass.EAST)
             mine_shaft()
 
             -- Mine left half of shaft
-            nav:face(Compass.W)
+            nav:face(Compass.WEST)
             try_forward(length)
             if not mine_shaft() then
                 return
@@ -304,10 +304,10 @@ local function main()
             -- Turn to face next shaft
             if i % 2 == 0 then
                 log:debug('Shaft is even so facing East')
-                nav:face(Compass.E)
+                nav:face(Compass.EAST)
             else
                 log:debug('Shaft is odd so facing West')
-                nav:face(Compass.W)
+                nav:face(Compass.WEST)
             end
 
             if not mine_shaft() then
@@ -319,10 +319,10 @@ local function main()
 
             if i % 2 == 0 then
                 log:debug('Shaft is even so facing East')
-                nav:face(Compass.E)
+                nav:face(Compass.EAST)
             else
                 log:debug('Shaft is odd so facing West')
-                nav:face(Compass.W)
+                nav:face(Compass.WEST)
             end
 
             if not mine_shaft() then
@@ -332,7 +332,7 @@ local function main()
 
         -- Mine to start of next shaft and push
         if i < shafts then
-            nav:face(Compass.N)
+            nav:face(Compass.NORTH)
             dig_forward(3)
         end
     end
@@ -341,7 +341,7 @@ local function main()
 
     return_to_station()
 
-    nav:face(Compass.E)
+    nav:face(Compass.EAST)
 
     log:debug('At station, dumping inventory')
     for i = 2, 16 do
@@ -352,7 +352,7 @@ local function main()
     end
     turtle.select(1)
 
-    nav:face(Compass.N)
+    nav:face(Compass.NORTH)
     tmc:down()
     debug_location()
 
