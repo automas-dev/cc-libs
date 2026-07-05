@@ -48,6 +48,9 @@ end
 function Point:link(other, weight)
     weight = weight or 1
     self.links[other.id] = weight
+    if other.links[self.id] == nil then
+        other:link(self, weight)
+    end
 end
 
 ---String conversion overload
@@ -60,7 +63,7 @@ function Point:__tostring()
         .. self.y
         .. ',z='
         .. self.z
-        .. ',#inks='
+        .. ',#links='
         .. table_size(self.links)
         .. ')'
 end
@@ -155,6 +158,9 @@ function Map:add(p1, p2, weight)
 
     g_p1:link(g_p2, weight)
     g_p2:link(g_p1, weight)
+
+    -- TODO check for links adjacent to p2
+    -- TODO should check include p1?
 
     log:trace('p1 becomes', g_p1, 'p2 becomes', g_p2)
 end
