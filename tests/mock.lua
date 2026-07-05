@@ -21,7 +21,7 @@ end
 
 ---@param args? {return_value?: any, return_unpack?: any[], return_sequence?: any[], return_sequence_unpack?: any[][], custom_function?: fun(...): any?}
 ---@return Mock | any
-function MagicMock(args)
+function Mock(args)
     args = args or {}
     local mock = {
         mt = {
@@ -81,7 +81,7 @@ function MagicMock(args)
                 return nil
             end
         end
-        local new_mock = MagicMock()
+        local new_mock = Mock()
         table[key] = new_mock
         return new_mock
     end

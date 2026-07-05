@@ -65,7 +65,7 @@ end
 function test.file_open_file_close_first()
     local s = FileStream:new('a.log')
     io.open.return_unpack = { 'a', nil }
-    local mock_file = MagicMock()
+    local mock_file = Mock()
     s.file = mock_file
     local success, err = s:open_file('b.log')
     expect_true(success)
@@ -86,7 +86,7 @@ end
 
 function test.file_send()
     local s = FileStream:new('a.log')
-    s.file = MagicMock()
+    s.file = Mock()
     local res = s:send('hi')
     expect_true(res)
     assert_eq(2, s.file.write.call_count)
@@ -97,7 +97,7 @@ end
 
 function test.file_send_open_file()
     local s = FileStream:new('a.log')
-    s.open_file = MagicMock()
+    s.open_file = Mock()
     local res = s:send('hi')
     expect_false(res)
     assert_eq(1, s.open_file.call_count)
