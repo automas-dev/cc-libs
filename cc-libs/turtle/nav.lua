@@ -1,8 +1,8 @@
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('nav')
 
-local cc_map = require 'cc-libs.map'
-local Map = cc_map.Map
+local ccl_map = require 'cc-libs.map'
+local Map = ccl_map.Map
 
 local ccl_location = require 'cc-libs.turtle.location'
 local Compass = ccl_location.Compass

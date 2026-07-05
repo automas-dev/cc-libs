@@ -11,14 +11,14 @@ local log = logging.get_logger('main')
 local ccl_motion = require 'cc-libs.turtle.motion'
 local Motion = ccl_motion.Motion
 
-local cc_map = require('cc-libs.map')
-local Map = cc_map.Map
+local ccl_map = require('cc-libs.map')
+local Map = ccl_map.Map
 
 local ccl_rgps = require 'cc-libs.turtle.rgps'
 local RGPS = ccl_rgps.RGPS
 
-local cc_nav = require('cc-libs.turtle.nav')
-local Nav = cc_nav.Nav
+local ccl_nav = require('cc-libs.turtle.nav')
+local Nav = ccl_nav.Nav
 
 local argparse = require 'cc-libs.util.argparse'
 local parser = argparse.ArgParse:new(
