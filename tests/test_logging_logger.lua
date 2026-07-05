@@ -181,6 +181,7 @@ function test.level_methods()
     expect_eq(Level.INFO, l.log.args[2])
     expect_eq('c', l.log.args[3])
     l.log.reset()
+    ---@diagnostic disable-next-line: deprecated
     l:warn('d')
     assert_eq(1, l.log.call_count)
     expect_eq(Level.WARNING, l.log.args[2])
