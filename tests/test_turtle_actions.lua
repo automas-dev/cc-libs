@@ -1,3 +1,4 @@
+---@diagnostic disable: inject-field, undefined-field
 local actions = require 'cc-libs.turtle.actions'
 
 local test = {}
