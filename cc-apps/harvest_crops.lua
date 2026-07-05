@@ -8,7 +8,7 @@ logging.basic_config {
 local log = logging.get_logger('main')
 
 local vec = require 'cc-libs.util.vec'
-local vec3 = vec.vec3
+local Vec3 = vec.Vec3
 
 local argparse = require 'cc-libs.util.argparse'
 local parser = argparse.ArgParse:new('farm', 'Harvest crops from the bottom right corner')
@@ -38,7 +38,7 @@ local seed_name_map = {
     ['minecraft:carrots'] = 'minecraft:carrot',
 }
 
-local home = vec3(1564, 69, -699)
+local home = Vec3(1564, 69, -699)
 
 local function return_home()
     local pos = tmc.location.pos

@@ -2,12 +2,12 @@ local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('location')
 
 local vec = require 'cc-libs.util.vec'
-local vec3 = vec.vec3
+local Vec3 = vec.Vec3
 
 -- Map is only used for types so does not need to be directly imported
 ---@module 'ccl_map'
 
-local vert_norm = vec3:new(0, 1, 0)
+local vert_norm = Vec3:new(0, 1, 0)
 
 ---@enum Compass
 local Compass = {
@@ -35,14 +35,14 @@ local static_name = {
 }
 
 local static_delta = {
-    vec3:new(0, 0, -1),
-    vec3:new(1, 0, 0),
-    vec3:new(0, 0, 1),
-    vec3:new(-1, 0, 0),
+    Vec3:new(0, 0, -1),
+    Vec3:new(1, 0, 0),
+    Vec3:new(0, 0, 1),
+    Vec3:new(-1, 0, 0),
 }
 
 ---@class Location
----@field pos vec3 current location
+---@field pos Vec3 current location
 ---@field heading Compass current heading
 ---@field has_fix boolean location is known
 ---@field has_heading boolean heading is known
@@ -57,11 +57,11 @@ function Location:new(map)
     local x, y, z = gps.locate(0, false)
 
     if x ~= nil then
-        log:debug('Got gps starting location', vec3:new(x, y, z))
+        log:debug('Got gps starting location', Vec3:new(x, y, z))
     end
 
     local o = {
-        pos = vec3:new(x, y, z),
+        pos = Vec3:new(x, y, z),
         heading = Compass.NORTH,
         has_fix = x ~= nil,
         has_heading = false,
@@ -74,7 +74,7 @@ function Location:new(map)
 end
 
 ---Get the current location as position and heading
----@return vec3 position
+---@return Vec3 position
 ---@return Compass heading
 function Location:location()
     return self.pos, self.heading
@@ -88,14 +88,14 @@ function Location:direction_name()
 end
 
 ---Get the delta vector for forwards
----@return vec3 forwards vector
+---@return Vec3 forwards vector
 function Location:delta()
     assert(self.heading >= 1 and self.heading <= 4, 'Direction is an unknown value ' .. self.heading)
     return static_delta[self.heading]
 end
 
 ---Get heading from motion delta
----@param delta vec3 motion delta
+---@param delta Vec3 motion delta
 function Location:set_heading_from_delta(delta)
     log:trace('Getting heading from delta', delta)
     if delta.x ~= 0 then
@@ -124,7 +124,7 @@ function Location:update(action)
     if not self.has_heading and self.has_fix and (action == Action.FORWARD or action == Action.BACKWARD) then
         local x, y, z = gps.locate(0, false)
         if x ~= nil then
-            local pos = vec3:new(x, y, z)
+            local pos = Vec3:new(x, y, z)
             local delta = pos - self.pos
             if action == Action.BACKWARD then
                 delta = -delta
@@ -161,7 +161,7 @@ function Location:update(action)
     -- Validate new position using gps
     if self.debug_location then
         local x, y, z = gps.locate(0, false)
-        local pos = vec3:new(x, y, z)
+        local pos = Vec3:new(x, y, z)
         if x == nil then
             log:error('Could not debug location, gps not available')
         elseif pos ~= self.pos then

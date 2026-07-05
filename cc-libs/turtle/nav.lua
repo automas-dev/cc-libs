@@ -14,15 +14,15 @@ local astar = require 'cc-libs.astar'
 ---@field map Map
 ---@field motion Motion
 ---@field gps any
----@field station vec3
----@field resume? vec3
+---@field station Vec3
+---@field resume? Vec3
 local Nav = {}
 
 ---Create a new navigation controller
 ---@param motion Motion controller to move the turtle
 ---@param gps any provides turtle position
 ---@param map? Map  map to store paths, will create new if nil
----@param station? vec3 location of the station, if nil will be set to gps.pos
+---@param station? Vec3 location of the station, if nil will be set to gps.pos
 ---@return Nav
 function Nav:new(motion, gps, map, station)
     map = map or Map:new()
@@ -54,8 +54,8 @@ function Nav:mark_resume()
 end
 
 ---Check if two points share the same value for at least 2 axis
----@param pos1 vec3
----@param pos2 vec3
+---@param pos1 Vec3
+---@param pos2 Vec3
 ---@return boolean
 local function is_inline(pos1, pos2)
     log:trace('is inline', pos1, pos2)
@@ -84,7 +84,7 @@ function Nav:face(compass)
 end
 
 ---Move to the trace step
----@param step vec3 position to move to
+---@param step Vec3 position to move to
 function Nav:trace_step(step)
     log:debug('trace step to pos', step.x, step.y, step.z)
     local pos = self.gps.pos

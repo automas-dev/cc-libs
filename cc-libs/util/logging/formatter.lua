@@ -1,6 +1,6 @@
 local json = require 'cc-libs.util.json'
 local vec = require 'cc-libs.util.vec'
-local vec3 = vec.vec3
+local Vec3 = vec.Vec3
 
 local _level = require 'cc-libs.util.logging.level'
 
@@ -28,7 +28,7 @@ end
 ---@field time number
 ---@field host_id number
 ---@field host_name string
----@field gps vec3?
+---@field gps Vec3?
 local Record = {}
 
 ---Create a new Record instance
@@ -52,7 +52,7 @@ function Record:new(subsystem, level, location, message, time)
     if gps and gps.locate then
         local x, y, z = gps.locate(0, false)
         if x ~= nil then
-            o.gps = vec3:new(x, y, z)
+            o.gps = Vec3:new(x, y, z)
         end
     end
     setmetatable(o, self)

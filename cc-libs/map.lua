@@ -109,8 +109,8 @@ function Map:dump(path)
 end
 
 ---Check if two points share the same value for at least 2 axis
----@param pos1 vec3|Point
----@param pos2 vec3|Point
+---@param pos1 Vec3|Point
+---@param pos2 Vec3|Point
 ---@return boolean
 local function is_inline(pos1, pos2)
     if pos1.x ~= pos2.x then
@@ -150,8 +150,8 @@ function Map:point(x, y, z)
 end
 
 ---Add two points to the graph and link them. The two points must be inline.
----@param p1 vec3|Point the first point
----@param p2 vec3|Point the second point
+---@param p1 Vec3|Point the first point
+---@param p2 Vec3|Point the second point
 ---@param weight? number weight of the link
 function Map:add(p1, p2, weight)
     log:debug('Add point', p1, 'and', p2)
