@@ -3,6 +3,7 @@
 local json = require 'cc-libs.util.json'
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('map')
+local table_size = require 'cc-libs.util.table_size'
 
 ---@alias PointId string
 
@@ -47,14 +48,6 @@ end
 function Point:link(other, weight)
     weight = weight or 1
     self.links[other.id] = weight
-end
-
-local function table_size(t)
-    local count = 0
-    for _ in pairs(t) do
-        count = count + 1
-    end
-    return count
 end
 
 ---String conversion overload
