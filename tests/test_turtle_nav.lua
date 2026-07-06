@@ -83,4 +83,25 @@ function test.mark_resume()
     expect_eq(point.id, poi)
 end
 
+function test.find_path()
+    local nav, map = setup_nav()
+    local p1 = map:point(0, 0, 0)
+    local p2 = map:point(1, 0, 0)
+    local p3 = map:point(1, 1, 0)
+    map:add(p1, p2)
+    map:add(p2, p3)
+
+    nav:add_poi('start', p1)
+    nav:add_poi('goal', p3)
+
+    local path = nav:find_path('start', 'goal')
+    assert_ne(nil, path)
+    expect_eq(3, #path)
+    -- Not part of test, only here for type check on next lines
+    assert(path ~= nil)
+    expect_eq(p1, path[1])
+    expect_eq(p2, path[2])
+    expect_eq(p3, path[3])
+end
+
 return test

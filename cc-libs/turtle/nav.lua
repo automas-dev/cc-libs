@@ -58,6 +58,10 @@ function Nav:mark_resume()
     self:add_poi('resume')
 end
 
+---Find a path from start to goal
+---@param start_poi_name string
+---@param goal_poi_name string
+---@return Point[]? path from start to goal
 function Nav:find_path(start_poi_name, goal_poi_name)
     local start = self:get_poi(start_poi_name)
     assert(start ~= nil, 'Missing start poi ' .. start_poi_name)
@@ -65,40 +69,8 @@ function Nav:find_path(start_poi_name, goal_poi_name)
     local goal = self:get_poi(goal_poi_name)
     assert(goal ~= nil, 'Missing goal poi ' .. goal_poi_name)
 
-    log:debug('Searching for path between', start, 'and', goal)
-
-    local function neighbors(pid)
-        local point = self.map:get(pid)
-        log:trace('neighbors', pid, table_size(point.links))
-        return point.links
-    end
-
-    local function f(n1, n2)
-        log:trace('f n1=', n1, 'n2=', n2)
-        local dx = math.abs(self.map:get(n1).x - self.map:get(n2).x)
-        local dy = math.abs(self.map:get(n1).y - self.map:get(n2).y)
-        return dx + dy
-    end
-
-    local function h(n1, n2)
-        log:trace('h n1=', n1, 'n2=', n2)
-        local dx = math.abs(self.map:get(n1).x - self.map:get(n2).x)
-        local dy = math.abs(self.map:get(n1).y - self.map:get(n2).y)
-        return math.sqrt(dx * dx + dy * dy)
-    end
-
-    local path = astar(start.id, goal.id, neighbors, f, h, true)
-    log:debug('Path completed with', #path, 'points')
-
-    local path_points = {}
-    for i = 1, #path do
-        path_points[i] = self.map:get(path[i])
-    end
-
-    return path_points
+    return self.map:find_path(start, goal)
 end
-
--- function Nav:
 
 ---Move to the trace step
 ---@param step Vec3 position to move to
