@@ -23,6 +23,20 @@ local function is_log()
     return false
 end
 
+local function place_sapling()
+    for i = 1, 16 do
+        local item = turtle.getItemDetail(i)
+        log:trace('Checking slot', i, 'found item', item)
+        if item ~= nil and string.find(item.name, 'sapling') ~= nil then
+            log:info('Placing sapling', item.name, 'from slot', i)
+            turtle.select(i)
+            turtle.place()
+            return true
+        end
+    end
+    return false
+end
+
 local function harvest()
     log:info('Starting harvest')
     local height = 0
@@ -40,6 +54,10 @@ local function main()
     while true do
         if is_log() then
             harvest()
+            if not place_sapling() then
+                log:info('Did not place a sapling so the program will exit')
+                return
+            end
         end
         sleep(1)
     end
