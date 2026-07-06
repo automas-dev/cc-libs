@@ -6,6 +6,9 @@ scripts. Not all are documented.
 If applications are running from this repo, use the `cc-apps/` prefix. If
 applications are installed using the installer script, use the `cc/` prefix.
 
+All commands that use argparse (take any arguments) have hidden `-h` and
+`--help` flags to print the usage without executing the script.
+
 ## [_template.lua](_template.lua)
 
 Template for application scrips.
@@ -247,12 +250,14 @@ Mine a 1x1 shaft down and construct walls around it if any are missing.
 ### Usage
 
 ```
-Usage: cc/shaft_down
+Usage: cc/shaft_down [options] <n> <block_walls>
 
 Dig a shaft down and add walls if they are missing
 Args:
     n: number of blocks to mine down
-    block_walls: name of block to place as wall
+    block_wall: name of block to place as wall
+Options:
+    -l/--ladder: place a ladder on the way back up
 ```
 
 ## [stairs](stairs.lua)
@@ -263,7 +268,7 @@ Mining will account for stair placement and mines an extra block if enabled.
 ### Usage
 
 ```
-Usage: cc/stairs <n> [place_stairs|false]
+Usage: cc/stairs [options] <n>
 
 Mine a staircase down optionally placing stairs from slot 1 on the return
 Args:
@@ -285,7 +290,7 @@ becomes full, blocks will be dropped on the ground.
 ### Usage
 
 ```
-Usage: cc/strip <length> <width> <height>
+Usage: cc/strip [options] <length> <width> <height>
 
 Mine a region to the front and right of the turtle
 WARNING this is for clearing areas, inventory will not be checked or dumped when full

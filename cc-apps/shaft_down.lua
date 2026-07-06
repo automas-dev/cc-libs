@@ -17,7 +17,7 @@ local argparse = require 'cc-libs.util.argparse'
 local parser = argparse.ArgParse:new('shaft_down', 'Dig a shaft down and add walls if they are missing')
 parser:add_arg('n', { help = 'number of blocks to mine down' })
 parser:add_arg('block_wall', { help = 'name of block to place as walls' })
-parser:add_option('l', 'ladder', 'Place a ladder on the way back up')
+parser:add_option('l', 'ladder', 'place a ladder on the way back up')
 local args = parser:parse_args({ ... })
 
 local n = tonumber(args.n)
