@@ -4,17 +4,17 @@ local nodes = {
     a = {
         x = 0,
         y = 0,
-        neighbors = { ['b'] = 1 },
+        neighbors = { b = 1 },
     },
     b = {
         x = 0,
         y = 3,
-        neighbors = { ['a'] = 1, ['c'] = 1 },
+        neighbors = { a = 1, c = 1 },
     },
     c = {
         x = 2,
         y = 3,
-        neighbors = { ['b'] = 1 },
+        neighbors = { b = 1 },
     },
 }
 
@@ -43,6 +43,51 @@ function test.astar()
     expect_eq('c', path[1])
     expect_eq('b', path[2])
     expect_eq('a', path[3])
+end
+
+function test.no_path()
+    local nodes2 = {
+        a = {
+            x = 0,
+            y = 0,
+            neighbors = { b = 1 },
+        },
+        b = {
+            x = 0,
+            y = 3,
+            neighbors = { a = 1 },
+        },
+        -- Disconnect
+        c = {
+            x = 2,
+            y = 3,
+            neighbors = { d = 1 },
+        },
+        d = {
+            x = 2,
+            y = 3,
+            neighbors = { c = 1 },
+        },
+    }
+
+    local function f2(n1, n2)
+        local dx = math.abs(nodes2[n1].x - nodes2[n2].x)
+        local dy = math.abs(nodes2[n1].y - nodes2[n2].y)
+        return dx + dy
+    end
+
+    local function h2(n1, n2)
+        local dx = math.abs(nodes2[n1].x - nodes2[n2].x)
+        local dy = math.abs(nodes2[n1].y - nodes2[n2].y)
+        return math.sqrt(dx * dx + dy * dy)
+    end
+
+    local function neighbors2(node)
+        return nodes2[node].neighbors
+    end
+
+    local path = astar('a', 'd', neighbors2, f2, h2)
+    expect_eq(nil, path)
 end
 
 return test
