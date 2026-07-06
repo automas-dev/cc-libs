@@ -4,9 +4,7 @@ local function astar(start, goal, get_neighbors, cost_fn, heuristic_fn, start_to
     local f_score = {
         [start] = 0,
     }
-    local h_score = {
-        -- [start] = f_score[start] + heuristic_fn(start, goal),
-    }
+    local h_score = {}
 
     local function pop_lowest_h()
         local lowest = nil
