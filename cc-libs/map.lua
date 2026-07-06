@@ -182,10 +182,51 @@ function Map:add(p1, p2, weight)
     -- Creates link in both directions
     g_p1:link(g_p2, weight)
 
-    -- TODO check for links adjacent to p2
-    -- TODO should check include p1?
+    self:link_adjacent(g_p1)
+    self:link_adjacent(g_p2)
+
+    -- TODO check for points between p1 and p2
 
     log:trace('p1 becomes', g_p1, 'p2 becomes', g_p2)
+end
+
+---Link adjacent points if they exist
+---@param point Point
+function Map:link_adjacent(point)
+    local p
+
+    -- +x
+    p = self:get(point_id(point.x + 1, point.y, point.z))
+    if p ~= nil then
+        point:link(p, 1)
+    end
+    -- -x
+    p = self:get(point_id(point.x - 1, point.y, point.z))
+    if p ~= nil then
+        point:link(p, 1)
+    end
+
+    -- +y
+    p = self:get(point_id(point.x, point.y + 1, point.z))
+    if p ~= nil then
+        point:link(p, 1)
+    end
+    -- -y
+    p = self:get(point_id(point.x, point.y - 1, point.z))
+    if p ~= nil then
+        point:link(p, 1)
+    end
+
+    -- +z
+    p = self:get(point_id(point.x, point.y, point.z + 1))
+    if p ~= nil then
+        point:link(p, 1)
+    end
+    -- -z
+    p = self:get(point_id(point.x, point.y, point.z - 1))
+    if p ~= nil then
+        point:link(p, 1)
+    end
 end
 
 local M = {
