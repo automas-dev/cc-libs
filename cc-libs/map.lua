@@ -1,9 +1,12 @@
----@module 'ccl_vec'
-
-local json = require 'cc-libs.util.json'
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('map')
+
+local json = require 'cc-libs.util.json'
+
 local table_size = require 'cc-libs.util.table_size'
+
+local ccl_vec = require 'cc-libs.util.vec'
+local Vec3 = ccl_vec.Vec3
 
 ---@alias PointId string
 
@@ -32,6 +35,7 @@ local Point = {}
 function Point:new(x, y, z)
     local o = {
         id = point_id(x, y, z),
+        -- TODO vec instead of x, y, z
         x = x,
         y = y,
         z = z,
@@ -42,6 +46,13 @@ function Point:new(x, y, z)
     return o
 end
 
+---Create a Point from a Vec3
+---@param vec Vec3
+---@return Point
+function Point:from_vec3(vec)
+    return Point:new(vec.x, vec.y, vec.z)
+end
+
 ---Connect this point to another. This will create the link on both points to each other.
 ---@param other Point point to link with
 ---@param weight? number weight of this link
@@ -50,6 +61,21 @@ function Point:link(other, weight)
     self.links[other.id] = weight
     if other.links[self.id] == nil then
         other:link(self, weight)
+    end
+end
+
+---Check if another point is inline with one of this points axis (ie. 2 axes match)
+---@param other Vec3|Point
+---@return boolean
+function Point:inline(other)
+    if self.x ~= other.x then
+        return self.y == other.y and self.z == other.z
+    elseif self.y ~= other.y then
+        return self.x == other.x and self.z == other.z
+    elseif self.z ~= other.z then
+        return self.x == other.x and self.y == other.y
+    else
+        return true
     end
 end
 
@@ -73,6 +99,7 @@ end
 local Map = {}
 
 --- Create a new empty map
+---@return Map
 function Map:new()
     local o = {
         graph = {},
@@ -102,22 +129,6 @@ function Map:dump(path)
     local file = assert(io.open(path, 'w'))
     file:write(json.encode(self))
     file:close()
-end
-
----Check if two points share the same value for at least 2 axis
----@param pos1 Vec3|Point
----@param pos2 Vec3|Point
----@return boolean
-local function is_inline(pos1, pos2)
-    if pos1.x ~= pos2.x then
-        return pos1.y == pos2.y and pos1.z == pos2.z
-    elseif pos1.y ~= pos2.y then
-        return pos1.x == pos2.x and pos1.z == pos2.z
-    elseif pos1.z ~= pos2.z then
-        return pos1.x == pos2.x and pos1.y == pos2.y
-    else
-        return true
-    end
 end
 
 ---Get a point by it's id
@@ -151,13 +162,17 @@ end
 ---@param weight? number weight of the link
 function Map:add(p1, p2, weight)
     log:debug('Add point', p1, 'and', p2)
-    assert(is_inline(p1, p2), 'p1 is not inline with p2')
 
+    -- Get by x, y, z instead of id to support vec and auto-add missing points
     local g_p1 = self:point(p1.x, p1.y, p1.z)
     local g_p2 = self:point(p2.x, p2.y, p2.z)
 
+    -- TODO automatic weight from distance
+
+    assert(g_p1:inline(g_p2), 'p1 is not inline with p2')
+
+    -- Creates link in both directions
     g_p1:link(g_p2, weight)
-    g_p2:link(g_p1, weight)
 
     -- TODO check for links adjacent to p2
     -- TODO should check include p1?
