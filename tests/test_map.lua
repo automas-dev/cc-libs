@@ -130,6 +130,13 @@ function test.map_new_point()
     assert_eq(0, table_size(point.links))
 end
 
+function test.map_point_from_vec3()
+    local map = Map:new()
+    local point = Point:new(1, 2, 3)
+    map.graph[point.id] = point
+    assert_eq(point, map:point_from_vec3(Vec3:new(1, 2, 3)))
+end
+
 function test.map_add()
     local map = Map:new()
     local p1 = Point:new(0, 0, 0)

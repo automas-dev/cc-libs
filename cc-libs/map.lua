@@ -162,6 +162,13 @@ function Map:point(x, y, z)
     return point
 end
 
+---Get a point by Vec3 position
+---@param pos Vec3
+---@return Point
+function Map:point_from_vec3(pos)
+    return self:point(pos.x, pos.y, pos.z)
+end
+
 ---Add two points to the graph and link them. The two points must be inline.
 ---@param p1 Vec3|Point the first point
 ---@param p2 Vec3|Point the second point
