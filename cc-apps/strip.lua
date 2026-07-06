@@ -14,8 +14,8 @@ local Motion = ccl_motion.Motion
 local ccl_map = require 'cc-libs.map'
 local Map = ccl_map.Map
 
-local ccl_rgps = require 'cc-libs.turtle.rgps'
-local RGPS = ccl_rgps.RGPS
+local ccl_location = require 'cc-libs.turtle.location'
+local Location = ccl_location.Location
 
 local ccl_nav = require 'cc-libs.turtle.nav'
 local Nav = ccl_nav.Nav
@@ -44,9 +44,9 @@ assert(height >= 1, 'height must be at least 1')
 log:info('Starting with parameters length=', length, 'width=', width, 'height=', height, 'direction=', direction)
 
 local map = Map:new()
-local gps = RGPS:new(map)
-local tmc = Motion:new(gps)
-local nav = Nav:new(tmc, gps, map)
+local location = Location:new(map)
+local tmc = Motion:new(location)
+local nav = Nav:new(map, location)
 
 tmc:enable_dig()
 
@@ -92,6 +92,8 @@ local function mine_layer(dig_up, dig_down)
 end
 
 local function main()
+    nav:mark_poi('station')
+
     -- Mine 3 layers at a time
     while height >= 3 do
         log:debug('Mining layer of height 3')
@@ -119,9 +121,9 @@ local function main()
         mine_layer(direction == 'up', direction == 'down')
     end
 
-    nav:mark_resume()
-    nav:back_follow()
-    tmc:around()
+    nav:mark_poi('resume')
+    tmc:follow_path(nav:find_path('resume', 'station'))
+    tmc:right()
 end
 
 log:catch_errors(main)
