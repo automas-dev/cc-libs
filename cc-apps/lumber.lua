@@ -51,6 +51,7 @@ local function harvest()
 end
 
 local function main()
+    log:info('Starting lumber, waiting for logs')
     while true do
         if is_log() then
             harvest()
