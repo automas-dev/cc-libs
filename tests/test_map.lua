@@ -221,7 +221,10 @@ function test.find_path()
     map:add(p5, p3)
 
     local path = map:find_path(p1, p3)
+    assert_ne(nil, path)
     expect_eq(3, #path)
+    -- Not part of test, only here for type check on next lines
+    assert(path ~= nil)
     expect_eq(p1, path[1])
     expect_eq(p2, path[2])
     expect_eq(p3, path[3])
@@ -234,7 +237,6 @@ function test.find_path_no_connection()
 
     local path = map:find_path(p1, p2)
     expect_eq(nil, path)
-    -- TODO
 end
 
 return test
