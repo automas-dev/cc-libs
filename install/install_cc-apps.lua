@@ -211,9 +211,21 @@ end
 
 print('Downloading apps from github')
 
-local PACKAGE_URL = 'https://github.com/automas-dev/cc-libs/releases/latest/download/cc-apps.tar'
+local args = { ... }
+
+local PACKAGE_URL
+
+if #args >= 1 then
+    local tag = args[1]
+    print('Using tag', tag)
+    PACKAGE_URL = 'https://github.com/automas-dev/cc-libs/releases/download/' .. tag .. '/cc-apps.tar'
+else
+    print('Using latest')
+    PACKAGE_URL = 'https://github.com/automas-dev/cc-libs/releases/latest/download/cc-apps.tar'
+end
+
 local CHUNK_SIZE = 8192
-local resp = assert(http.get(PACKAGE_URL), 'Failed to fetch package from github')
+local resp = assert(http.get(PACKAGE_URL), 'Failed to fetch package from github ' .. PACKAGE_URL)
 local tar_file = assert(io.open('cc-apps.tar', 'wb'), 'Failed to open tar file')
 
 repeat
