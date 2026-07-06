@@ -33,13 +33,23 @@ end
 ---@param name string
 ---@param point Point?
 ---@return PointId? previous point id of `name`
-function Nav:add_poi(name, point)
+function Nav:mark_poi(name, point)
     if point == nil then
         point = self.map:point_from_vec3(self.location.pos)
     end
     local previous = self.poi[name]
     self.poi[name] = point.id
     log:info('Mark poi', name, point.id)
+    return previous
+end
+
+---Add a point of interest
+---@param name string
+---@return PointId? previous point id of `name`
+function Nav:clear_poi(name)
+    local previous = self.poi[name]
+    self.poi[name] = nil
+    log:info('Cleared poi', name)
     return previous
 end
 
@@ -52,7 +62,7 @@ end
 
 ---Mark the current location as resume poi
 function Nav:mark_resume()
-    self:add_poi('resume')
+    self:mark_poi('resume')
 end
 
 ---Find a path from start to goal

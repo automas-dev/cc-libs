@@ -54,18 +54,27 @@ function test.nav_new()
     expect_eq(0, table_size(nav.poi))
 end
 
-function test.add_poi()
+function test.mark_poi()
     local nav = setup_nav()
     local point = Point:new(1, 2, 3)
-    nav:add_poi('a', point)
+    nav:mark_poi('a', point)
     expect_eq(point.id, nav.poi['a'])
 end
 
-function test.add_poi_here()
+function test.mark_poi_here()
     local nav = setup_nav(Vec3:new(1, 2, 3))
-    nav:add_poi('a')
+    nav:mark_poi('a')
     local poi = nav.poi['a']
     expect_eq('1,2,3', poi)
+end
+
+function test.clear_poi()
+    local nav = setup_nav()
+    local point = Point:new(1, 2, 3)
+    nav:mark_poi('a', point)
+    expect_eq(point.id, nav.poi['a'])
+    nav:clear_poi('a')
+    expect_eq(nil, nav.poi['a'])
 end
 
 function test.get_poi()
@@ -91,8 +100,8 @@ function test.find_path()
     map:add(p1, p2)
     map:add(p2, p3)
 
-    nav:add_poi('start', p1)
-    nav:add_poi('goal', p3)
+    nav:mark_poi('start', p1)
+    nav:mark_poi('goal', p3)
 
     local path = nav:find_path('start', 'goal')
     assert_ne(nil, path)
