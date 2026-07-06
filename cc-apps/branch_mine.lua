@@ -52,7 +52,7 @@ if fs.exists(map_file) then
 end
 local location = Location:new(map)
 local tmc = Motion:new(location)
-local nav = Nav:new(tmc, location, map)
+local nav = Nav:new(map, location)
 
 local function debug_location()
     log:debug('Location is x=', location.pos.x, 'z=', location.pos.z, 'heading=', location:heading_name())
@@ -97,8 +97,8 @@ local function return_to_station()
     log:info('Returning to station')
 
     debug_location()
-    nav:mark_resume()
-    nav:back_follow()
+    nav:mark_poi('resume')
+    tmc:follow_path(nav:find_path('resume', 'station'))
 end
 
 local function dump()
@@ -113,7 +113,7 @@ local function dump()
 
     -- Dump
 
-    nav:face(Compass.EAST)
+    tmc:face(Compass.EAST)
 
     log:debug('At station, dumping inventory')
     for i = 2, 16 do
@@ -125,7 +125,7 @@ local function dump()
     turtle.select(1)
 
     log:info('Collecting more torches')
-    nav:face(Compass.WEST)
+    tmc:face(Compass.WEST)
     local success, err = turtle.suck(turtle.getItemSpace())
     log:debug('When sucking torches, got return', tostring(success))
     if not success then
@@ -135,8 +135,8 @@ local function dump()
     -- Resume
 
     log:info('Returning to mining')
-    nav:follow()
-    nav:face(state.heading)
+    tmc:follow_path(nav:find_path('station', 'resume'))
+    tmc:face(state.heading)
 end
 
 local function try_forward(n)
@@ -197,7 +197,7 @@ local function place_torch()
     if data.name ~= 'minecraft:torch' then
         log:error('Item in slot 1 is not torch')
         return_to_station()
-        nav:face(Compass.NORTH)
+        tmc:face(Compass.NORTH)
         tmc:down()
         return false
     end
@@ -215,7 +215,7 @@ local function mine_shaft()
         if i > 0 and i % torch == 0 then -- > 0 to prevent placing in tunnel
             if not place_torch() then
                 return_to_station()
-                nav:face(Compass.NORTH)
+                tmc:face(Compass.NORTH)
                 tmc:down()
                 return false
             end
@@ -228,13 +228,13 @@ local function mine_tunnel()
     log:debug('Mining tunnel at z=', location.pos.z)
     assert(location.pos.x == 0, 'Mining tunnel but not at x=0')
 
-    nav:face(Compass.NORTH)
+    tmc:face(Compass.NORTH)
 
     for _ = 1, 3 do
         if location.pos.z % torch == 1 then -- 1 is fix for gps starting a block behind
             if not place_torch() then
                 return_to_station()
-                nav:face(Compass.NORTH)
+                tmc:face(Compass.NORTH)
                 tmc:down()
                 return false
             end
@@ -243,7 +243,7 @@ local function mine_tunnel()
         dig_forward()
     end
 
-    nav:face(Compass.SOUTH)
+    tmc:face(Compass.SOUTH)
     try_forward(3)
     return true
 end
@@ -261,10 +261,8 @@ local function main()
 
     -- Move to start
 
-    nav:reset()
-
     tmc:up()
-    nav:reset()
+    nav:mark_poi('station')
     dig_forward()
 
     -- Skip shafts
@@ -291,11 +289,11 @@ local function main()
             end
 
             -- Mine right half of shaft
-            nav:face(Compass.EAST)
+            tmc:face(Compass.EAST)
             mine_shaft()
 
             -- Mine left half of shaft
-            nav:face(Compass.WEST)
+            tmc:face(Compass.WEST)
             try_forward(length)
             if not mine_shaft() then
                 return
@@ -304,10 +302,10 @@ local function main()
             -- Turn to face next shaft
             if i % 2 == 0 then
                 log:debug('Shaft is even so facing East')
-                nav:face(Compass.EAST)
+                tmc:face(Compass.EAST)
             else
                 log:debug('Shaft is odd so facing West')
-                nav:face(Compass.WEST)
+                tmc:face(Compass.WEST)
             end
 
             if not mine_shaft() then
@@ -319,10 +317,10 @@ local function main()
 
             if i % 2 == 0 then
                 log:debug('Shaft is even so facing East')
-                nav:face(Compass.EAST)
+                tmc:face(Compass.EAST)
             else
                 log:debug('Shaft is odd so facing West')
-                nav:face(Compass.WEST)
+                tmc:face(Compass.WEST)
             end
 
             if not mine_shaft() then
@@ -332,7 +330,7 @@ local function main()
 
         -- Mine to start of next shaft and push
         if i < shafts then
-            nav:face(Compass.NORTH)
+            tmc:face(Compass.NORTH)
             dig_forward(3)
         end
     end
@@ -341,7 +339,7 @@ local function main()
 
     return_to_station()
 
-    nav:face(Compass.EAST)
+    tmc:face(Compass.EAST)
 
     log:debug('At station, dumping inventory')
     for i = 2, 16 do
@@ -352,7 +350,7 @@ local function main()
     end
     turtle.select(1)
 
-    nav:face(Compass.NORTH)
+    tmc:face(Compass.NORTH)
     tmc:down()
     debug_location()
 
