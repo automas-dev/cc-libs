@@ -4,9 +4,6 @@ local log = logging.get_logger('location')
 local ccl_vec = require 'cc-libs.util.vec'
 local Vec3 = ccl_vec.Vec3
 
--- Map is only used for types so does not need to be directly imported
----@module 'ccl_map'
-
 local vert_norm = Vec3:new(0, 1, 0)
 
 ---@enum Compass
