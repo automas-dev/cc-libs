@@ -2,86 +2,103 @@ local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('nav')
 
 local ccl_map = require 'cc-libs.map'
-local Map = ccl_map.Map
+local Point = ccl_map.Point
 
 local ccl_location = require 'cc-libs.turtle.location'
 local Compass = ccl_location.Compass
-local CompassName = ccl_location.CompassName
+
+local table_size = require 'cc-libs.util.table_size'
 
 local astar = require 'cc-libs.astar'
 
 ---@class Nav
 ---@field map Map
----@field motion Motion
----@field gps any
----@field station Vec3
----@field resume? Vec3
+---@field location Location
+---@field poi { [string]: PointId }
 local Nav = {}
 
 ---Create a new navigation controller
----@param motion Motion controller to move the turtle
----@param gps any provides turtle position
----@param map? Map  map to store paths, will create new if nil
----@param station? Vec3 location of the station, if nil will be set to gps.pos
+---@param map Map map to store paths, will create new if nil
+---@param location Location
 ---@return Nav
-function Nav:new(motion, gps, map, station)
-    map = map or Map:new()
-    station = station or gps.pos
+function Nav:new(map, location)
     local o = {
         map = map,
-        motion = motion,
-        gps = gps,
-        station = station,
-        resume = nil,
+        location = location,
+        poi = {},
     }
     setmetatable(o, self)
     self.__index = self
     return o
 end
 
----Clear the resume point and set the station to gps.pos
-function Nav:reset()
-    log:info('Reset')
-
-    self.station = self.gps.pos
-    self.resume = nil
+---Add a point of interest
+---@param name string
+---@param point Point?
+---@return PointId? previous point id of `name`
+function Nav:add_poi(name, point)
+    if point == nil then
+        point = self.map:point_from_vec3(self.location.pos)
+    end
+    local previous = self.poi[name]
+    self.poi[name] = point.id
+    log:info('Mark poi', name, point.id)
+    return previous
 end
 
----Mark the current location as a resume point
+---Get a point of interest
+---@param name string
+---@return Point?
+function Nav:get_poi(name)
+    return self.map:get(self.poi[name])
+end
+
+---Mark the current location as resume poi
 function Nav:mark_resume()
-    self.resume = self.gps.pos
-    log:info('Mark resume point', self.resume)
+    self:add_poi('resume')
 end
 
----Check if two points share the same value for at least 2 axis
----@param pos1 Vec3
----@param pos2 Vec3
----@return boolean
-local function is_inline(pos1, pos2)
-    log:trace('is inline', pos1, pos2)
-    if pos1.x ~= pos2.x then
-        return pos1.y == pos2.y and pos1.z == pos2.z
-    elseif pos1.y ~= pos2.y then
-        return pos1.x == pos2.x and pos1.z == pos2.z
-    elseif pos1.z ~= pos2.z then
-        return pos1.x == pos2.x and pos1.y == pos2.y
-    else
-        return true
+function Nav:find_path(start_poi_name, goal_poi_name)
+    local start = self:get_poi(start_poi_name)
+    assert(start ~= nil, 'Missing start poi ' .. start_poi_name)
+
+    local goal = self:get_poi(goal_poi_name)
+    assert(goal ~= nil, 'Missing goal poi ' .. goal_poi_name)
+
+    log:debug('Searching for path between', start, 'and', goal)
+
+    local function neighbors(pid)
+        local point = self.map:get(pid)
+        log:trace('neighbors', pid, table_size(point.links))
+        return point.links
     end
-end
 
-function Nav:face(compass)
-    assert(compass >= 1 and compass <= 4, 'Direction is an unknown value ' .. self.gps.dir)
-    log:trace('face', CompassName[compass])
-
-    if compass == self.gps.dir + 2 or compass == self.gps.dir - 2 then
-        self.motion:around()
-    elseif compass == self.gps.dir + 1 or compass == self.gps.dir - 3 then
-        self.motion:right()
-    elseif compass == self.gps.dir - 1 or compass == self.gps.dir + 3 then
-        self.motion:left()
+    local function f(n1, n2)
+        log:trace('f n1=', n1, 'n2=', n2)
+        local dx = math.abs(self.map:get(n1).x - self.map:get(n2).x)
+        local dy = math.abs(self.map:get(n1).y - self.map:get(n2).y)
+        return dx + dy
     end
+
+    local function h(n1, n2)
+        log:trace('h n1=', n1, 'n2=', n2)
+        local dx = math.abs(self.map:get(n1).x - self.map:get(n2).x)
+        local dy = math.abs(self.map:get(n1).y - self.map:get(n2).y)
+        return math.sqrt(dx * dx + dy * dy)
+    end
+
+    local path = astar(start.id, goal.id, neighbors, f, h, true)
+    log:debug('Path completed with', #path, 'points')
+
+    local path_points = {}
+    for i = 1, #path do
+        path_points[i] = self.map:get(path[i])
+    end
+
+    return path_points
 end
+
+-- function Nav:
 
 ---Move to the trace step
 ---@param step Vec3 position to move to
@@ -152,51 +169,6 @@ function Nav:back_follow()
     for i = 1, #path do
         self:trace_step(path[i])
     end
-end
-
-local function table_size(t)
-    local count = 0
-    for _ in pairs(t) do
-        count = count + 1
-    end
-    return count
-end
-
-function Nav:find_path(start, goal)
-    log:debug('Searching for path between', start, 'and', goal)
-
-    local p_start = self.map:point(start.x, start.y, start.z)
-    local p_goal = self.map:point(goal.x, goal.y, goal.z)
-
-    local function neighbors(pid)
-        local point = self.map:get(pid)
-        log:trace('neighbors', pid, table_size(point.links))
-        return point.links
-    end
-
-    local function f(n1, n2)
-        log:trace('f n1=', n1, 'n2=', n2)
-        local dx = math.abs(self.map:get(n1).x - self.map:get(n2).x)
-        local dy = math.abs(self.map:get(n1).y - self.map:get(n2).y)
-        return dx + dy
-    end
-
-    local function h(n1, n2)
-        log:trace('h n1=', n1, 'n2=', n2)
-        local dx = math.abs(self.map:get(n1).x - self.map:get(n2).x)
-        local dy = math.abs(self.map:get(n1).y - self.map:get(n2).y)
-        return math.sqrt(dx * dx + dy * dy)
-    end
-
-    local path = astar(p_start.id, p_goal.id, neighbors, f, h, true)
-    log:debug('Path completed with', #path, 'points')
-
-    local path_points = {}
-    for i = 1, #path do
-        path_points[i] = self.map:get(path[i])
-    end
-
-    return path_points
 end
 
 local M = {
