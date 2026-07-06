@@ -92,6 +92,20 @@ function test.assert_fuel_fail()
     expect_false(success)
 end
 
+function test.assert_items()
+    turtle.getItemDetail.return_value = { name = 'name' }
+    turtle.getItemCount.return_value = 1
+    local success, err = pcall(actions.assert_items, 'name', 1)
+    expect_true(success, err)
+end
+
+function test.assert_items_fail()
+    turtle.getItemDetail.return_value = { name = 'name' }
+    turtle.getItemCount.return_value = 1
+    local success, _ = pcall(actions.assert_items, 'name', 64)
+    expect_false(success)
+end
+
 function test.inventory_full_empty()
     turtle.getItemCount.return_value = 0
     expect_false(actions.inventory_full())

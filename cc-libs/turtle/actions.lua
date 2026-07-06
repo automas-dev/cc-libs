@@ -62,6 +62,31 @@ function M.assert_fuel(need)
     end
 end
 
+---Check turtle has enough items. Raises error through log:fatal if there are
+---not enough items.
+---@param item_name string minecraft item id
+---@param need number amount of fuel needed
+function M.assert_items(item_name, need)
+    log:debug('Finding count of item', item_name, 'needing', need)
+
+    local has = 0
+
+    for i = 1, 16 do
+        local item = turtle.getItemDetail(i)
+        log:trace('Checking slot', i, 'found item', item)
+        if item ~= nil and item.name == item_name then
+            log:debug('Found item', item.name, 'in slot', i)
+            has = has + turtle.getItemCount(i)
+            if has >= need then
+                log:debug('Inventory has enough of', item_name)
+                return
+            end
+        end
+    end
+
+    log:fatal('Inventory does not have enough', item_name, 'found', has)
+end
+
 ---Check if all slots have at least 1 item
 ---@return boolean
 function M.inventory_full()
