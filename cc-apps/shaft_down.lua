@@ -16,20 +16,16 @@ local actions = require 'cc-libs.turtle.actions'
 local argparse = require 'cc-libs.util.argparse'
 local parser = argparse.ArgParse:new('shaft_down', 'Dig a shaft down and add walls if they are missing')
 parser:add_arg('n', { help = 'number of blocks to mine down' })
-parser:add_arg('block_walls', { help = 'name of block to place as walls' })
+parser:add_arg('block_wall', { help = 'name of block to place as walls' })
+parser:add_option('l', 'ladder', 'Place a ladder on the way back up')
 local args = parser:parse_args({ ... })
 
 local n = tonumber(args.n)
+assert(n ~= nil)
 local block_wall = args.block_wall
+local place_ladder = args.ladder
 
-log:info('Starting with parameters n=', n)
-
-log:info('Starting fuel level', turtle.getFuelLevel())
-local fuel_need = n * 2
-log:debug('Fuel needed is', fuel_need)
-if turtle.getFuelLevel() < fuel_need then
-    log:fatal('Not enough fuel! Need', fuel_need)
-end
+log:info('Starting with parameters n=', n, 'block_wall=', block_wall, 'ladder=', place_ladder)
 
 local tmc = Motion:new()
 tmc:enable_dig()
@@ -52,6 +48,11 @@ local function place_all_sides()
 end
 
 local function main()
+    actions.assert_fuel(n * 2)
+    if place_ladder then
+        actions.assert_items('minecraft:ladder', n)
+    end
+
     local total = 0
     for _ = 1, n do
         -- Can't move down, maybe we hit bedrock
@@ -62,12 +63,20 @@ local function main()
         total = total + 1
     end
 
-    -- Return
-
     log:info('Returning to station')
 
     -- Using total instead of n in case we stopped early
-    tmc:up(total)
+
+    if place_ladder then
+        for _ = 1, total do
+            tmc:up()
+            if actions.select_slot('minecraft:ladder') then
+                turtle.placeDown()
+            end
+        end
+    else
+        tmc:up(total)
+    end
 
     log:info('Done!')
 end
