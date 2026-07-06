@@ -51,7 +51,15 @@ local function harvest()
 end
 
 local function main()
-    log:info('Starting lumber, waiting for logs')
+    log:info('Starting lumber')
+    if not turtle.detectDown() then
+        log:info('Returning to floor')
+        while not turtle.detectDown() do
+            tmc:down()
+        end
+        log:info('Found floor')
+    end
+    log:info('Waiting for logs')
     while true do
         if is_log() then
             harvest()
