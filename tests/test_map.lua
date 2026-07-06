@@ -205,4 +205,36 @@ function test.map_add_not_inline()
     expect_false(success)
 end
 
+function test.find_path()
+    local map = Map:new()
+    local p1 = map:point(0, 0, 0)
+    local p2 = map:point(1, 0, 0)
+    local p3 = map:point(1, 1, 0)
+    map:add(p1, p2)
+    map:add(p2, p3)
+
+    -- Path that should not be taken
+    local p4 = map:point(2, 0, 0)
+    local p5 = map:point(2, 1, 0)
+    map:add(p2, p4)
+    map:add(p4, p5)
+    map:add(p5, p3)
+
+    local path = map:find_path(p1, p3)
+    expect_eq(3, #path)
+    expect_eq(p1, path[1])
+    expect_eq(p2, path[2])
+    expect_eq(p3, path[3])
+end
+
+function test.find_path_no_connection()
+    local map = Map:new()
+    local p1 = map:point(0, 0, 0)
+    local p2 = map:point(1, 1, 0)
+
+    local path = map:find_path(p1, p2)
+    expect_eq(nil, path)
+    -- TODO
+end
+
 return test

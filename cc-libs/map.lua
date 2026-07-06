@@ -8,6 +8,8 @@ local table_size = require 'cc-libs.util.table_size'
 local ccl_vec = require 'cc-libs.util.vec'
 local Vec3 = ccl_vec.Vec3
 
+local astar = require 'cc-libs.astar'
+
 ---@alias PointId string
 
 ---Get a string id for the give x, y, z coords of a Point
@@ -234,6 +236,48 @@ function Map:link_adjacent(point)
     if p ~= nil then
         point:link(p, 1)
     end
+end
+
+---Find a path between two points
+---@param p1 Point
+---@param p2 Point
+---@return Point[]? path array of points in order from p1 to p2
+function Map:find_path(p1, p2)
+    log:debug('Searching for path between', p1, 'and', p2)
+
+    local function neighbors(pid)
+        local point = self:get(pid)
+        log:trace('neighbors', pid, table_size(point.links))
+        return point.links
+    end
+
+    local function f(n1, n2)
+        log:trace('f n1=', n1, 'n2=', n2)
+        local dx = math.abs(self:get(n1).x - self:get(n2).x)
+        local dy = math.abs(self:get(n1).y - self:get(n2).y)
+        return dx + dy
+    end
+
+    local function h(n1, n2)
+        log:trace('h n1=', n1, 'n2=', n2)
+        local dx = math.abs(self:get(n1).x - self:get(n2).x)
+        local dy = math.abs(self:get(n1).y - self:get(n2).y)
+        return math.sqrt(dx * dx + dy * dy)
+    end
+
+    local path = astar(p1.id, p2.id, neighbors, f, h, true)
+    if path == nil then
+        log:error('Failed to find path from', p1, 'to', p2)
+        return nil
+    end
+    log:debug('Path completed with', #path, 'points')
+
+    local path_points = {}
+    for i = 1, #path do
+        path_points[i] = self:get(path[i])
+    end
+
+    return path_points
 end
 
 local M = {
