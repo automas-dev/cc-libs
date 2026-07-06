@@ -7,8 +7,8 @@ local CompassName = ccl_location.CompassName
 local Action = ccl_location.Action
 local Location = ccl_location.Location
 
-local vec = require 'cc-libs.util.vec'
-local Vec3 = vec.Vec3
+local ccl_vec = require 'cc-libs.util.vec'
+local Vec3 = ccl_vec.Vec3
 
 local test = {}
 

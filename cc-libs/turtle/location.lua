@@ -1,8 +1,8 @@
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('location')
 
-local vec = require 'cc-libs.util.vec'
-local Vec3 = vec.Vec3
+local ccl_vec = require 'cc-libs.util.vec'
+local Vec3 = ccl_vec.Vec3
 
 -- Map is only used for types so does not need to be directly imported
 ---@module 'ccl_map'

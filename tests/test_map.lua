@@ -4,8 +4,8 @@ local ccl_map = require 'cc-libs.map'
 local Point = ccl_map.Point
 local Map = ccl_map.Map
 
-local vec = require 'cc-libs.util.vec'
-local Vec3 = vec.Vec3
+local ccl_vec = require 'cc-libs.util.vec'
+local Vec3 = ccl_vec.Vec3
 
 local table_size = require 'cc-libs.util.table_size'
 

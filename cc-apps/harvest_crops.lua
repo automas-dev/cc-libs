@@ -7,8 +7,8 @@ logging.basic_config {
 }
 local log = logging.get_logger('main')
 
-local vec = require 'cc-libs.util.vec'
-local Vec3 = vec.Vec3
+local ccl_vec = require 'cc-libs.util.vec'
+local Vec3 = ccl_vec.Vec3
 
 local argparse = require 'cc-libs.util.argparse'
 local parser = argparse.ArgParse:new('farm', 'Harvest crops from the bottom right corner')

@@ -1,5 +1,5 @@
-local vec = require 'cc-libs.util.vec'
-local Vec2 = vec.Vec2
+local ccl_vec = require 'cc-libs.util.vec'
+local Vec2 = ccl_vec.Vec2
 
 local test = {}
 

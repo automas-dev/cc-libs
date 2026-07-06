@@ -1,8 +1,10 @@
 ---@diagnostic disable: undefined-field
 -- luacheck: ignore 143 142
+
 local json = require 'cc-libs.util.json'
-local vec = require 'cc-libs.util.vec'
-local Vec3 = vec.Vec3
+
+local ccl_vec = require 'cc-libs.util.vec'
+local Vec3 = ccl_vec.Vec3
 
 local formatter = require 'cc-libs.util.logging.formatter'
 local Record = formatter.Record
