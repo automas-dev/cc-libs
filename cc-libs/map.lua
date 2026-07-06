@@ -53,6 +53,12 @@ function Point:from_vec3(vec)
     return Point:new(vec.x, vec.y, vec.z)
 end
 
+---Convert Point to a Vec3
+---@return Vec3
+function Point:to_vec3()
+    return Vec3:new(self.x, self.y, self.z)
+end
+
 ---Connect this point to another. This will create the link on both points to each other.
 ---@param other Point point to link with
 ---@param weight? number weight of this link
@@ -167,7 +173,9 @@ function Map:add(p1, p2, weight)
     local g_p1 = self:point(p1.x, p1.y, p1.z)
     local g_p2 = self:point(p2.x, p2.y, p2.z)
 
-    -- TODO automatic weight from distance
+    if weight == nil then
+        weight = (g_p1:to_vec3() - g_p2:to_vec3()):get_length()
+    end
 
     assert(g_p1:inline(g_p2), 'p1 is not inline with p2')
 

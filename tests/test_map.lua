@@ -35,6 +35,11 @@ function test.point_from_vec3()
     expect_eq(3, point.z)
 end
 
+function test.point_to_vec3()
+    local point = Point:new(1, 2, 3)
+    expect_eq(Vec3:new(1, 2, 3), point:to_vec3())
+end
+
 function test.point_link()
     local p1 = Point:new(1, 0, 0)
     local p2 = Point:new(2, 0, 0)
@@ -128,6 +133,21 @@ function test.map_add()
     -- p1 and p2 are copied, so they can't be used directly here
     expect_eq(1, map:get(p1.id).links[p2.id])
     expect_eq(1, map:get(p2.id).links[p1.id])
+end
+
+function test.map_add_auto_weight()
+    local map = Map:new()
+    local p1 = Point:new(0, 0, 0)
+    local p2 = Point:new(2, 0, 0)
+
+    map:add(p1, p2)
+
+    expect_eq(p1.id, map.graph[p1.id].id)
+    expect_eq(p2.id, map.graph[p2.id].id)
+
+    -- p1 and p2 are copied, so they can't be used directly here
+    expect_eq(2, map:get(p1.id).links[p2.id])
+    expect_eq(2, map:get(p2.id).links[p1.id])
 end
 
 function test.map_add_not_inline()
