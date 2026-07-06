@@ -1,3 +1,4 @@
+-- Remember to update README.md with any changes here
 package.path = '../?.lua;../?/init.lua;' .. package.path
 local logging = require 'cc-libs.util.logging'
 logging.basic_config {
@@ -22,6 +23,20 @@ local function is_log()
     return false
 end
 
+local function place_sapling()
+    for i = 1, 16 do
+        local item = turtle.getItemDetail(i)
+        log:trace('Checking slot', i, 'found item', item)
+        if item ~= nil and string.find(item.name, 'sapling') ~= nil then
+            log:info('Placing sapling', item.name, 'from slot', i)
+            turtle.select(i)
+            turtle.place()
+            return true
+        end
+    end
+    return false
+end
+
 local function harvest()
     log:info('Starting harvest')
     local height = 0
@@ -35,13 +50,26 @@ local function harvest()
     tmc:down(height)
 end
 
-local function run()
+local function main()
+    log:info('Starting lumber')
+    if not turtle.detectDown() then
+        log:info('Returning to floor')
+        while not turtle.detectDown() do
+            tmc:down()
+        end
+        log:info('Found floor')
+    end
+    log:info('Waiting for logs')
     while true do
         if is_log() then
             harvest()
+            if not place_sapling() then
+                log:info('Did not place a sapling so the program will exit')
+                return
+            end
         end
         sleep(1)
     end
 end
 
-log:catch_errors(run)
+log:catch_errors(main)

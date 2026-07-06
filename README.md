@@ -20,6 +20,7 @@ can be found under the install folder.
 
 ```sh
 wget https://raw.githubusercontent.com/automas-dev/cc-libs/refs/heads/main/install/install_cc-libs.lua
+install_cc-libs
 ```
 
 ### Apps
@@ -30,6 +31,7 @@ installed.
 
 ```sh
 wget https://raw.githubusercontent.com/automas-dev/cc-libs/refs/heads/main/install/install_cc-apps.lua
+install_cc-apps
 ```
 
 Apps can be used via the `cc/` prefix (eg. `cc/dig_down` or `cc/branch_mine`).

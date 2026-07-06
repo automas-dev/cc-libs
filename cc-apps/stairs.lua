@@ -1,3 +1,4 @@
+-- Remember to update README.md with any changes here
 package.path = '../?.lua;../?/init.lua;' .. package.path
 local logging = require 'cc-libs.util.logging'
 logging.basic_config {
@@ -7,24 +8,17 @@ logging.basic_config {
 }
 local log = logging.get_logger('main')
 
----@module 'ccl_motion'
 local ccl_motion = require 'cc-libs.turtle.motion'
 
-local args = { ... }
-if #args < 1 then
-    print('Usage: stairs <n> [place stairs|false]')
-    print()
-    print('Options:')
-    print('    n: number of steps')
-    print('    place stairs: true will place stairs from slot 1')
-    print()
-    print('If stairs are being placed, n will be limited to the number of stairs in slot 1.')
-    print('The height mined will also be increased to account for the steps')
-    return
-end
+local argparse = require 'cc-libs.util.argparse'
+local parser =
+    argparse.ArgParse:new('stairs', 'Mine a staircase down optionally placing stairs from slot 1 on the return')
+parser:add_arg('n', { help = 'number of steps' })
+parser:add_option('p', 'place_stairs', 'place stairs from slot 1 on the return')
+local args = parser:parse_args({ ... })
 
-local n = tonumber(args[1])
-local place_stairs = args[2] == 'true' or args[2] == 'yes'
+local n = tonumber(args.n)
+local place_stairs = args.place_stairs
 
 log:info('Starting with parameters n=', n)
 
@@ -43,44 +37,48 @@ end
 local tmc = ccl_motion.Motion:new()
 tmc:enable_dig()
 
-tmc:up()
-
-for i = 1, n do
-    if turtle.getFuelLevel() == 0 then
-        log:fatal('Ran out of fuel!')
-    end
-
-    tmc:forward()
-    turtle.digUp()
-
-    if place_stairs and i % 2 == 1 then
-        tmc:up()
-        turtle.digUp()
-        if i < n then
-            turtle.dig()
-        end
-        tmc:down()
-    end
-
-    tmc:down()
-    turtle.digDown()
-end
-
--- Return
-
-log:info('Returning to station')
-
-tmc:around()
-
-for _ = 1, n do
-    if place_stairs then
-        turtle.placeDown()
-    end
+local function main()
     tmc:up()
-    tmc:forward()
+
+    for i = 1, n do
+        if turtle.getFuelLevel() == 0 then
+            log:fatal('Ran out of fuel!')
+        end
+
+        tmc:forward()
+        turtle.digUp()
+
+        if place_stairs and i % 2 == 1 then
+            tmc:up()
+            turtle.digUp()
+            if i < n then
+                turtle.dig()
+            end
+            tmc:down()
+        end
+
+        tmc:down()
+        turtle.digDown()
+    end
+
+    -- Return
+
+    log:info('Returning to station')
+
+    tmc:around()
+
+    for _ = 1, n do
+        if place_stairs then
+            turtle.placeDown()
+        end
+        tmc:up()
+        tmc:forward()
+    end
+
+    tmc:around()
+    tmc:down()
+
+    log:info('Done!')
 end
 
-tmc:around()
-tmc:down()
-
-log:info('Done!')
+log:catch_errors(main)

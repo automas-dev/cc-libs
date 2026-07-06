@@ -4,9 +4,7 @@ local function astar(start, goal, get_neighbors, cost_fn, heuristic_fn, start_to
     local f_score = {
         [start] = 0,
     }
-    local h_score = {
-        [start] = f_score[start] + heuristic_fn(start, goal),
-    }
+    local h_score = {}
 
     local function pop_lowest_h()
         local lowest = nil
@@ -24,6 +22,7 @@ local function astar(start, goal, get_neighbors, cost_fn, heuristic_fn, start_to
         return lowest
     end
 
+    -- Compute graph weights
     while #open > 0 do
         -- Get node in open with lowest f + h score and remove it from open
         local current = pop_lowest_h()
@@ -52,13 +51,23 @@ local function astar(start, goal, get_neighbors, cost_fn, heuristic_fn, start_to
         end
     end
 
+    -- Find path
     local path = {}
     local curr = goal
-    while curr ~= nil do
+    while curr ~= nil and curr ~= start do
         path[#path + 1] = curr
         curr = parent[curr]
     end
 
+    -- Check full path was found
+    if curr ~= start then
+        return nil
+    end
+
+    -- Add start to the path
+    path[#path + 1] = curr
+
+    -- Reverse path to be from start to goal
     if start_to_goal then
         local reversed = {}
         for i = 1, #path do

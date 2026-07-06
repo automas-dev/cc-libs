@@ -1,3 +1,4 @@
+-- Remember to update README.md with any changes here
 package.path = '../?.lua;../?/init.lua;' .. package.path
 local logging = require 'cc-libs.util.logging'
 logging.basic_config {
@@ -13,6 +14,9 @@ local json = require 'cc-libs.util.json'
 
 local turtle_states = {}
 
+---Receive and update info about a computer or turtle
+---@param id number id of the requester
+---@param message string json telemetry data for `id`
 local function proto_telemetry(id, message)
     tel_log:debug('proto telemetry')
     local success, data = pcall(json.decode, message)
@@ -33,6 +37,9 @@ local function proto_telemetry(id, message)
     end
 end
 
+---Respond with telemetry of the requested id
+---@param id number id of the requester
+---@param message string json request with field `id`
 local function proto_report(id, message)
     tel_log:debug('proto report')
     local success, data = pcall(json.decode, message)
@@ -66,11 +73,13 @@ local function proto_report(id, message)
     rednet.send(id, json.encode(response), 'mainframe_response')
 end
 
+---Mapping from protocol name to handler function for telemetry
 local protocols = {
     telemetry = proto_telemetry,
     report = proto_report,
 }
 
+---Received telemetry data over rednet from the `telemetry` and `report` protocols
 local function run_telemetry()
     log:info('Starting telemetry thread')
 
@@ -88,6 +97,7 @@ local function run_telemetry()
     end
 end
 
+---Receive remote logs over rednet from the `remote_log` protocol
 local function run_remote_log()
     log:info('Starting remote log thread')
 
@@ -102,15 +112,15 @@ local function run_remote_log()
         if not success then
             remote_log:error('Failed to decode message from', id)
         else
-            if logging.level_from_name(data['level']) >= logging.Level.WARNING then
-                stream:send('[' .. data['host'] .. '] ' .. fmt:format_record(data))
+            if logging.level_from_name(data.level) >= logging.Level.WARNING then
+                stream:send('[' .. data.host .. '] ' .. fmt:format_record(data))
             end
             local file_handle = log_files[data.host]
             if not file_handle then
-                file_handle = logging.FileStream:new('logs/remote/' .. data['host'] .. '.json')
+                file_handle = logging.FileStream:new('logs/remote/' .. data.host .. '.json')
                 log_files[data.host] = file_handle
             end
-            file_handle:send(message)
+            file_handle:send(tostring(message))
         end
     end
 end

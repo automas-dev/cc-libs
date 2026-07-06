@@ -1,26 +1,31 @@
----@module 'ccl_logging'
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('motion')
 
----@module 'ccl_rgps'
-local ccl_rgps = require 'cc-libs.turtle.rgps'
-local Action = ccl_rgps.Action
+local json = require 'cc-libs.util.json'
+
+local ccl_location = require 'cc-libs.turtle.location'
+local Action = ccl_location.Action
+local Location = ccl_location.Location
+local CompassName = ccl_location.CompassName
+-- TODO is this needed for types?
+local Compass = ccl_location.Compass
 
 ---@class Motion
----@field max_tries integer
----@field can_dig boolean
----@field rgps? RGPS
+---@field max_tries integer max attempts to move before failing
+---@field can_dig boolean turtle can mine blocks in it's path
+---@field location Location optional location tracking
 local Motion = {}
 
+-- TODO take map for updating
 ---Create a new motion controller
----@param rgps? RGPS rgps to be updated with motions
+---@param location? Location location to be updated with motions
 ---@return Motion
-function Motion:new(rgps)
+function Motion:new(location)
     log:trace('New Motion instance')
     local o = {
         max_tries = 10,
         can_dig = false,
-        rgps = rgps or nil,
+        location = location or Location:new(),
     }
     setmetatable(o, self)
     self.__index = self
@@ -52,7 +57,7 @@ function Motion:_attempt_move(action, fail_cb)
             break
         elseif turtle.getFuelLevel() == 0 then
             -- NOTE getFuelLevel can return "unlimited" if fuel consumption is disabled
-            log:warn('Turtle is out of fuel')
+            log:warning('Turtle is out of fuel')
             return false
         elseif fail_cb then
             fail_cb()
@@ -72,12 +77,12 @@ function Motion:forward(n)
     for _ = 1, n do
         if not self:_attempt_move(turtle.forward, (self.can_dig and turtle.dig or nil)) then
             -- TODO is this warn in the right place?
-            log:warn('Failed to move forward after ' .. self.max_tries .. 'attempts')
+            log:warning('Failed to move forward after ' .. self.max_tries .. 'attempts')
             return false
         end
-        if self.rgps ~= nil then
-            self.rgps:update(Action.FORWARD)
-        end
+
+        -- Update location after move
+        self.location:update(Action.FORWARD)
     end
     return true
 end
@@ -92,12 +97,12 @@ function Motion:backward(n)
     for _ = 1, n do
         if not self:_attempt_move(turtle.back) then
             -- TODO is this warn in the right place?
-            log:warn('Failed to move back after ' .. self.max_tries .. 'attempts')
+            log:warning('Failed to move back after ' .. self.max_tries .. 'attempts')
             return false
         end
-        if self.rgps ~= nil then
-            self.rgps:update(Action.BACKWARD)
-        end
+
+        -- Update location after move
+        self.location:update(Action.BACKWARD)
     end
     return true
 end
@@ -112,12 +117,12 @@ function Motion:up(n)
     for _ = 1, n do
         if not self:_attempt_move(turtle.up, (self.can_dig and turtle.digUp or nil)) then
             -- TODO is this warn in the right place?
-            log:warn('Failed to move up after ' .. self.max_tries .. 'attempts')
+            log:warning('Failed to move up after ' .. self.max_tries .. 'attempts')
             return false
         end
-        if self.rgps ~= nil then
-            self.rgps:update(Action.UP)
-        end
+
+        -- Update location after move
+        self.location:update(Action.UP)
     end
     return true
 end
@@ -132,12 +137,12 @@ function Motion:down(n)
     for _ = 1, n do
         if not self:_attempt_move(turtle.down, (self.can_dig and turtle.digDown or nil)) then
             -- TODO is this warn in the right place?
-            log:warn('Failed to move down after ' .. self.max_tries .. 'attempts')
+            log:warning('Failed to move down after ' .. self.max_tries .. 'attempts')
             return false
         end
-        if self.rgps ~= nil then
-            self.rgps:update(Action.DOWN)
-        end
+
+        -- Update location after move
+        self.location:update(Action.DOWN)
     end
     return true
 end
@@ -157,9 +162,9 @@ function Motion:left(n)
     for i = 1, n do
         log:trace('Turn number', i)
         turtle.turnLeft()
-        if self.rgps ~= nil then
-            self.rgps:update(Action.TURN_LEFT)
-        end
+
+        -- Update location after move
+        self.location:update(Action.TURN_LEFT)
     end
 end
 
@@ -178,9 +183,9 @@ function Motion:right(n)
     for i = 1, n do
         log:trace('Turn number', i)
         turtle.turnRight()
-        if self.rgps ~= nil then
-            self.rgps:update(Action.TURN_RIGHT)
-        end
+
+        -- Update location after move
+        self.location:update(Action.TURN_RIGHT)
     end
 end
 
@@ -188,6 +193,149 @@ end
 function Motion:around()
     self:right(2)
 end
+
+---Turn to face a direction based on heading from self.location
+---@param compass Compass
+function Motion:face(compass)
+    assert(compass >= 1 and compass <= 4, 'Direction is an unknown value ' .. self.location.heading)
+    log:trace('face', CompassName[compass])
+
+    if not self.location.has_heading then
+        log:warning('Location does not have a heading, this move is relative to the starting heading')
+    end
+
+    if compass == self.location.heading + 2 or compass == self.location.heading - 2 then
+        self:around()
+    elseif compass == self.location.heading + 1 or compass == self.location.heading - 3 then
+        self:right()
+    elseif compass == self.location.heading - 1 or compass == self.location.heading + 3 then
+        self:left()
+    end
+end
+
+---Follow a path of map points
+---@param path Point[]
+function Motion:follow_path(path)
+    assert(#path > 1, 'Not enough points in path')
+    assert(path[1]:to_vec3() == self.location.pos, 'Path does not start at current location')
+
+    local f = fs.open('path.json', 'w')
+    if f ~= nil then
+        f.write(json.encode(path))
+        f.close()
+    end
+
+    local actions = {}
+
+    local last_direction = nil
+
+    for i = 2, #path do
+        local from = path[i - 1]
+        local to = path[i]
+
+        if from.x ~= to.x then
+            local delta = math.abs(to.x - from.x)
+            local direction = from.x < to.x and Compass.EAST or Compass.WEST
+            if direction ~= last_direction then
+                actions[#actions + 1] = {
+                    action = 'face',
+                    direction = direction,
+                    direction_name = CompassName[direction],
+                }
+                last_direction = direction
+            end
+            actions[#actions + 1] = {
+                action = 'forward',
+                count = delta,
+            }
+        elseif from.y ~= to.y then
+            local delta = math.abs(to.y - from.y)
+            actions[#actions + 1] = {
+                action = from.y < to.y and 'up' or 'down',
+                count = delta,
+            }
+        elseif from.z ~= to.z then
+            local delta = math.abs(to.z - from.z)
+            local direction = from.z < to.z and Compass.SOUTH or Compass.NORTH
+            if direction ~= last_direction then
+                actions[#actions + 1] = {
+                    action = 'face',
+                    direction = direction,
+                    direction_name = CompassName[direction],
+                }
+                last_direction = direction
+            end
+            actions[#actions + 1] = {
+                action = 'forward',
+                count = delta,
+            }
+        end
+    end
+
+    log:debug('Path of length', #path, 'results in', #actions, 'actions')
+
+    f = fs.open('motion_actions.json', 'w')
+    if f ~= nil then
+        f.write(json.encode(actions))
+        f.close()
+    end
+
+    for i, step in ipairs(actions) do
+        log:trace('Step', i, 'is', step.action)
+        if step.action == 'face' then
+            self:face(step.direction)
+        elseif step.action == 'up' then
+            self:up(step.count)
+        elseif step.action == 'down' then
+            self:down(step.count)
+        elseif step.action == 'forward' then
+            self:forward(step.count)
+        end
+    end
+end
+
+-- ---Move to the trace step
+-- ---@param step Vec3 position to move to
+-- function Nav:trace_step(step)
+--     log:debug('trace step to pos', step.x, step.y, step.z)
+--     local pos = self.gps.pos
+--     assert(is_inline(pos, step), 'Step is not inline with current position')
+--     log:trace('trace starts at pos', pos.x, pos.y, pos.z)
+
+--     if pos.x ~= step.x then
+--         local delta = math.abs(step.x - pos.x)
+
+--         if pos.x < step.x then
+--             self:face(Compass.EAST)
+--         else
+--             self:face(Compass.WEST)
+--         end
+
+--         self.motion:forward(delta)
+--     elseif pos.y ~= step.y then
+--         local delta = math.abs(step.y - pos.y)
+
+--         if pos.y < step.y then
+--             self.motion:up(delta)
+--         else
+--             self.motion:down(delta)
+--         end
+--     elseif pos.z ~= step.z then
+--         local delta = math.abs(step.z - pos.z)
+
+--         if pos.z < step.z then
+--             self:face(Compass.NORTH)
+--         else
+--             self:face(Compass.SOUTH)
+--         end
+--         self.motion:forward(delta)
+--     end
+
+--     local end_pos = self.gps.pos
+--     local at_end_pos = end_pos.x == step.x and end_pos.y == step.y and end_pos.z == step.z
+
+--     assert(at_end_pos, 'trace_step did not reach step position')
+-- end
 
 local M = {
     Motion = Motion,

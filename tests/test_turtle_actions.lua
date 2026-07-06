@@ -1,3 +1,4 @@
+---@diagnostic disable: inject-field, undefined-field
 local actions = require 'cc-libs.turtle.actions'
 
 local test = {}
@@ -88,6 +89,20 @@ end
 function test.assert_fuel_fail()
     turtle.getFuelLevel.return_value = 1
     local success, _ = pcall(actions.assert_fuel, 2)
+    expect_false(success)
+end
+
+function test.assert_items()
+    turtle.getItemDetail.return_value = { name = 'name' }
+    turtle.getItemCount.return_value = 1
+    local success, err = pcall(actions.assert_items, 'name', 1)
+    expect_true(success, err)
+end
+
+function test.assert_items_fail()
+    turtle.getItemDetail.return_value = { name = 'name' }
+    turtle.getItemCount.return_value = 1
+    local success, _ = pcall(actions.assert_items, 'name', 64)
     expect_false(success)
 end
 

@@ -1,3 +1,4 @@
+-- Remember to update README.md with any changes here
 package.path = '../?.lua;../?/init.lua;' .. package.path
 local logging = require 'cc-libs.util.logging'
 logging.basic_config {
@@ -7,35 +8,24 @@ logging.basic_config {
 }
 local log = logging.get_logger('main')
 
----@module 'ccl_motion'
 local ccl_motion = require 'cc-libs.turtle.motion'
 local Motion = ccl_motion.Motion
 
 local actions = require 'cc-libs.turtle.actions'
 
-local args = { ... }
-if #args < 1 then
-    print('Usage: shaft_down <n> <block_walls>')
-    print()
-    print('Dig a shaft down and add walls if they are missing')
-    print()
-    print('Options:')
-    print('    n: number of blocks to mine down')
-    print('    block_walls: name of block to place as walls')
-    return
-end
+local argparse = require 'cc-libs.util.argparse'
+local parser = argparse.ArgParse:new('shaft_down', 'Dig a shaft down and add walls if they are missing')
+parser:add_arg('n', { help = 'number of blocks to mine down' })
+parser:add_arg('block_wall', { help = 'name of block to place as walls' })
+parser:add_option('l', 'ladder', 'place a ladder on the way back up')
+local args = parser:parse_args({ ... })
 
-local n = tonumber(args[1])
-local block_wall = args[2]
+local n = tonumber(args.n)
+assert(n ~= nil)
+local block_wall = args.block_wall
+local place_ladder = args.ladder
 
-log:info('Starting with parameters n=', n)
-
-log:info('Starting fuel level', turtle.getFuelLevel())
-local fuel_need = n * 2
-log:debug('Fuel needed is', fuel_need)
-if turtle.getFuelLevel() < fuel_need then
-    log:fatal('Not enough fuel! Need', fuel_need)
-end
+log:info('Starting with parameters n=', n, 'block_wall=', block_wall, 'ladder=', place_ladder)
 
 local tmc = Motion:new()
 tmc:enable_dig()
@@ -57,21 +47,38 @@ local function place_all_sides()
     end
 end
 
-local total = 0
-for _ = 1, n do
-    if not tmc:down() then
-        break
+local function main()
+    actions.assert_fuel(n * 2)
+    if place_ladder then
+        actions.assert_items('minecraft:ladder', n)
     end
-    place_all_sides()
-    total = total + 1
+
+    local total = 0
+    for _ = 1, n do
+        -- Can't move down, maybe we hit bedrock
+        if not tmc:down() then
+            break
+        end
+        place_all_sides()
+        total = total + 1
+    end
+
+    log:info('Returning to station')
+
+    -- Using total instead of n in case we stopped early
+
+    if place_ladder then
+        for _ = 1, total do
+            tmc:up()
+            if actions.select_slot('minecraft:ladder') then
+                turtle.placeDown()
+            end
+        end
+    else
+        tmc:up(total)
+    end
+
+    log:info('Done!')
 end
 
--- Return
-
-log:info('Returning to station')
-
-for _ = 1, total do
-    tmc:up()
-end
-
-log:info('Done!')
+log:catch_errors(main)

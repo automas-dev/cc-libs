@@ -1,3 +1,4 @@
+-- Remember to update README.md with any changes here
 package.path = '../?.lua;../?/init.lua;' .. package.path
 local logging = require 'cc-libs.util.logging'
 logging.basic_config {
@@ -7,26 +8,19 @@ logging.basic_config {
 }
 local log = logging.get_logger('main')
 
----@module 'ccl_motion'
 local ccl_motion = require 'cc-libs.turtle.motion'
 local Motion = ccl_motion.Motion
 
 local actions = require 'cc-libs.turtle.actions'
 
-local args = { ... }
-if #args < 1 then
-    print('Usage: ladder_up <height> [block_fill]')
-    print()
-    print("Dig forwards and lay a bridge on the way back if there isn't one already")
-    print()
-    print('Options:')
-    print('    height: height of the ladder')
-    print('    block_fill: name of block to place as column if there is an air gap')
-    return
-end
+local argparse = require 'cc-libs.util.argparse'
+local parser = argparse.ArgParse:new('ladder_up', 'Build a ladder, placing ladder blocks bellow the turtle')
+parser:add_arg('height', { help = 'height of the ladder' })
+parser:add_arg('block_fill', { help = 'name of block to place as column if there is an air gap', required = false })
+local args = parser:parse_args({ ... })
 
-local height = tonumber(args[1])
-local block_fill = args[2]
+local height = tonumber(args.height)
+local block_fill = args.block_fill
 
 log:info('Starting with parameters height=', height, 'fill=', block_fill)
 
@@ -56,34 +50,38 @@ local function place_ladder()
     end
 end
 
--- Start
+local function main()
+    local total_height = 0
 
-local total_height = 0
+    -- Start
 
-place_fill()
-
-for _ = 1, height - 1 do
-    if not tmc:up() then
-        log:warning('Failed to move after', total_height, 'blocks, returning to start')
-        break
-    end
     place_fill()
-    total_height = total_height + 1
+
+    for _ = 1, height - 1 do
+        if not tmc:up() then
+            log:warning('Failed to move after', total_height, 'blocks, returning to start')
+            break
+        end
+        place_fill()
+        total_height = total_height + 1
+    end
+
+    -- Return
+
+    log:info('Returning after', total_height, 'blocks')
+
+    for _ = 1, total_height do
+        tmc:down()
+        place_ladder()
+    end
+
+    log:info('Placing final ladder')
+
+    if tmc:backward() and actions.select_slot('minecraft:ladder') then
+        turtle.place()
+    else
+        log:warning('Failed to find ladder')
+    end
 end
 
--- Return
-
-log:info('Returning after', total_height, 'blocks')
-
-for _ = 1, total_height do
-    tmc:down()
-    place_ladder()
-end
-
-log:info('Placing final ladder')
-
-if tmc:backward() and actions.select_slot('minecraft:ladder') then
-    turtle.place()
-else
-    log:warning('Failed to find ladder')
-end
+log:catch_errors(main)

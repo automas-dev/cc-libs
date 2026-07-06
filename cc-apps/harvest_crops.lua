@@ -7,8 +7,8 @@ logging.basic_config {
 }
 local log = logging.get_logger('main')
 
-local vec = require 'cc-libs.util.vec'
-local vec3 = vec.vec3
+local ccl_vec = require 'cc-libs.util.vec'
+local Vec3 = ccl_vec.Vec3
 
 local argparse = require 'cc-libs.util.argparse'
 local parser = argparse.ArgParse:new('farm', 'Harvest crops from the bottom right corner')
@@ -38,7 +38,7 @@ local seed_name_map = {
     ['minecraft:carrots'] = 'minecraft:carrot',
 }
 
-local home = vec3(1564, 69, -699)
+local home = Vec3(1564, 69, -699)
 
 local function return_home()
     local pos = tmc.location.pos
@@ -143,7 +143,7 @@ local function harvest_crops()
     log:debug('Finished dumping inventory')
 end
 
-local function run()
+local function main()
     if tmc.location.has_fix and tmc.location.pos ~= home then
         log:warning('Did not start at home, may have been unloaded')
         if not turtle.detect() then
@@ -165,4 +165,4 @@ local function run()
     end
 end
 
-log:catch_errors(run)
+log:catch_errors(main)

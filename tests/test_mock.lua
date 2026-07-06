@@ -1,7 +1,7 @@
 local test = {}
 
 function test.new_empty()
-    local mock = MagicMock()
+    local mock = Mock()
     expect_eq(nil, mock.return_value)
     expect_eq(nil, mock.return_unpack)
     expect_eq(nil, mock.return_sequence)
@@ -9,7 +9,7 @@ function test.new_empty()
 end
 
 function test.new()
-    local mock = MagicMock {
+    local mock = Mock {
         return_value = 'a',
         return_unpack = { 'b' },
         return_sequence = { 'c' },
@@ -22,12 +22,12 @@ function test.new()
 end
 
 function test.no_return()
-    local mock = MagicMock()
+    local mock = Mock()
     expect_eq(nil, mock())
 end
 
 function test.custom_function()
-    local mock = MagicMock()
+    local mock = Mock()
     local custom_call = 0
     mock.custom_function = function(a)
         custom_call = custom_call + 1
@@ -39,14 +39,14 @@ function test.custom_function()
 end
 
 function test.return_value()
-    local mock = MagicMock()
+    local mock = Mock()
     mock.return_value = 1
     expect_eq(1, mock())
     expect_eq(1, mock())
 end
 
 function test.return_unpack()
-    local mock = MagicMock()
+    local mock = Mock()
     mock.return_unpack = { 1, 2 }
     expect_eq(1, mock())
     local a, b = mock()
@@ -55,7 +55,7 @@ function test.return_unpack()
 end
 
 function test.return_sequence()
-    local mock = MagicMock()
+    local mock = Mock()
     mock.return_sequence = { 1, 2 }
     expect_eq(1, mock())
     expect_eq(2, mock())
@@ -63,7 +63,7 @@ function test.return_sequence()
 end
 
 function test.return_sequence_unpack()
-    local mock = MagicMock()
+    local mock = Mock()
     mock.return_sequence_unpack = { { 1, 'a' }, { 2, 'b' } }
     local a, b = mock()
     expect_eq(1, a)
@@ -77,7 +77,7 @@ function test.return_sequence_unpack()
 end
 
 function test.return_value_priority()
-    local mock = MagicMock()
+    local mock = Mock()
     assert_eq(nil, mock())
     local a, b
     mock.return_sequence_unpack = { { 6, 7 }, { 8, 9 } }
@@ -105,7 +105,7 @@ function test.return_value_priority()
 end
 
 function test.call_count()
-    local mock = MagicMock()
+    local mock = Mock()
     expect_eq(0, mock.call_count)
     mock()
     expect_eq(1, mock.call_count)
@@ -114,7 +114,7 @@ function test.call_count()
 end
 
 function test.args()
-    local mock = MagicMock()
+    local mock = Mock()
     assert_true(type(mock.args) == 'table')
     expect_eq(0, #mock.args)
     mock(1, '2')
@@ -128,7 +128,7 @@ function test.args()
 end
 
 function test.calls()
-    local mock = MagicMock()
+    local mock = Mock()
     mock()
     mock(1)
     mock(2, 3)
@@ -153,8 +153,8 @@ function test.calls()
 end
 
 function test.reset()
-    local mock1 = MagicMock()
-    local mock2 = MagicMock()
+    local mock1 = Mock()
+    local mock2 = Mock()
     mock1()
     mock2()
     mock1.reset()
@@ -166,7 +166,7 @@ function test.reset()
 end
 
 function test.reset_nested()
-    local mock1 = MagicMock()
+    local mock1 = Mock()
     mock1.mock2()
     mock1.reset()
     expect_eq(0, mock1.call_count)
@@ -177,8 +177,8 @@ function test.reset_nested()
 end
 
 function test.reset_all()
-    local mock1 = MagicMock()
-    local mock2 = MagicMock()
+    local mock1 = Mock()
+    local mock2 = Mock()
     mock1()
     mock2()
     mock1.reset_all()
@@ -192,8 +192,8 @@ function test.reset_all()
 end
 
 function test.reset_returns()
-    local mock1 = MagicMock()
-    local mock2 = MagicMock()
+    local mock1 = Mock()
+    local mock2 = Mock()
     mock1.return_value = 1
     mock2.return_sequence = { 2, 3 }
     mock1.reset_all()

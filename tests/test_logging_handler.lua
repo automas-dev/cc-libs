@@ -4,8 +4,8 @@ local Handler = handler.Handler
 local test = {}
 
 function test.new()
-    local f = MagicMock()
-    local s = MagicMock()
+    local f = Mock()
+    local s = Mock()
     local h = Handler:new(f, s)
     expect_eq(0, h.level)
     expect_eq(f, h.formatter)
@@ -13,8 +13,8 @@ function test.new()
 end
 
 function test.new_level()
-    local f = MagicMock()
-    local s = MagicMock()
+    local f = Mock()
+    local s = Mock()
     local h = Handler:new(f, s, 1)
     expect_eq(1, h.level)
     expect_eq(f, h.formatter)
@@ -22,12 +22,12 @@ function test.new_level()
 end
 
 function test.send()
-    local f = MagicMock()
+    local f = Mock()
     f.format_record.return_value = 'msg'
-    local s = MagicMock()
+    local s = Mock()
     s.send.return_value = true
     local h = Handler:new(f, s)
-    local r = MagicMock()
+    local r = Mock()
     expect_true(h:send(r))
     assert_eq(1, f.format_record.call_count)
     expect_eq(r, f.format_record.args[2])
@@ -36,12 +36,12 @@ function test.send()
 end
 
 function test.send_fail()
-    local f = MagicMock()
+    local f = Mock()
     f.format_record.return_value = 'msg'
-    local s = MagicMock()
+    local s = Mock()
     s.send.return_value = false
     local h = Handler:new(f, s)
-    local r = MagicMock()
+    local r = Mock()
     expect_false(h:send(r))
     assert_eq(1, f.format_record.call_count)
     expect_eq(r, f.format_record.args[2])

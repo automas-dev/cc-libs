@@ -1,3 +1,4 @@
+-- Remember to update README.md with any changes here
 package.path = '../?.lua;../?/init.lua;' .. package.path
 local logging = require 'cc-libs.util.logging'
 logging.basic_config {
@@ -7,66 +8,122 @@ logging.basic_config {
 }
 local log = logging.get_logger('main')
 
----@module 'ccl_motion'
 local ccl_motion = require 'cc-libs.turtle.motion'
 local Motion = ccl_motion.Motion
 
----@module 'ccl-actions'
-local actions = require 'cc-libs.turtle.actions'
+local ccl_map = require 'cc-libs.map'
+local Map = ccl_map.Map
 
-local args = { ... }
-if #args < 3 then
-    print('Usage: strip <length> <width> <depth> [direction|down]')
-    print()
-    print('Mine a square region to the right')
-    print('WARNING this is for clearing areas, inventory will not be checked or dumped when full')
-    print()
-    print('Options:')
-    print('    length: length of area to mine')
-    print('    width: width of area to mine')
-    print('    depth: depth of area to mine')
-    print('    direction: up or down')
-    return
-end
+local ccl_location = require 'cc-libs.turtle.location'
+local Location = ccl_location.Location
 
-local width = tonumber(args[1])
-local length = tonumber(args[2])
-local depth = tonumber(args[3])
-local direction = args[4] or 'down'
+local ccl_nav = require 'cc-libs.turtle.nav'
+local Nav = ccl_nav.Nav
 
-assert(direction == 'up' or direction == 'down', 'Direction must be up or down')
+local argparse = require 'cc-libs.util.argparse'
+local parser = argparse.ArgParse:new(
+    'strip',
+    'Mine a region to the front and right of the turtle\n'
+        .. 'WARNING this is for clearing areas, inventory will not be checked or dumped when full'
+)
+parser:add_arg('length', { help = 'length of area to mine' })
+parser:add_arg('width', { help = 'width of area to mine' })
+parser:add_arg('height', { help = 'height of area to mine' })
+parser:add_option('u', 'up', 'mine up instead of down')
+local args = parser:parse_args({ ... })
 
-log:info('Starting with parameters width=', width, 'length=', length, 'depth=', depth, 'direction=', direction)
+local length = tonumber(args.width)
+local width = tonumber(args.length)
+local height = tonumber(args.height)
+local direction = args.up and 'up' or 'down'
 
-local tmc = Motion:new()
+assert(length >= 1, 'length must be at least 1')
+assert(width >= 1, 'width must be at least 1')
+assert(height >= 1, 'height must be at least 1')
+
+log:info('Starting with parameters length=', length, 'width=', width, 'height=', height, 'direction=', direction)
+
+local map = Map:new()
+local location = Location:new(map)
+local tmc = Motion:new(location)
+local nav = Nav:new(map, location)
+
 tmc:enable_dig()
+
+-- TODO check if motion was successful
 
 local function mine_layer(dig_up, dig_down)
     for z = 1, length do
         for x = 1, width do
-            tmc:forward()
             if dig_up then
                 turtle.digUp()
             end
             if dig_down then
                 turtle.digDown()
             end
+            if x < width then
+                tmc:forward()
+            end
         end
-        if z % 2 == 1 then
-            tmc:right()
-            tmc:forward()
-            tmc:right()
-        else
-            tmc:left()
-            tmc:forward()
-            tmc:left()
+        if z < length then
+            if z % 2 == 1 then
+                tmc:right()
+                if dig_up then
+                    turtle.digUp()
+                end
+                if dig_down then
+                    turtle.digDown()
+                end
+                tmc:forward()
+                tmc:right()
+            else
+                tmc:left()
+                if dig_up then
+                    turtle.digUp()
+                end
+                if dig_down then
+                    turtle.digDown()
+                end
+                tmc:forward()
+                tmc:left()
+            end
         end
     end
 end
 
-if depth == 3 then
-    tmc:down()
-    mine_layer(true, true)
-elseif depth < 3 then
-    mine_layer(false, depth == 2)
+local function main()
+    nav:mark_poi('station')
+
+    -- Mine 3 layers at a time
+    while height >= 3 do
+        log:debug('Mining layer of height 3')
+        if direction == 'up' then
+            tmc:up(2)
+        else
+            tmc:down(2)
+        end
+        mine_layer(true, true)
+        tmc:around()
+        height = height - 3
+    end
+
+    -- Handle 1 or 2 remaining layers
+    if height == 1 then
+        log:debug('Mining layer of height 1')
+        mine_layer(false, false)
+    elseif height == 2 then
+        log:debug('Mining layer of height 2')
+        if direction == 'up' then
+            tmc:up()
+        else
+            tmc:down()
+        end
+        mine_layer(direction == 'up', direction == 'down')
+    end
+
+    nav:mark_poi('resume')
+    tmc:follow_path(nav:find_path('resume', 'station'))
+    tmc:right()
 end
+
+log:catch_errors(main)

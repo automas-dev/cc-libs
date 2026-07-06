@@ -13,7 +13,7 @@ local function separate_parts(target)
     return parts
 end
 
----Patch a global object with MagicMock
+---Patch a global object with Mock
 ---@param target string
 ---@return Mock
 function patch(target)
@@ -27,8 +27,8 @@ function patch(target)
     return patch_local(obj, field)
 end
 
----Patch an field with MagicMock
----@param obj table any object with a field to replace with MagicMock
+---Patch an field with Mock
+---@param obj table any object with a field to replace with Mock
 ---@param field string name of the field to replace
 ---@return Mock
 function patch_local(obj, field)
@@ -38,7 +38,7 @@ function patch_local(obj, field)
         end
     end
     local old = obj[field]
-    local mock = MagicMock()
+    local mock = Mock()
     obj[field] = mock
     table.insert(patches, {
         old = old,

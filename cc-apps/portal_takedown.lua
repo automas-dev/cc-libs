@@ -1,3 +1,4 @@
+-- Remember to update README.md with any changes here
 -- Setup import paths
 package.path = '../?.lua;../?/init.lua;' .. package.path
 

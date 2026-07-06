@@ -32,7 +32,7 @@ function test.new_level()
 end
 
 function test.new_parent()
-    local parent = MagicMock()
+    local parent = Mock()
     local l = Logger:new('ss', 1, parent)
     expect_eq('ss', l.subsystem)
     expect_eq(1, l.level)
@@ -46,15 +46,15 @@ end
 
 function test.add_handler()
     local l = Logger:new('ss')
-    local h = MagicMock()
+    local h = Mock()
     l:add_handler(h)
     assert_eq(1, #l.handlers)
     expect_eq(h, l.handlers[1])
 end
 
 function test.new_handler()
-    local f = MagicMock()
-    local s = MagicMock()
+    local f = Mock()
+    local s = Mock()
     local l = Logger:new('ss')
     l:new_handler(f, s)
     assert_eq(1, #l.handlers)
@@ -64,8 +64,8 @@ function test.new_handler()
 end
 
 function test.new_handler_level()
-    local f = MagicMock()
-    local s = MagicMock()
+    local f = Mock()
+    local s = Mock()
     local l = Logger:new('ss')
     l:new_handler(f, s, 1)
     assert_eq(1, #l.handlers)
@@ -83,12 +83,12 @@ end
 
 function test.log()
     local l = Logger:new('ss')
-    local h = MagicMock()
+    local h = Mock()
     h.level = 0
     h.stream.level = 0
     l.handlers[1] = h
-    local mock_record = MagicMock()
-    Record.new = MagicMock {
+    local mock_record = Mock()
+    Record.new = Mock {
         return_value = mock_record,
     }
     os.epoch.return_value = 12000 -- epoch returns ms
@@ -105,8 +105,8 @@ function test.log()
 end
 
 function test.log_parent_handlers()
-    local parent = MagicMock()
-    local h = MagicMock()
+    local parent = Mock()
+    local h = Mock()
     h.level = 0
     h.stream.level = 0
     parent.handlers = {
@@ -119,9 +119,9 @@ end
 
 function test.log_logger_block()
     local l = Logger:new('ss', 1)
-    local h = MagicMock()
+    local h = Mock()
     l.handlers[1] = h
-    Record.new = MagicMock()
+    Record.new = Mock()
     os.epoch.return_value = 12
     l:log(0, 'a')
     expect_eq(0, l.handlers[1].call_count)
@@ -129,11 +129,11 @@ end
 
 function test.log_handler_block()
     local l = Logger:new('ss')
-    local h = MagicMock()
+    local h = Mock()
     h.level = 1
     h.stream.level = 0
     l.handlers[1] = h
-    Record.new = MagicMock()
+    Record.new = Mock()
     os.epoch.return_value = 12
     l:log(0, 'a')
     expect_eq(0, l.handlers[1].call_count)
@@ -141,11 +141,11 @@ end
 
 function test.log_stream_block()
     local l = Logger:new('ss')
-    local h = MagicMock()
+    local h = Mock()
     h.level = 0
     h.stream.level = 1
     l.handlers[1] = h
-    Record.new = MagicMock()
+    Record.new = Mock()
     os.epoch.return_value = 12
     l:log(0, 'a')
     expect_eq(0, l.handlers[1].call_count)
@@ -153,11 +153,11 @@ end
 
 function test.log_handler_stream_block()
     local l = Logger:new('ss')
-    local h = MagicMock()
+    local h = Mock()
     h.level = 1
     h.stream.level = 1
     l.handlers[1] = h
-    Record.new = MagicMock()
+    Record.new = Mock()
     os.epoch.return_value = 12
     l:log(0, 'a')
     expect_eq(0, l.handlers[1].call_count)
@@ -165,7 +165,7 @@ end
 
 function test.level_methods()
     local l = Logger:new('ss')
-    l.log = MagicMock()
+    l.log = Mock()
     l:trace('a')
     assert_eq(1, l.log.call_count)
     expect_eq(Level.TRACE, l.log.args[2])
@@ -181,6 +181,7 @@ function test.level_methods()
     expect_eq(Level.INFO, l.log.args[2])
     expect_eq('c', l.log.args[3])
     l.log.reset()
+    ---@diagnostic disable-next-line: deprecated
     l:warn('d')
     assert_eq(1, l.log.call_count)
     expect_eq(Level.WARNING, l.log.args[2])
@@ -209,7 +210,7 @@ end
 
 function test.catch_errors()
     local l = Logger:new('ss')
-    l.log = MagicMock()
+    l.log = Mock()
 
     local function good()
         return 'res'
