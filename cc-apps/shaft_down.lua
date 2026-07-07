@@ -5,11 +5,15 @@ logging.basic_config {
     level = logging.Level.INFO,
     file_level = logging.Level.DEBUG,
     filepath = 'logs/shaft_down.log',
+    remote_enabled = true,
 }
 local log = logging.get_logger('main')
 
 local ccl_motion = require 'cc-libs.turtle.motion'
 local Motion = ccl_motion.Motion
+
+local ccl_telemetry = require 'cc-libs.telemetry'
+local Telemetry = ccl_telemetry.Telemetry
 
 local actions = require 'cc-libs.turtle.actions'
 
@@ -29,6 +33,8 @@ log:info('Starting with parameters n=', n, 'block_wall=', block_wall, 'ladder=',
 
 local tmc = Motion:new()
 tmc:enable_dig()
+
+local telem = Telemetry:new(tmc.location)
 
 local function place()
     if not turtle.detect() then
@@ -81,4 +87,4 @@ local function main()
     log:info('Done!')
 end
 
-log:catch_errors(main)
+telem:run_parallel_with(log.catch_errors, log, main)
