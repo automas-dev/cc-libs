@@ -26,14 +26,38 @@ local function proto_telemetry(id, message)
         return
     end
     if not turtle_states[id] then
-        tel_log:debug('Found turtle for id', id)
+        tel_log:debug('Creating state for id', id)
         turtle_states[id] = {
             id = id,
+            events = {},
         }
     end
-    tel_log:debug('Updating state')
-    for k, v in pairs(data) do
-        turtle_states[id][k] = v
+    if data.event then
+        local event = {
+            event = data.event,
+            event_data = data.event_data,
+            meta = data,
+        }
+        event.meta.event = nil
+        event.meta.event_data = nil
+        -- TODO where to store this?
+        turtle_states[id].events[#turtle_states[id].events + 1] = event
+        tel_log:debug(
+            'Computer',
+            id,
+            'sent event',
+            event.event,
+            'with data',
+            json.encode(event.event_data),
+            'and meta',
+            json.encode(event.meta)
+        )
+    else
+        tel_log:debug('Updating state')
+        for k, v in pairs(data) do
+            turtle_states[id][k] = v
+        end
+        tel_log:debug('Turtle', id, 'state is', json.encode(turtle_states[id]))
     end
 end
 
