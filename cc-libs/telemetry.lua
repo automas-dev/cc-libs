@@ -16,6 +16,7 @@ local PayloadType = {
 ---@class Telemetry
 ---@field location Location?
 ---@field telemetry_sleep_s number
+---@field os_events_enabled boolean
 local Telemetry = {}
 
 ---Construct a new Telemetry object
@@ -26,6 +27,7 @@ function Telemetry:new(location)
     local o = {
         location = location,
         telemetry_sleep_s = 1,
+        os_events_enabled = true,
     }
     setmetatable(o, self)
     self.__index = self
@@ -97,13 +99,25 @@ function Telemetry:run_parallel_with(fn, ...)
     local function run_fn()
         result = fn(table.unpack(args))
     end
-    local function run_telem()
+    local function run_state_thread()
         while true do
             self:update_state()
             os.sleep(self.telemetry_sleep_s)
         end
     end
-    parallel.waitForAny(run_fn, run_telem)
+    local function run_event_thread()
+        while true do
+            local event_data = { os.pullEvent() }
+            self:send_event('os_event', event_data)
+        end
+    end
+
+    if self.os_events_enabled then
+        parallel.waitForAny(run_fn, run_state_thread, run_event_thread)
+    else
+        parallel.waitForAny(run_fn, run_state_thread)
+    end
+
     return result
 end
 
