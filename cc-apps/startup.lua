@@ -8,8 +8,8 @@ logging.basic_config {
     remote_enabled = true,
 }
 
-local ccl_telemetry = require 'cc-libs.telemetry'
-local Telemetry = ccl_telemetry.Telemetry
+local ccl_telemetry = require 'cc-libs.net.telemetry'
+local get_telemetry = ccl_telemetry.get_telemetry
 
 local json = require 'cc-libs.util.json'
 
@@ -20,7 +20,7 @@ local REMOTE_CONTROL_RESPONSE_PROTOCOL = 'remote_control'
 local function telemetry()
     local log = logging.get_logger('telemetry')
 
-    local telem = Telemetry:new()
+    local telem = get_telemetry()
 
     local function main()
         while true do
@@ -73,7 +73,7 @@ local function local_shell()
 end
 
 local function wait_for_q()
-    local telem = Telemetry:new()
+    local telem = get_telemetry()
     while true do
         local key
         repeat
@@ -81,7 +81,7 @@ local function wait_for_q()
             _, key = os.pullEvent('key')
         until key == keys.q
         -- print('Q was pressed!')
-        telem:send_event('key_press', { key = key })
+        telem:send_event('key_press', '', { key = key })
     end
 end
 

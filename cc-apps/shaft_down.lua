@@ -12,8 +12,8 @@ local log = logging.get_logger('main')
 local ccl_motion = require 'cc-libs.turtle.motion'
 local Motion = ccl_motion.Motion
 
-local ccl_telemetry = require 'cc-libs.telemetry'
-local Telemetry = ccl_telemetry.Telemetry
+local ccl_telemetry = require 'cc-libs.net.telemetry'
+local get_telemetry = ccl_telemetry.get_telemetry
 
 local actions = require 'cc-libs.turtle.actions'
 
@@ -34,7 +34,8 @@ log:info('Starting with parameters n=', n, 'block_wall=', block_wall, 'ladder=',
 local tmc = Motion:new()
 tmc:enable_dig()
 
-local telem = Telemetry:new(tmc.location)
+local telem = get_telemetry()
+telem:set_location(tmc.location)
 
 local function place()
     if not turtle.detect() then
