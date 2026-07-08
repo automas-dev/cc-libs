@@ -2,13 +2,14 @@ local log_formatter = require 'cc-libs.util.logging.formatter'
 local log_handler = require 'cc-libs.util.logging.handler'
 local log_level = require 'cc-libs.util.logging.level'
 local log_logger = require 'cc-libs.util.logging.logger'
+local log_record = require 'cc-libs.util.logging.record'
 local log_stream = require 'cc-libs.util.logging.stream'
 
 local ROOT_LOGGER_NAME = 'root'
 
 local M = {
     Formatter = log_formatter.Formatter,
-    Record = log_formatter.Record,
+    Record = log_record.Record,
     ShortFormatter = log_formatter.ShortFormatter,
     LongFormatter = log_formatter.LongFormatter,
     JsonFormatter = log_formatter.JsonFormatter,
