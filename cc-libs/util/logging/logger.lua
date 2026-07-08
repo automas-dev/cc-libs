@@ -69,7 +69,9 @@ function Logger:set_level(level)
 end
 
 local function table_to_string(...)
+    -- TODO pretty table
     local args = { ... }
+    -- TODO can this be table.concat?
     local msg = ''
     for i = 1, #args do
         if i == 1 then
