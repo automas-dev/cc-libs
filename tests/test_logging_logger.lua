@@ -7,8 +7,8 @@ local Logger = logger.Logger
 local log_level = require 'cc-libs.util.logging.level'
 local Level = log_level.Level
 
-local log_formatter = require 'cc-libs.util.logging.formatter'
-local Record = log_formatter.Record
+local log_record = require 'cc-libs.util.logging.record'
+local Record = log_record.Record
 
 local test = {}
 
