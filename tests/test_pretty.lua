@@ -37,4 +37,12 @@ function test.fn()
     expect_true(string.match(pretty.format({ a = function() end }), '{a=function: 0x%x+}'))
 end
 
+function test.pprint()
+    local p = patch('print')
+    pretty.pprint('hello', { a = 1, b = { c = 'three' } })
+    assert_eq(1, p.call_count)
+    assert_eq(1, #p.args)
+    expect_eq('hello { a=1, b={ c="three" } }', p.args[1])
+end
+
 return test

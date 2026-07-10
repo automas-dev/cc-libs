@@ -43,13 +43,14 @@ function M.format(val, quote_string, comma_space, bracket_space)
     return tostring(val)
 end
 
+---Pretty print using pretty.format for tables
+---@param ... any values to print
 function M.pprint(...)
-    local parts = {}
-    -- arg is magic for { ... }
-    for _, part in ipairs(arg) do
-        table.insert(parts, M.format(part, true, true, true))
+    local args = { ... }
+    for i, v in ipairs(args) do
+        args[i] = M.format(v, true, true, true)
     end
-    print(table.concat(parts, ' '))
+    print(table.concat(args, ' '))
 end
 
 return M
