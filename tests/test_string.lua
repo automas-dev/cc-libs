@@ -158,10 +158,4 @@ function test.rsplit_max_count()
     expect_arr_eq({ 'a,b', '', 'c' }, str.rsplit('a,b,,c', ',', 2))
 end
 
-function test.gmatch()
-    local pattern = '([^:]+)'
-end
-
-local l = '\\w+|"[\\w\\s]*"'
-
 return test
