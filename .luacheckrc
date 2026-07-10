@@ -29,6 +29,7 @@ globals = {
     "expect_ne",
     "expect_float_eq",
     "expect_float_ne",
+    "expect_arr_eq",
     "store_check_fail",
     "expect_gt",
     "expect_ge",

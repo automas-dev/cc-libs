@@ -21,14 +21,7 @@ local function datetime(time)
 end
 
 ---@class Formatter
-local Formatter = {}
-
----Format record into a string
----@param record Record the record to format
----@return string text the formatted message for record
-function Formatter:format_record(record)
-    return record.message
-end
+---@field format_record fun(self: Formatter, record: Record): string
 
 ---@class ShortFormatter : Formatter
 ---@field show_id boolean show the computer id in the message
@@ -46,6 +39,9 @@ function ShortFormatter:new(show_id)
     return o
 end
 
+---Format record into a string
+---@param record Record the record to format
+---@return string text the formatted message for record
 function ShortFormatter:format_record(record)
     local prefix = ''
     if self.show_id then
@@ -66,6 +62,9 @@ function LongFormatter:new()
     return o
 end
 
+---Format record into a string
+---@param record Record the record to format
+---@return string text the formatted message for record
 function LongFormatter:format_record(record)
     return '['
         .. datetime(record.time)
@@ -91,6 +90,9 @@ function JsonFormatter:new()
     return o
 end
 
+---Format record into a string
+---@param record Record the record to format
+---@return string text the formatted message for record
 function JsonFormatter:format_record(record)
     return json.encode({
         timestamp = datetime(record.time),
