@@ -7,6 +7,8 @@ local Level = log_level.Level
 local log_handler = require 'cc-libs.util.logging.handler'
 local Handler = log_handler.Handler
 
+local pretty = require 'cc-libs.util.pretty'
+
 ---Get a string with filename and line of the calling code
 ---@return string traceback filename and line number
 ---@return debuginfo info name and debug
@@ -73,9 +75,9 @@ local function table_to_string(...)
     local msg = ''
     for i = 1, #args do
         if i == 1 then
-            msg = tostring(args[1])
+            msg = pretty.format(args[1])
         else
-            msg = msg .. ' ' .. tostring(args[i])
+            msg = msg .. ' ' .. pretty.format(args[i])
         end
     end
     return msg
