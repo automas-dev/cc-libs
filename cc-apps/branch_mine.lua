@@ -55,10 +55,12 @@ if fs.exists(map_file) then
 end
 local location = Location:new(map)
 local tmc = Motion:new(location)
+tmc:enable_dig()
 local nav = Nav:new(map, location)
 
 local telem = get_telemetry()
 telem:set_location(location)
+tmc:attach_telemetry(telem)
 
 tmc.motion_fail_cb = function(action, reason)
     log:info('Stopping execution for motion error', action, reason)
@@ -150,28 +152,6 @@ local function dump()
     tmc:face(state.heading)
 end
 
-local function try_forward(n)
-    n = n or 1
-    assert(n >= 0, 'n must be positive')
-
-    for _ = 1, n do
-        local did_move = false
-        for _ = 1, FORWARD_MAX_TRIES do
-            if tmc:forward() then
-                did_move = true
-                break
-            else
-                log:debug('Could not move forward, trying to dig')
-                turtle.dig()
-            end
-        end
-
-        if not did_move then
-            log:fatal('Failed to move forward after', FORWARD_MAX_TRIES, 'attempts')
-        end
-    end
-end
-
 local function dig_forward(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
@@ -186,7 +166,7 @@ local function dig_forward(n)
         end
 
         turtle.dig()
-        try_forward()
+        tmc:forward()
         turtle.digUp()
 
         local has_block, data = turtle.inspectDown()
@@ -255,7 +235,7 @@ local function mine_tunnel()
     end
 
     tmc:face(Compass.SOUTH)
-    try_forward(3)
+    tmc:forward(3)
     return true
 end
 
@@ -310,7 +290,7 @@ local function main()
 
             -- Mine left half of shaft
             tmc:face(Compass.WEST)
-            try_forward(length)
+            tmc:forward(length)
             if not mine_shaft() then
                 return
             end
