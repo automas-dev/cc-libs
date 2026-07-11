@@ -24,7 +24,7 @@ local PayloadType = {
 local Telemetry = {}
 
 ---Construct a new Telemetry object
----@param location? Location
+---@param location? Location used for position and heading metadata
 ---@return Telemetry
 function Telemetry:new(location)
     peripheral.find('modem', rednet.open)
