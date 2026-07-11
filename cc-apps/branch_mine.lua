@@ -8,7 +8,6 @@ logging.basic_config {
 }
 local log = logging.get_logger('main')
 
-local FORWARD_MAX_TRIES = 10
 local map_file = 'branch_map.json'
 
 local ccl_motion = require 'cc-libs.turtle.motion'
