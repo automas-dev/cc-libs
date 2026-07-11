@@ -71,18 +71,11 @@ function Logger:set_level(level)
 end
 
 local function table_to_string(...)
-    -- TODO pretty table
     local args = { ... }
-    -- TODO can this be table.concat?
-    local msg = ''
     for i = 1, #args do
-        if i == 1 then
-            msg = pretty.format(args[1])
-        else
-            msg = msg .. ' ' .. pretty.format(args[i])
-        end
+        args[i] = pretty.format(args[i])
     end
-    return msg
+    return table.concat(args, ' ')
 end
 
 ---Write a log message to each handler
