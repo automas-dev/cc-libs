@@ -265,6 +265,11 @@ local function main()
     -- assert_torch() -- Disabled because of torch re-stock on dump
     assert_fuel()
 
+    -- Use relative heading for navigation if gps isn't available for heading
+    if not location.has_fix then
+        location.has_heading = true
+    end
+
     -- Move to start
 
     tmc:up()
