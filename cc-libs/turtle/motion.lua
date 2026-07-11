@@ -42,6 +42,7 @@ end
 ---Attach telemetry to broadcast alerts for failed actions
 ---@param telemetry Telemetry
 function Motion:attach_telemetry(telemetry)
+    -- TODO add more telemetry events from Motion
     self.telemetry = telemetry
 end
 
@@ -65,6 +66,7 @@ function Motion:_telem_alert_fail(action, attempts)
         log:warning(msg)
     end
     if self.telemetry ~= nil then
+        log:trace('Sending telemetry alert motion_fail for', action, 'max_tries')
         self.telemetry:send_alert('motion_fail', msg, {
             action = action,
             attempts = attempts,
@@ -73,6 +75,7 @@ function Motion:_telem_alert_fail(action, attempts)
         })
     end
     if self.motion_fail_cb ~= nil then
+        log:trace('Calling motion fail cb for', action, 'max_tries')
         self.motion_fail_cb(action, 'max_tries')
     end
 end
@@ -86,12 +89,14 @@ function Motion:_telem_alert_no_fuel(action)
         log:warning(msg)
     end
     if self.telemetry ~= nil then
+        log:trace('Sending telemetry alert motion_fail for', action, 'no_fuel')
         self.telemetry:send_alert('no_fuel', msg, {
             action = action,
             subsystem = log.subsystem,
         })
     end
     if self.motion_fail_cb ~= nil then
+        log:trace('Calling motion fail cb for', action, 'no_fuel')
         self.motion_fail_cb(action, 'no_fuel')
     end
 end
@@ -107,14 +112,18 @@ function Motion:_attempt_move(action, action_fn, dig_fn)
     local tries = 0
     for i = 1, self.max_tries do
         tries = i
+        log:trace('Action', action, 'attempt', tries, 'of', self.max_tries)
         if action_fn() then
+            log:trace('Action', action, 'was successful')
             success = true
             break
         elseif turtle.getFuelLevel() == 0 then
+            log:trace('TMP FUEL STUFF')
             -- NOTE getFuelLevel can return "unlimited" if fuel consumption is disabled
             self:_telem_alert_no_fuel(action)
             return false
-        elseif dig_fn then
+        elseif dig_fn ~= nil then
+            log:trace('Calling dig function after fail of action', action)
             dig_fn()
         end
     end
