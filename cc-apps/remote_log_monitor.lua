@@ -10,8 +10,7 @@ local parser = argparse.ArgParse:new('remote_log_monitor', 'Read and echo remote
 parser:add_arg('level', { help = 'min log level to print' })
 local args = parser:parse_args({ ... })
 
-local level = args.level
-level = logging.level_from_name(level)
+local level = logging.level_from_name(args.level)
 
 peripheral.find('modem', rednet.open)
 
@@ -24,6 +23,6 @@ while true do
     if not success then
         print('Failed to decode message from ' .. id)
     elseif logging.level_from_name(data['level']) >= level then
-        stream:send('[' .. data['host'] .. '] ' .. fmt:format_record(data))
+        stream:send('[' .. data['host'] .. '] ' .. fmt:format_record(data), data)
     end
 end

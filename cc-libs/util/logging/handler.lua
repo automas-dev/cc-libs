@@ -25,7 +25,7 @@ end
 ---@return boolean success was the message send successful
 function Handler:send(record)
     local message = self.formatter:format_record(record)
-    return self.stream:send(message)
+    return self.stream:send(message, record)
 end
 
 return {
