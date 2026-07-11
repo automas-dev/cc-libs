@@ -1,6 +1,12 @@
 ---@diagnostic disable: inject-field, undefined-field
 -- luacheck: ignore 143 142
 
+local record = require 'cc-libs.util.logging.record'
+local Record = record.Record
+
+local level = require 'cc-libs.util.logging.level'
+local Level = level.Level
+
 local stream = require 'cc-libs.util.logging.stream'
 local ConsoleStream = stream.ConsoleStream
 local FileStream = stream.FileStream
@@ -13,6 +19,10 @@ function test.setup()
     patch('print')
     patch('rednet')
     patch('peripheral')
+    patch('term')
+    patch('os.getComputerID')
+    patch('os.getComputerLabel')
+    patch('colors')
 end
 
 function test.console_new_empty()
@@ -27,7 +37,10 @@ end
 
 function test.console_send()
     local s = ConsoleStream:new()
-    local res = s:send('hi')
+    -- TODO test colors with different levels
+    -- TODO test with colors disabled
+    local rec = Record:new('', Level.INFO, '', '', nil)
+    local res = s:send('hi', rec)
     expect_true(res)
     assert_eq(1, print.call_count)
     expect_eq(1, #print.args)

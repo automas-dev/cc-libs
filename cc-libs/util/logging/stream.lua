@@ -1,10 +1,13 @@
+local _level = require 'cc-libs.util.logging.level'
+
 ---@class Stream
 ---@field level number|LogLevel minimum message level
----@field send fun(self: Stream, message: string): boolean
+---@field send fun(self: Stream, message: string, record: Record): boolean
 
 local REDNET_PROTOCOL = 'remote_log'
 
 ---@class ConsoleStream : Stream
+---@field color_enabled boolean use colored text for messages in the console
 local ConsoleStream = {}
 
 ---Create a new ConsoleStream instance
@@ -13,6 +16,7 @@ local ConsoleStream = {}
 function ConsoleStream:new(level)
     local o = {
         level = level or 0,
+        color_enabled = true,
     }
     setmetatable(o, self)
     self.__index = self
@@ -21,8 +25,21 @@ end
 
 ---Write the message to print
 ---@param message string the log message as a single string
+---@param record Record the message record
 ---@return boolean success was the message send successful
-function ConsoleStream:send(message)
+function ConsoleStream:send(message, record)
+    if self.color_enabled then
+        term.setBackgroundColor(colors.black)
+        if record.level == _level.Level.ERROR then
+            term.setTextColor(colors.red)
+        elseif record.level == _level.Level.WARNING then
+            term.setTextColor(colors.yellow)
+        elseif record.level == _level.Level.DEBUG then
+            term.setTextColor(colors.cyan)
+        else
+            term.setTextColor(colors.white)
+        end
+    end
     print(message)
     return true
 end

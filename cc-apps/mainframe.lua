@@ -137,7 +137,7 @@ local function run_remote_log()
             remote_log:error('Failed to decode message from', id)
         else
             if logging.level_from_name(data.level) >= logging.Level.WARNING then
-                stream:send('[' .. data.host .. '] ' .. fmt:format_record(data))
+                stream:send('[' .. data.host .. '] ' .. fmt:format_record(data), data)
             end
             local file_handle = log_files[data.host]
             if not file_handle then
