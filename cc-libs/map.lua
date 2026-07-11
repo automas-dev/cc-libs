@@ -146,7 +146,7 @@ function Map:get(pid)
     return self.graph[pid]
 end
 
----Get a point by it's components
+---Get a point by it's components or create one if missing
 ---@param x number
 ---@param y number
 ---@param z number
@@ -155,7 +155,7 @@ function Map:point(x, y, z)
     local pid = point_id(x, y, z)
     local point = self:get(pid)
     if point == nil then
-        log:trace('Creating point for id', pid)
+        log:debug('Creating point for id', pid)
         point = Point:new(x, y, z)
         self.graph[point.id] = point
     else
@@ -176,8 +176,6 @@ end
 ---@param p2 Vec3|Point the second point
 ---@param weight? number weight of the link
 function Map:add(p1, p2, weight)
-    log:debug('Add point', p1, 'and', p2)
-
     -- Get by x, y, z instead of id to support vec and auto-add missing points
     local g_p1 = self:point(p1.x, p1.y, p1.z)
     local g_p2 = self:point(p2.x, p2.y, p2.z)
