@@ -24,6 +24,9 @@ local Compass = ccl_location.Compass
 local ccl_nav = require 'cc-libs.turtle.nav'
 local Nav = ccl_nav.Nav
 
+local ccl_telemetry = require 'cc-libs.net.telemetry'
+local get_telemetry = ccl_telemetry.get_telemetry
+
 local argparse = require 'cc-libs.util.argparse'
 local parser = argparse.ArgParse:new(
     'branch_mine',
@@ -53,6 +56,9 @@ end
 local location = Location:new(map)
 local tmc = Motion:new(location)
 local nav = Nav:new(map, location)
+
+local telem = get_telemetry()
+telem:set_location(location)
 
 local function debug_location()
     log:debug('Location is x=', location.pos.x, 'z=', location.pos.z, 'heading=', location:heading_name())
@@ -361,4 +367,4 @@ local function main()
     log:info('Done!')
 end
 
-log:catch_errors(main)
+telem:run_parallel_with(log.catch_errors, log, main)
