@@ -60,6 +60,11 @@ local nav = Nav:new(map, location)
 local telem = get_telemetry()
 telem:set_location(location)
 
+tmc.motion_fail_cb = function(action, reason)
+    log:info('Stopping execution for motion error', action, reason)
+    error('Motion error ' .. action .. ' ' .. reason)
+end
+
 local function debug_location()
     log:debug('Location is x=', location.pos.x, 'z=', location.pos.z, 'heading=', location:heading_name())
 end
