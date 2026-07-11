@@ -22,8 +22,8 @@ end
 
 ---Build a pretty string for quick printing
 ---@param t any
----@param quote_string boolean?
----@param comma_space boolean?
+---@param quote_string? boolean
+---@param comma_space? boolean
 ---@return string
 local function pretty_table(t, quote_string, comma_space)
     assert(type(t) == 'table', 't must be a table')

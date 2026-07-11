@@ -31,7 +31,7 @@ end
 
 ---Add a point of interest
 ---@param name string
----@param point Point?
+---@param point? Point
 ---@return PointId? previous point id of `name`
 function Nav:mark_poi(name, point)
     if point == nil then

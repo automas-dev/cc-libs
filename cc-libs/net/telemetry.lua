@@ -24,7 +24,7 @@ local PayloadType = {
 local Telemetry = {}
 
 ---Construct a new Telemetry object
----@param location Location?
+---@param location? Location
 ---@return Telemetry
 function Telemetry:new(location)
     peripheral.find('modem', rednet.open)
@@ -72,7 +72,7 @@ function Telemetry:_build_payload(type)
 end
 
 ---Send telemetry data
----@param state table?
+---@param state? table
 ---@return table payload
 function Telemetry:update_state(state)
     local payload = self:_build_payload(PayloadType.STATE)
@@ -87,7 +87,7 @@ end
 ---Send telemetry event
 ---@param type string
 ---@param msg string
----@param data table?
+---@param data? table
 ---@return table payload
 function Telemetry:send_event(type, msg, data)
     local payload = self:_build_payload(PayloadType.EVENT)
@@ -106,7 +106,7 @@ end
 ---Send telemetry event
 ---@param type string
 ---@param msg string
----@param data table?
+---@param data? table
 ---@return table payload
 function Telemetry:send_alert(type, msg, data)
     local payload = self:_build_payload(PayloadType.ALERT)

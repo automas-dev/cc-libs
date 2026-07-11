@@ -32,9 +32,9 @@ end
 
 ---Build a pretty string by expanding tables
 ---@param val any value to stringify
----@param quote_string boolean? string values should be surrounded by double quotes
----@param comma_space boolean? commas are followed by a space
----@param bracket_space boolean? inside of brackets includes a space (eg. {a=1} vs { a=1 })
+---@param quote_string? boolean string values should be surrounded by double quotes
+---@param comma_space? boolean commas are followed by a space
+---@param bracket_space? boolean inside of brackets includes a space (eg. {a=1} vs { a=1 })
 ---@return string string formatted `val`
 function M.format(val, quote_string, comma_space, bracket_space)
     if type(val) == 'table' then
