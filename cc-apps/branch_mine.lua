@@ -3,7 +3,7 @@ package.path = '../?.lua;../?/init.lua;' .. package.path
 local logging = require 'cc-libs.util.logging'
 logging.basic_config {
     level = logging.Level.INFO,
-    file_level = logging.Level.TRACE,
+    file_level = logging.Level.DEBUG,
     filepath = 'logs/branch_mine.log',
 }
 local log = logging.get_logger('main')
@@ -23,6 +23,9 @@ local Compass = ccl_location.Compass
 
 local ccl_nav = require 'cc-libs.turtle.nav'
 local Nav = ccl_nav.Nav
+
+local ccl_telemetry = require 'cc-libs.net.telemetry'
+local get_telemetry = ccl_telemetry.get_telemetry
 
 local argparse = require 'cc-libs.util.argparse'
 local parser = argparse.ArgParse:new(
@@ -53,6 +56,9 @@ end
 local location = Location:new(map)
 local tmc = Motion:new(location)
 local nav = Nav:new(map, location)
+
+local telem = get_telemetry()
+telem:set_location(location)
 
 local function debug_location()
     log:debug('Location is x=', location.pos.x, 'z=', location.pos.z, 'heading=', location:heading_name())
@@ -259,6 +265,11 @@ local function main()
     -- assert_torch() -- Disabled because of torch re-stock on dump
     assert_fuel()
 
+    -- Use relative heading for navigation if gps isn't available for heading
+    if not location.has_fix then
+        location.has_heading = true
+    end
+
     -- Move to start
 
     tmc:up()
@@ -361,4 +372,4 @@ local function main()
     log:info('Done!')
 end
 
-log:catch_errors(main)
+telem:run_parallel_with(log.catch_errors, log, main)
