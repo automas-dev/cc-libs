@@ -17,6 +17,28 @@ local PayloadType = {
     ALERT = 'PAYLOAD_ALERT',
 }
 
+---@class TelemetryPayload
+---@field _telem_type PayloadType
+---@field type PayloadType
+---@field time_local number
+---@field time_utc number
+---@field time_ingame number
+---@field host_id number
+---@field host_name string
+---@field pos? Vec3
+---@field heading? number
+---@field has_fix boolean
+---@field has_heading boolean
+
+---@class StateTelemetryPayload : TelemetryPayload
+---@field state? table
+
+---@class EventTelemetryPayload : TelemetryPayload
+---@field event { id: string, type: string, message: string, data: table? }
+
+---@class AlertTelemetryPayload : TelemetryPayload
+---@field alert { id: string, type: string, message: string, data: table? }
+
 ---@class Telemetry
 ---@field location Location?
 ---@field telemetry_sleep_s number
@@ -47,7 +69,7 @@ end
 ---Build a payload packet with common fields
 ---@private
 ---@param type PayloadType
----@return table payload the payload table with common fields
+---@return TelemetryPayload payload the payload table with common fields
 function Telemetry:_build_payload(type)
     local payload = {
         _telem_type = type,
@@ -73,9 +95,10 @@ end
 
 ---Send telemetry data
 ---@param state? table
----@return table payload
+---@return StateTelemetryPayload payload
 function Telemetry:update_state(state)
     local payload = self:_build_payload(PayloadType.STATE)
+    ---@cast payload StateTelemetryPayload
     -- TODO replace this with current program and other stats about it
     payload.state = state
     local message = json.encode(payload)
@@ -88,9 +111,10 @@ end
 ---@param type string
 ---@param msg string
 ---@param data? table
----@return table payload
+---@return EventTelemetryPayload payload
 function Telemetry:send_event(type, msg, data)
     local payload = self:_build_payload(PayloadType.EVENT)
+    ---@cast payload EventTelemetryPayload
     payload.event = {
         id = uuid(),
         type = type,
@@ -107,9 +131,10 @@ end
 ---@param type string
 ---@param msg string
 ---@param data? table
----@return table payload
+---@return AlertTelemetryPayload payload
 function Telemetry:send_alert(type, msg, data)
     local payload = self:_build_payload(PayloadType.ALERT)
+    ---@cast payload AlertTelemetryPayload
     payload.alert = {
         id = uuid(),
         type = type,
