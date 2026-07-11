@@ -280,7 +280,9 @@ local function main()
 
             -- Mine right half of shaft
             tmc:face(Compass.EAST)
-            mine_shaft()
+            if not mine_shaft() then
+                break
+            end
 
             -- Mine left half of shaft
             tmc:face(Compass.WEST)
