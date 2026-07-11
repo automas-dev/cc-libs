@@ -14,22 +14,35 @@ local Compass = ccl_location.Compass
 ---@field max_tries integer max attempts to move before failing
 ---@field can_dig boolean turtle can mine blocks in it's path
 ---@field location Location optional location tracking
+---@field telemetry? Telemetry used to send alerts if an action fails
+---@field motion_fail_cb? function called if an action fails
+---@field log_fails boolean create a warning log message if an action fails
 local Motion = {}
 
 -- TODO take map for updating
 ---Create a new motion controller
 ---@param location? Location location to be updated with motions
+---@param motion_fail_cb? function called if an action fails
 ---@return Motion
-function Motion:new(location)
+function Motion:new(location, motion_fail_cb)
     log:trace('New Motion instance')
     local o = {
         max_tries = 10,
         can_dig = false,
         location = location or Location:new(),
+        telemetry = nil,
+        motion_fail_cb = motion_fail_cb,
+        log_fails = true,
     }
     setmetatable(o, self)
     self.__index = self
     return o
+end
+
+---Attach telemetry to broadcast alerts for failed actions
+---@param telemetry Telemetry
+function Motion:attach_telemetry(telemetry)
+    self.telemetry = telemetry
 end
 
 ---If a move fails, dig before the next attempt (default: false)
@@ -42,28 +55,73 @@ function Motion:disable_dig()
     self.can_dig = false
 end
 
+---Broadcast an alert using telemetry for a failed action
+---@private
+---@param action string human readable name for action
+---@param attempts number how many retries occurred before failing
+function Motion:_telem_alert_fail(action, attempts)
+    local msg = 'Failed action ' .. action .. ' after ' .. attempts .. ' attempts'
+    if self.log_fails then
+        log:warning(msg)
+    end
+    if self.telemetry ~= nil then
+        self.telemetry:send_alert('motion_fail', msg, {
+            action = action,
+            attempts = attempts,
+            max_attempts = self.max_tries,
+            subsystem = log.subsystem,
+        })
+    end
+    if self.motion_fail_cb ~= nil then
+        self.motion_fail_cb(action, 'max_tries')
+    end
+end
+
+---Broadcast an alert using telemetry for failed action due to missing fuel
+---@private
+---@param action string human readable name for action
+function Motion:_telem_alert_no_fuel(action)
+    local msg = 'Turtle is out of fuel'
+    if self.log_fails then
+        log:warning(msg)
+    end
+    if self.telemetry ~= nil then
+        self.telemetry:send_alert('no_fuel', msg, {
+            action = action,
+            subsystem = log.subsystem,
+        })
+    end
+    if self.motion_fail_cb ~= nil then
+        self.motion_fail_cb(action, 'no_fuel')
+    end
+end
+
 ---Attempt an action up to self.max_tries times
 ---@private
----@param action function normally turtle.forward or .back or .up or .down
----@param fail_cb? function called if an attempt fails up to max attempts
----@return boolean was the move a success
-function Motion:_attempt_move(action, fail_cb)
+---@param action string human readable name for action
+---@param action_fn function normally turtle.forward or .back or .up or .down
+---@param dig_fn? function called if an attempt fails up to max attempts
+---@return boolean success was the move a success
+function Motion:_attempt_move(action, action_fn, dig_fn)
     local success = false
     local tries = 0
     for i = 1, self.max_tries do
         tries = i
-        if action() then
+        if action_fn() then
             success = true
             break
         elseif turtle.getFuelLevel() == 0 then
             -- NOTE getFuelLevel can return "unlimited" if fuel consumption is disabled
-            log:warning('Turtle is out of fuel')
+            self:_telem_alert_no_fuel(action)
             return false
-        elseif fail_cb then
-            fail_cb()
+        elseif dig_fn then
+            dig_fn()
         end
     end
     log:trace('Attempt to move took', tries, 'tries and was', (success and 'success' or 'fail'))
+    if not success then
+        self:_telem_alert_fail(action, tries)
+    end
     return success
 end
 
@@ -75,9 +133,7 @@ function Motion:forward(n)
     assert(n >= 0, 'n must be positive')
     log:debug('move forward', n, 'blocks')
     for _ = 1, n do
-        if not self:_attempt_move(turtle.forward, (self.can_dig and turtle.dig or nil)) then
-            -- TODO is this warn in the right place?
-            log:warning('Failed to move forward after ' .. self.max_tries .. 'attempts')
+        if not self:_attempt_move('forward', turtle.forward, (self.can_dig and turtle.dig or nil)) then
             return false
         end
 
@@ -95,9 +151,7 @@ function Motion:backward(n)
     assert(n >= 0, 'n must be positive')
     log:debug('move backward', n, 'blocks')
     for _ = 1, n do
-        if not self:_attempt_move(turtle.back) then
-            -- TODO is this warn in the right place?
-            log:warning('Failed to move back after ' .. self.max_tries .. 'attempts')
+        if not self:_attempt_move('back', turtle.back) then
             return false
         end
 
@@ -115,9 +169,7 @@ function Motion:up(n)
     assert(n >= 0, 'n must be positive')
     log:debug('move up', n, 'blocks')
     for _ = 1, n do
-        if not self:_attempt_move(turtle.up, (self.can_dig and turtle.digUp or nil)) then
-            -- TODO is this warn in the right place?
-            log:warning('Failed to move up after ' .. self.max_tries .. 'attempts')
+        if not self:_attempt_move('up', turtle.up, (self.can_dig and turtle.digUp or nil)) then
             return false
         end
 
@@ -135,9 +187,7 @@ function Motion:down(n)
     assert(n >= 0, 'n must be positive')
     log:debug('move down', n, 'blocks')
     for _ = 1, n do
-        if not self:_attempt_move(turtle.down, (self.can_dig and turtle.digDown or nil)) then
-            -- TODO is this warn in the right place?
-            log:warning('Failed to move down after ' .. self.max_tries .. 'attempts')
+        if not self:_attempt_move('down', turtle.down, (self.can_dig and turtle.digDown or nil)) then
             return false
         end
 

@@ -6,7 +6,7 @@ local M = {}
 ---resolved relative to `cwd`. If `path` is absolute and `cwd` is not nil, `cwd`
 ---will be ignored.
 ---@param path string the relative or absolute path to expand
----@param cwd string? if `path` is relative, it will be resolved to absolute relative to `cwd`
+---@param cwd? string if `path` is relative, it will be resolved to absolute relative to `cwd`
 ---@return string path the resolved relative or absolute path
 function M.resolve(path, cwd)
     if path == '/' then

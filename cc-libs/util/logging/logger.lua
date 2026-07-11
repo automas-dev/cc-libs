@@ -72,15 +72,10 @@ end
 
 local function table_to_string(...)
     local args = { ... }
-    local msg = ''
     for i = 1, #args do
-        if i == 1 then
-            msg = pretty.format(args[1])
-        else
-            msg = msg .. ' ' .. pretty.format(args[i])
-        end
+        args[i] = pretty.format(args[i])
     end
-    return msg
+    return table.concat(args, ' ')
 end
 
 ---Write a log message to each handler

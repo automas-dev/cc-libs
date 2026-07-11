@@ -113,11 +113,6 @@ local function main()
         mine_layer(false, false)
     elseif height == 2 then
         log:debug('Mining layer of height 2')
-        if direction == 'up' then
-            tmc:up()
-        else
-            tmc:down()
-        end
         mine_layer(direction == 'up', direction == 'down')
     end
 

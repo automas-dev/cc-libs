@@ -26,8 +26,8 @@ function test.setup()
 end
 
 ---Create map, location, motion and nav objects
----@param pos Vec3?
----@param heading Compass?
+---@param pos? Vec3
+---@param heading? Compass
 ---@return Nav
 ---@return Map
 ---@return Location

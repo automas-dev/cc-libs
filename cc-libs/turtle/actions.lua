@@ -5,7 +5,7 @@ local M = {}
 
 ---Find the first slot with at least `need` items of the given name.
 ---@param item_name string minecraft item id
----@param need integer? 1 to 64, default 1
+---@param need? integer 1 to 64, default 1
 ---@return integer|nil
 function M.find_slot(item_name, need)
     need = need or 1

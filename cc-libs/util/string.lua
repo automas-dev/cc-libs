@@ -18,8 +18,8 @@ end
 
 ---Split a string on `sep` starting from the beginning of `text`
 ---@param text string text to split
----@param sep string? separator to split `text` on, default ' '
----@param max_count number? max number of splits (eg, 1 would return 2 strings)
+---@param sep? string separator to split `text` on, default ' '
+---@param max_count? number max number of splits (eg, 1 would return 2 strings)
 ---@return string[] split strings
 function M.split(text, sep, max_count)
     if sep == nil then
@@ -51,8 +51,8 @@ end
 
 ---Split a string on `sep` starting from the end of `text`
 ---@param text string text to split
----@param sep string? separator to split `text` on, default ' '
----@param max_count number? max number of splits (eg, 1 would return 2 strings)
+---@param sep? string separator to split `text` on, default ' '
+---@param max_count? number max number of splits (eg, 1 would return 2 strings)
 ---@return string[] split strings
 function M.rsplit(text, sep, max_count)
     local p = M.split(text, sep, nil)
