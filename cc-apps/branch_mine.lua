@@ -112,6 +112,8 @@ local function return_to_station()
     debug_location()
     nav:mark_poi('resume')
     tmc:follow_path(nav:find_path('resume', 'station'))
+    debug_location()
+    log:debug('Finished returning to station')
 end
 
 local function dump()
@@ -128,6 +130,7 @@ local function dump()
 
     tmc:face(Compass.EAST)
 
+    -- TODO check if target inventory is full and stop
     log:debug('At station, dumping inventory')
     for i = 2, 16 do
         turtle.select(i)
@@ -187,9 +190,6 @@ local function place_torch()
     end
     if data.name ~= 'minecraft:torch' then
         log:error('Item in slot 1 is not torch')
-        return_to_station()
-        tmc:face(Compass.NORTH)
-        tmc:down()
         return false
     end
     turtle.select(1)
@@ -205,9 +205,6 @@ local function mine_shaft()
 
         if i > 0 and i % torch == 0 then -- > 0 to prevent placing in tunnel
             if not place_torch() then
-                return_to_station()
-                tmc:face(Compass.NORTH)
-                tmc:down()
                 return false
             end
         end
@@ -224,9 +221,6 @@ local function mine_tunnel()
     for _ = 1, 3 do
         if location.pos.z % torch == 1 then -- 1 is fix for gps starting a block behind
             if not place_torch() then
-                return_to_station()
-                tmc:face(Compass.NORTH)
-                tmc:down()
                 return false
             end
         end
@@ -281,7 +275,7 @@ local function main()
             log:debug('First shaft, starting at center in tunnel')
 
             if not mine_tunnel() then
-                return
+                break
             end
 
             -- Mine right half of shaft
@@ -292,7 +286,7 @@ local function main()
             tmc:face(Compass.WEST)
             tmc:forward(length)
             if not mine_shaft() then
-                return
+                break
             end
         else
             -- Turn to face next shaft
@@ -305,10 +299,10 @@ local function main()
             end
 
             if not mine_shaft() then
-                return
+                break
             end
             if not mine_tunnel() then
-                return
+                break
             end
 
             if i % 2 == 0 then
@@ -320,7 +314,7 @@ local function main()
             end
 
             if not mine_shaft() then
-                return
+                break
             end
         end
 
