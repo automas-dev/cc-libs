@@ -16,6 +16,8 @@ local Motion = ccl_motion.Motion
 local ccl_map = require 'cc-libs.map'
 local Map = ccl_map.Map
 
+local action = require 'cc-libs.turtle.actions'
+
 local ccl_location = require 'cc-libs.turtle.location'
 local Location = ccl_location.Location
 local Compass = ccl_location.Compass
@@ -61,9 +63,9 @@ local telem = get_telemetry()
 telem:set_location(location)
 tmc:attach_telemetry(telem)
 
-tmc.motion_fail_cb = function(action, reason)
-    log:info('Stopping execution for motion error', action, reason)
-    error('Motion error ' .. action .. ' ' .. reason)
+tmc.motion_fail_cb = function(move_action, reason)
+    log:info('Stopping execution for motion error', move_action, reason)
+    error('Motion error ' .. move_action .. ' ' .. reason)
 end
 
 local function debug_location()
@@ -99,6 +101,17 @@ local function assert_fuel()
     if turtle.getFuelLevel() < fuel_need then
         log:fatal('Not enough fuel! Need', fuel_need)
     end
+end
+
+local function estimate_time()
+    local shafts_per_dump = 2
+    local total_shafts = shafts - skip
+    local total_distance = shafts * 6 + total_shafts * length * 2 + total_shafts * length * 2 / shafts_per_dump
+    local action_count = 4
+    local action_time = 0.4 -- s/action
+    local total_s = action_count * action_time * total_distance
+    local total_m = total_s / 60
+    log:info('This will take', total_s, 'seconds =', total_m, 'minutes')
 end
 
 local function inventory_full()
@@ -154,6 +167,34 @@ local function dump()
     tmc:face(state.heading)
 end
 
+local function check_for_ore()
+    local has_block, data
+    has_block, data = turtle.inspect()
+    if has_block then
+        if string.match(data.name, 'ore') then
+            telem:send_event('found_ore', 'Found ore ' .. data.name, { block = data })
+            log:info('Found ore', data.name, 'near', location.pos, 'block =', data)
+            return
+        end
+    end
+    has_block, data = turtle.inspectUp()
+    if has_block then
+        if string.match(data.name, 'ore') then
+            telem:send_event('found_ore', 'Found ore ' .. data.name, { block = data })
+            log:info('Found ore', data.name, 'near', location.pos, 'block =', data)
+            return
+        end
+    end
+    has_block, data = turtle.inspectDown()
+    if has_block then
+        if string.match(data.name, 'ore') then
+            telem:send_event('found_ore', 'Found ore ' .. data.name, { block = data })
+            log:info('Found ore', data.name, 'near', location.pos, 'block =', data)
+            return
+        end
+    end
+end
+
 local function dig_forward(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
@@ -166,6 +207,8 @@ local function dig_forward(n)
         if inventory_full() then
             dump()
         end
+
+        check_for_ore()
 
         turtle.dig()
         tmc:forward()
@@ -182,16 +225,10 @@ end
 
 local function place_torch()
     log:debug('Place torch')
-    local data = turtle.getItemDetail(1)
-    if not data then
-        log:error('No torches in 1st slot')
-        return false
+    if action.select_slot('minecraft:torch') == nil then
+        log:error('No torches found')
+        dump()
     end
-    if data.name ~= 'minecraft:torch' then
-        log:error('Item in slot 1 is not torch')
-        return false
-    end
-    turtle.select(1)
     turtle.placeDown()
     return true
 end
@@ -242,6 +279,7 @@ end
 local function main()
     -- assert_torch() -- Disabled because of torch re-stock on dump
     assert_fuel()
+    estimate_time()
 
     -- Use relative heading for navigation if gps isn't available for heading
     if not location.has_fix then
