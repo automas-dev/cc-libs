@@ -3,7 +3,7 @@ package.path = '../?.lua;../?/init.lua;' .. package.path
 local logging = require 'cc-libs.util.logging'
 logging.basic_config {
     level = logging.Level.INFO,
-    file_level = logging.Level.TRACE,
+    file_level = logging.Level.DEBUG,
     filepath = 'logs/branch_mine.log',
 }
 local log = logging.get_logger('main')
