@@ -55,6 +55,8 @@ function Location:new(map)
 
     if x ~= nil then
         log:debug('Got gps starting location', Vec3:new(x, y, z))
+    else
+        log:debug('No gps available for starting location')
     end
 
     local o = {
@@ -122,11 +124,14 @@ function Location:update(action)
         local x, y, z = gps.locate(0, false)
         if x ~= nil then
             local pos = Vec3:new(x, y, z)
-            local delta = pos - self.pos
+            log:debug('Using gps for heading from', pos_before_move, 'to', pos)
+            local delta = pos - pos_before_move
             if action == Action.BACKWARD then
                 delta = -delta
             end
             self:set_heading_from_delta(delta)
+        else
+            log:debug('No gps available for heading')
         end
     end
 
