@@ -131,8 +131,13 @@ function Map:load(path)
     local file = assert(io.open(path, 'r'))
     local data = json.decode(file:read('a'))
     file:close()
-    self.graph = data.graph
-    self.waypoints = data.waypoints
+    -- Use default or {} to handle empty graph or waypoints
+    if data.graph ~= nil then
+        self.graph = data.graph
+    end
+    if data.waypoints ~= nil then
+        self.waypoints = data.waypoints
+    end
     log:debug('Finished loading map from', path)
 end
 
