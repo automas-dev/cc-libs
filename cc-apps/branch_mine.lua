@@ -56,8 +56,7 @@ if fs.exists(map_file) then
 end
 local location = Location:new(map)
 local tmc = Motion:new(location)
-tmc:enable_dig()
-local nav = Nav:new(map, location)
+local nav = Nav:new(map, tmc)
 
 local telem = get_telemetry()
 telem:set_location(location)
@@ -123,7 +122,7 @@ local function return_to_station()
 
     debug_location()
     nav:mark_poi('resume')
-    tmc:follow_path(nav:find_path('resume', 'station'))
+    nav:follow_path(nav:find_path('resume', 'station'))
     debug_location()
     log:debug('Finished returning to station')
 end
@@ -163,7 +162,7 @@ local function dump()
     -- Resume
 
     log:info('Returning to mining')
-    tmc:follow_path(nav:find_path('station', 'resume'))
+    nav:follow_path(nav:find_path('station', 'resume'))
     tmc:face(state.heading)
 end
 
