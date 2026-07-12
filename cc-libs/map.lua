@@ -133,6 +133,8 @@ function Map:load(path)
     local data = json.decode(file:read('*all'))
     file:close()
     self.graph = data.graph
+    self.waypoints = data.waypoints
+    log:debug('Finished loading map from', path)
 end
 
 ---Write the map to a file
@@ -143,6 +145,7 @@ function Map:dump(path)
     local file = assert(io.open(path, 'w'))
     file:write(json.encode(self))
     file:close()
+    log:debug('Finished dumping map to', path)
 end
 
 ---Add a named waypoint
