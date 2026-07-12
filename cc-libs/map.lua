@@ -156,19 +156,64 @@ end
 ---Get a named waypoint
 ---@param name string
 ---@return Point? point
-function Map:get_poi(name)
+function Map:get_waypoint(name)
     local pid = self.waypoints[name]
     if pid == nil then
         return nil
     end
-    return self:get(pid)
+    return self:get_point(pid)
 end
 
----Get a point by it's id
----@param pid PointId
+---Remove a waypoint by name
+---@param name string
+function Map:remove_waypoint(name)
+    self.waypoints[name] = nil
+end
+
+---Add a point to the map
+---@param point Point
+function Map:add_point(point)
+    self.graph[point.id] = point
+end
+
+---Get a point from it's id
+---@param pid string
+---@return Point?
+function Map:get_point(pid)
+    return self.graph[pid]
+end
+
+---Get a point by location
+---@param x number
+---@param y number
+---@param z number
+---@return Point?
+function Map:get_pos(x, y, z)
+    local pid = point_id(x, y, z)
+    return self.graph[pid]
+end
+
+---Get a point from it's id
+---TODO deprecate
+---@param pid string
 ---@return Point
 function Map:get(pid)
     return self.graph[pid]
+end
+
+---Remove a point using it's id
+---@param pid string
+function Map:remove_point(pid)
+    self.graph[pid] = nil
+end
+
+---Remove a point by location
+---@param x number
+---@param y number
+---@param z number
+function Map:remove_pos(x, y, z)
+    local pid = point_id(x, y, z)
+    self.graph[pid] = nil
 end
 
 ---Get a point by it's components

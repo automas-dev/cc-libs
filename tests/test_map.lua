@@ -109,15 +109,62 @@ end
 function test.map_add_waypoint()
     local map = Map:new()
     map:add_waypoint(Point:new(1, 2, 3), 'poi')
-    expect_eq(1, #map.waypoints)
-    expect_eq(Vec3:new(1, 2, 3), map.waypoints['poi']:to_vec3())
+    assert_eq(1, table_size(map.waypoints))
+    expect_eq('1,2,3', map.waypoints['poi'])
 end
 
-function test.map_get()
+function test.map_get_waypoint()
+    local map = Map:new()
+    map:point(1, 2, 3)
+    map.waypoints['poi'] = '1,2,3'
+    local point = map:get_waypoint('poi')
+    assert_ne(nil, point)
+    ---@diagnostic disable-next-line: need-check-nil
+    expect_eq('1,2,3', point.id)
+end
+
+function test.map_remove_waypoint()
+    local map = Map:new()
+    map.waypoints['poi'] = '1,2,3'
+    map:remove_waypoint('poi')
+    expect_eq(nil, map.waypoints['poi'])
+end
+
+function test.map_add_point()
+    local map = Map:new()
+    local point = Point:new(1, 2, 3)
+    map:add_point(point)
+    assert_eq(point, map.graph[point.id])
+end
+
+function test.map_get_point()
     local map = Map:new()
     local point = Point:new(1, 2, 3)
     map.graph[point.id] = point
-    assert_eq(point, map:get(point.id))
+    assert_eq(point, map:get_point(point.id))
+end
+
+function test.map_get_pos()
+    local map = Map:new()
+    local point = Point:new(1, 2, 3)
+    map.graph[point.id] = point
+    assert_eq(point, map:get_pos(1, 2, 3))
+end
+
+function test.map_remove_point()
+    local map = Map:new()
+    local point = Point:new(1, 2, 3)
+    map.graph[point.id] = point
+    map:remove_point(point.id)
+    assert_eq(nil, map.graph[point.id])
+end
+
+function test.map_remove_pos()
+    local map = Map:new()
+    local point = Point:new(1, 2, 3)
+    map.graph[point.id] = point
+    map:remove_pos(1, 2, 3)
+    assert_eq(nil, map.graph[point.id])
 end
 
 function test.map_point()
