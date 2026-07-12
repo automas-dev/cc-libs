@@ -118,7 +118,9 @@ local function return_to_station()
 
     debug_location()
     nav:mark_poi('resume')
-    nav:follow_path(nav:find_path('resume', 'station'))
+    if nav:get_poi('resume').id ~= nav:get_poi('station').id then
+        nav:follow_path(nav:find_path('resume', 'station'))
+    end
     debug_location()
     log:debug('Finished returning to station')
 end
