@@ -280,7 +280,6 @@ end
 
 -- TODO
 -- Smart check for inventory full
--- Check for fail to move
 -- Don't mine fortune ores (eg. diamond)
 -- Pickup fuel
 -- Mine through wall to last shaft for dump
