@@ -46,7 +46,7 @@ log:info('Starting with parameters length=', length, 'width=', width, 'height=',
 local map = Map:new()
 local location = Location:new(map)
 local tmc = Motion:new(location)
-local nav = Nav:new(map, location)
+local nav = Nav:new(map, tmc)
 
 tmc:enable_dig()
 
@@ -117,7 +117,7 @@ local function main()
     end
 
     nav:mark_poi('resume')
-    tmc:follow_path(nav:find_path('resume', 'station'))
+    nav:follow_path(nav:find_path('resume', 'station'))
     tmc:right()
 end
 

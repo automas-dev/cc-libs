@@ -116,6 +116,8 @@ function Motion:_attempt_move(action, action_fn, dig_fn)
             return false
         elseif dig_fn then
             dig_fn()
+        else
+            log:warning('Dig function is disabled')
         end
     end
     log:trace('Attempt to move took', tries, 'tries and was', (success and 'success' or 'fail'))
@@ -262,130 +264,6 @@ function Motion:face(compass)
         self:left()
     end
 end
-
----Follow a path of map points
----@param path Point[]
-function Motion:follow_path(path)
-    assert(#path > 1, 'Not enough points in path')
-    assert(path[1]:to_vec3() == self.location.pos, 'Path does not start at current location')
-
-    local f = fs.open('path.json', 'w')
-    if f ~= nil then
-        f.write(json.encode(path))
-        f.close()
-    end
-
-    local actions = {}
-
-    local last_direction = nil
-
-    for i = 2, #path do
-        local from = path[i - 1]
-        local to = path[i]
-
-        if from.x ~= to.x then
-            local delta = math.abs(to.x - from.x)
-            local direction = from.x < to.x and Compass.EAST or Compass.WEST
-            if direction ~= last_direction then
-                actions[#actions + 1] = {
-                    action = 'face',
-                    direction = direction,
-                    direction_name = CompassName[direction],
-                }
-                last_direction = direction
-            end
-            actions[#actions + 1] = {
-                action = 'forward',
-                count = delta,
-            }
-        elseif from.y ~= to.y then
-            local delta = math.abs(to.y - from.y)
-            actions[#actions + 1] = {
-                action = from.y < to.y and 'up' or 'down',
-                count = delta,
-            }
-        elseif from.z ~= to.z then
-            local delta = math.abs(to.z - from.z)
-            local direction = from.z < to.z and Compass.SOUTH or Compass.NORTH
-            if direction ~= last_direction then
-                actions[#actions + 1] = {
-                    action = 'face',
-                    direction = direction,
-                    direction_name = CompassName[direction],
-                }
-                last_direction = direction
-            end
-            actions[#actions + 1] = {
-                action = 'forward',
-                count = delta,
-            }
-        end
-    end
-
-    log:debug('Path of length', #path, 'results in', #actions, 'actions')
-
-    f = fs.open('motion_actions.json', 'w')
-    if f ~= nil then
-        f.write(json.encode(actions))
-        f.close()
-    end
-
-    for i, step in ipairs(actions) do
-        log:trace('Step', i, 'is', step.action)
-        if step.action == 'face' then
-            self:face(step.direction)
-        elseif step.action == 'up' then
-            self:up(step.count)
-        elseif step.action == 'down' then
-            self:down(step.count)
-        elseif step.action == 'forward' then
-            self:forward(step.count)
-        end
-    end
-end
-
--- ---Move to the trace step
--- ---@param step Vec3 position to move to
--- function Nav:trace_step(step)
---     log:debug('trace step to pos', step.x, step.y, step.z)
---     local pos = self.gps.pos
---     assert(is_inline(pos, step), 'Step is not inline with current position')
---     log:trace('trace starts at pos', pos.x, pos.y, pos.z)
-
---     if pos.x ~= step.x then
---         local delta = math.abs(step.x - pos.x)
-
---         if pos.x < step.x then
---             self:face(Compass.EAST)
---         else
---             self:face(Compass.WEST)
---         end
-
---         self.motion:forward(delta)
---     elseif pos.y ~= step.y then
---         local delta = math.abs(step.y - pos.y)
-
---         if pos.y < step.y then
---             self.motion:up(delta)
---         else
---             self.motion:down(delta)
---         end
---     elseif pos.z ~= step.z then
---         local delta = math.abs(step.z - pos.z)
-
---         if pos.z < step.z then
---             self:face(Compass.NORTH)
---         else
---             self:face(Compass.SOUTH)
---         end
---         self.motion:forward(delta)
---     end
-
---     local end_pos = self.gps.pos
---     local at_end_pos = end_pos.x == step.x and end_pos.y == step.y and end_pos.z == step.z
-
---     assert(at_end_pos, 'trace_step did not reach step position')
--- end
 
 local M = {
     Motion = Motion,

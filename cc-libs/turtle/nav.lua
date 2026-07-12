@@ -1,27 +1,27 @@
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('nav')
 
-local ccl_map = require 'cc-libs.map'
-local Point = ccl_map.Point
-local Map = ccl_map.Point
-
 local ccl_location = require 'cc-libs.turtle.location'
-local Location = ccl_location.Location
+local Compass = ccl_location.Compass
+local CompassName = ccl_location.CompassName
+
+local json = require 'cc-libs.util.json'
 
 ---@class Nav
 ---@field map Map
----@field location Location
+---@field motion Motion
 ---@field poi { [string]: PointId }
 local Nav = {}
 
 ---Create a new navigation controller
 ---@param map Map map to store paths, will create new if nil
----@param location Location
+---@param motion Motion turtle motion controller with location
 ---@return Nav
-function Nav:new(map, location)
+function Nav:new(map, motion)
     local o = {
         map = map,
-        location = location,
+        motion = motion,
+        -- Keeping these separate from the map waypoints because they are more temporary
         poi = {},
     }
     setmetatable(o, self)
@@ -29,13 +29,13 @@ function Nav:new(map, location)
     return o
 end
 
----Add a point of interest
----@param name string
----@param point? Point
+---Add a point of interest using motion location if point is nil
+---@param name string name of the point of interest
+---@param point? Point point or nil to use motion location
 ---@return PointId? previous point id of `name`
 function Nav:mark_poi(name, point)
     if point == nil then
-        point = self.map:pos(self.location.pos)
+        point = self.map:pos(self.motion.location.pos)
     end
     local previous = self.poi[name]
     self.poi[name] = point.id
@@ -43,7 +43,22 @@ function Nav:mark_poi(name, point)
     return previous
 end
 
----Add a point of interest
+---Mark the current location as `resume` poi using motion location
+function Nav:mark_resume()
+    self:mark_poi('resume')
+end
+
+---Get the map `Point` for a point of interest
+---@param name string name of the point of interest
+---@return Point? point point from map if `name` exists
+function Nav:get_poi(name)
+    local pid = self.poi[name]
+    if pid ~= nil then
+        return self.map:get_point(pid)
+    end
+end
+
+---Remove a point of interest
 ---@param name string
 ---@return PointId? previous point id of `name`
 function Nav:clear_poi(name)
@@ -51,18 +66,6 @@ function Nav:clear_poi(name)
     self.poi[name] = nil
     log:info('Cleared poi', name)
     return previous
-end
-
----Get a point of interest
----@param name string
----@return Point?
-function Nav:get_poi(name)
-    return self.map:get_point(self.poi[name])
-end
-
----Mark the current location as resume poi
-function Nav:mark_resume()
-    self:mark_poi('resume')
 end
 
 ---Find a path from start to goal
@@ -79,6 +82,87 @@ function Nav:find_path(start_poi_name, goal_poi_name)
     local path = self.map:find_path(start, goal)
     assert(path ~= nil, 'Failed to find path from ' .. tostring(start) .. ' to ' .. tostring(goal))
     return path
+end
+
+---Follow a path of map points
+---@param path Point[]
+function Nav:follow_path(path)
+    assert(#path > 1, 'Not enough points in path')
+    assert(path[1]:to_vec3() == self.motion.location.pos, 'Path does not start at current location')
+
+    local f = fs.open('path.json', 'w')
+    if f ~= nil then
+        f.write(json.encode(path))
+        f.close()
+    end
+
+    local actions = {}
+
+    local last_direction = nil
+
+    for i = 2, #path do
+        local from = path[i - 1]
+        local to = path[i]
+
+        if from.x ~= to.x then
+            local delta = math.abs(to.x - from.x)
+            local direction = from.x < to.x and Compass.EAST or Compass.WEST
+            if direction ~= last_direction then
+                actions[#actions + 1] = {
+                    action = 'face',
+                    direction = direction,
+                    direction_name = CompassName[direction],
+                }
+                last_direction = direction
+            end
+            actions[#actions + 1] = {
+                action = 'forward',
+                count = delta,
+            }
+        elseif from.y ~= to.y then
+            local delta = math.abs(to.y - from.y)
+            actions[#actions + 1] = {
+                action = from.y < to.y and 'up' or 'down',
+                count = delta,
+            }
+        elseif from.z ~= to.z then
+            local delta = math.abs(to.z - from.z)
+            local direction = from.z < to.z and Compass.SOUTH or Compass.NORTH
+            if direction ~= last_direction then
+                actions[#actions + 1] = {
+                    action = 'face',
+                    direction = direction,
+                    direction_name = CompassName[direction],
+                }
+                last_direction = direction
+            end
+            actions[#actions + 1] = {
+                action = 'forward',
+                count = delta,
+            }
+        end
+    end
+
+    log:debug('Path of length', #path, 'results in', #actions, 'actions')
+
+    f = fs.open('motion_actions.json', 'w')
+    if f ~= nil then
+        f.write(json.encode(actions))
+        f.close()
+    end
+
+    for i, step in ipairs(actions) do
+        log:trace('Step', i, 'is', step.action)
+        if step.action == 'face' then
+            self.motion:face(step.direction)
+        elseif step.action == 'up' then
+            self.motion:up(step.count)
+        elseif step.action == 'down' then
+            self.motion:down(step.count)
+        elseif step.action == 'forward' then
+            self.motion:forward(step.count)
+        end
+    end
 end
 
 local M = {

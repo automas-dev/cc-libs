@@ -6,6 +6,9 @@ local Nav = ccl_nav.Nav
 local ccl_location = require 'cc-libs.turtle.location'
 local Location = ccl_location.Location
 
+local ccl_motion = require 'cc-libs.turtle.motion'
+local Motion = ccl_motion.Motion
+
 local ccl_map = require 'cc-libs.map'
 local Point = ccl_map.Point
 local Map = ccl_map.Map
@@ -30,10 +33,12 @@ end
 ---@param heading? Compass
 ---@return Nav
 ---@return Map
+---@return Motion
 ---@return Location
 local function setup_nav(pos, heading)
     local map = Map:new()
     local location = Location:new(map)
+    local motion = Motion:new(location)
     location.has_fix = true
     location.has_heading = true
     if pos ~= nil then
@@ -42,14 +47,14 @@ local function setup_nav(pos, heading)
     if heading ~= nil then
         location.heading = heading
     end
-    local nav = Nav:new(map, location)
-    return nav, map, location
+    local nav = Nav:new(map, motion)
+    return nav, map, motion, location
 end
 
 function test.nav_new()
-    local nav, map, location = setup_nav()
+    local nav, map, motion = setup_nav()
 
-    expect_eq(location, nav.location)
+    expect_eq(motion, nav.motion)
     expect_eq(map, nav.map)
     expect_eq(0, table_size(nav.poi))
 end
