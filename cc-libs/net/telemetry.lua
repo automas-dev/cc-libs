@@ -29,6 +29,7 @@ local PayloadType = {
 ---@field heading? number
 ---@field has_fix boolean
 ---@field has_heading boolean
+---@field subsystem string?
 
 ---@class StateTelemetryPayload : TelemetryPayload
 ---@field state? table
@@ -40,17 +41,20 @@ local PayloadType = {
 ---@field alert { id: string, type: string, message: string, data: table? }
 
 ---@class Telemetry
+---@field subsystem string?
 ---@field location Location?
 ---@field telemetry_sleep_s number
 ---@field os_events_enabled boolean
 local Telemetry = {}
 
 ---Construct a new Telemetry object
+---@param subsystem? string name of subsystem sending telemetry
 ---@param location? Location used for position and heading metadata
 ---@return Telemetry
-function Telemetry:new(location)
+function Telemetry:new(subsystem, location)
     peripheral.find('modem', rednet.open)
     local o = {
+        subsystem = subsystem,
         location = location,
         telemetry_sleep_s = 1,
         os_events_enabled = true,
@@ -79,6 +83,7 @@ function Telemetry:_build_payload(type)
         time_ingame = os.epoch('ingame') / 1000,
         host_id = os.getComputerID(),
         host_name = os.getComputerLabel() or '',
+        subsystem = self.subsystem,
     }
     if self.location then
         payload.pos, payload.heading = self.location:location()
@@ -115,6 +120,9 @@ end
 function Telemetry:send_event(type, msg, data)
     local payload = self:_build_payload(PayloadType.EVENT)
     ---@cast payload EventTelemetryPayload
+    if self.subsystem ~= nil then
+        type = self.subsystem .. '.' .. type
+    end
     payload.event = {
         id = uuid(),
         type = type,
@@ -135,6 +143,9 @@ end
 function Telemetry:send_alert(type, msg, data)
     local payload = self:_build_payload(PayloadType.ALERT)
     ---@cast payload AlertTelemetryPayload
+    if self.subsystem ~= nil then
+        type = self.subsystem .. '.' .. type
+    end
     payload.alert = {
         id = uuid(),
         type = type,
@@ -183,17 +194,21 @@ local M = {
     Telemetry = Telemetry,
     TELEMETRY_PROTOCOL = TELEMETRY_PROTOCOL,
     PayloadType = PayloadType,
+    subsystems = {},
 }
 
-local _telem = nil
-
----Get the global telemetry object
+---Get the global or subsystem telemetry object
+---@param subsystem? string name of a subsystem
+---@param location? Location location used to create Telemetry if subsystem does not exist
 ---@return Telemetry
-function M.get_telemetry()
-    if not _telem then
-        _telem = Telemetry:new()
+function M.get_telemetry(subsystem, location)
+    local subsystem_key = subsystem or '_'
+    local telem = M.subsystems[subsystem_key]
+    if telem == nil then
+        telem = Telemetry:new(subsystem, location)
+        M.subsystems[subsystem_key] = telem
     end
-    return _telem
+    return telem
 end
 
 return M
