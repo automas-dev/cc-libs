@@ -77,6 +77,8 @@ local function main()
     time_with_reset('Dig Up', turtle.digUp, 20, turtle.placeUp)
     turtle.digUp()
 
+    time('Dig Empty', turtle.digUp, 20)
+
     time('Turn', turtle.turnLeft, 20)
 
     time_with_reset('Up', turtle.up, 20, turtle.down)
