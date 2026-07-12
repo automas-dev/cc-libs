@@ -148,12 +148,12 @@ function Map:dump(path)
     log:debug('Finished dumping map to', path)
 end
 
----Add a named waypoint
----@param point Vec3|Point
+---Add a named waypoint, creating point if missing
+---@param pos Vec3|Point
 ---@param name string
-function Map:add_waypoint(point, name)
-    local pid = point_id(point.x, point.y, point.z)
-    self.waypoints[name] = pid
+function Map:add_waypoint(pos, name)
+    local point = self:pos(pos)
+    self.waypoints[name] = point.id
 end
 
 ---Get a named waypoint
