@@ -46,7 +46,6 @@ local PayloadType = {
 ---@field subsystem string?
 ---@field location Location?
 ---@field heartbeat_sleep_s number
----@field os_events_enabled boolean
 local Telemetry = {}
 
 ---Construct a new Telemetry object
@@ -59,7 +58,6 @@ function Telemetry:new(subsystem, location)
         subsystem = subsystem,
         location = location,
         heartbeat_sleep_s = DEFAULT_HEARTBEAT_SLEEP_S,
-        os_events_enabled = true,
     }
     setmetatable(o, self)
     self.__index = self
@@ -115,19 +113,19 @@ function Telemetry:update_state(state)
 end
 
 ---Send telemetry event
----@param type string
+---@param event_type string
 ---@param msg string
 ---@param data? table
 ---@return EventTelemetryPayload payload
-function Telemetry:send_event(type, msg, data)
+function Telemetry:send_event(event_type, msg, data)
     local payload = self:_build_payload(PayloadType.EVENT)
     ---@cast payload EventTelemetryPayload
     if self.subsystem ~= nil then
-        type = self.subsystem .. '.' .. type
+        event_type = self.subsystem .. '.' .. event_type
     end
     payload.event = {
         id = uuid(),
-        type = type,
+        type = event_type,
         message = msg,
         data = data,
     }
@@ -138,19 +136,19 @@ function Telemetry:send_event(type, msg, data)
 end
 
 ---Send telemetry event
----@param type string
+---@param alert_type string
 ---@param msg string
 ---@param data? table
 ---@return AlertTelemetryPayload payload
-function Telemetry:send_alert(type, msg, data)
+function Telemetry:send_alert(alert_type, msg, data)
     local payload = self:_build_payload(PayloadType.ALERT)
     ---@cast payload AlertTelemetryPayload
     if self.subsystem ~= nil then
-        type = self.subsystem .. '.' .. type
+        alert_type = self.subsystem .. '.' .. alert_type
     end
     payload.alert = {
         id = uuid(),
-        type = type,
+        type = alert_type,
         message = msg,
         data = data,
     }
@@ -164,18 +162,15 @@ end
 ---@class TelemetryRunner
 ---@field telem Telemetry
 ---@field running boolean
----@field os_events_enabled boolean send telemetry events for os events
 ---@field private threads { name: string, can_kill: boolean, co: thread, filter: string? }[]
 local TelemetryRunner = {}
 
 ---@return TelemetryRunner
 ---@param telem Telemetry
----@param os_events_enabled? boolean send telemetry events for os events
-function TelemetryRunner:new(telem, os_events_enabled)
+function TelemetryRunner:new(telem)
     local o = {
         telem = telem,
         running = false,
-        os_events_enabled = os_events_enabled or false,
         threads = {},
     }
     setmetatable(o, self)
@@ -210,7 +205,7 @@ end
 
 function TelemetryRunner:terminate_all()
     log:debug('Terminating all threads')
-    self.telem:send_event('runner.terminate_all', 'Terminating ' .. #self.threads .. ' threads', self)
+    self.telem:send_event('runner.terminate_all', 'Terminating ' .. #self.threads .. ' threads')
 
     local did_kill = 0
     for _, thread in ipairs(self.threads) do
@@ -265,17 +260,13 @@ function TelemetryRunner:run()
                     end
                 end
 
-                -- Abort if this coroutine has finished
-                if coroutine.status(thread.co) == 'dead' and thread.can_kill then
-                    log:info('Thread', thread.name, 'exited so all other threads will be terminated')
+                if coroutine.status(thread.co) == 'dead' then
+                    log:debug('Thread', thread.name, 'died')
                     self.telem:send_event(
                         'runner.thread_died',
                         'Thread ' .. thread.name .. ' died',
                         { name = thread.name, can_kill = thread.can_kill }
                     )
-                    self:terminate_all()
-                    self.running = false
-                    return true
                 end
 
                 thread.filter = param
@@ -286,6 +277,13 @@ function TelemetryRunner:run()
         while i <= #self.threads do
             local thread = self.threads[i]
             if coroutine.status(thread.co) == 'dead' then
+                if thread.can_kill then
+                    log:info('Thread', thread.name, 'exited so all other threads will be terminated')
+                    self:terminate_all()
+                    self.running = false
+                    return true
+                end
+
                 log:debug('Removing dead thread', thread.name)
                 table.remove(self.threads, i)
             else
@@ -300,17 +298,13 @@ function TelemetryRunner:run()
         end
 
         event = table.pack(os.pullEventRaw())
-        if self.os_events_enabled then
-            self.telem:send_event('runner.os_event', 'Received OS event ' .. event[1], event)
-        end
-        log:trace('Next event is', event)
     end
 end
 
 ---Get TelemetryRunner
 ---@return TelemetryRunner runner
 function Telemetry:make_runner()
-    local runner = TelemetryRunner:new(self, self.os_events_enabled)
+    local runner = TelemetryRunner:new(self)
     return runner
 end
 
