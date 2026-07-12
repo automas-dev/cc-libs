@@ -56,6 +56,7 @@ if fs.exists(map_file) then
 end
 local location = Location:new(map)
 local tmc = Motion:new(location)
+tmc:enable_dig()
 local nav = Nav:new(map, tmc)
 
 local telem = get_telemetry()
