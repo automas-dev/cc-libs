@@ -209,9 +209,16 @@ local function dig_forward(n)
 
         check_for_ore()
 
-        turtle.dig()
+        -- Detecting air is twice as fast as digging air (20 hz instead of 14 hz)
+        if turtle.detect() then
+            turtle.dig()
+        end
+
         tmc:forward()
-        turtle.digUp()
+
+        if turtle.detectUp() then
+            turtle.digUp()
+        end
 
         local has_block, data = turtle.inspectDown()
         if has_block then
