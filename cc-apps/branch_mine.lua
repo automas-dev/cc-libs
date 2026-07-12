@@ -48,12 +48,7 @@ local skip = tonumber(args.skip)
 
 log:info('Starting with parameters shafts=', shafts, 'length=', length, 'torc=', torch, 'skip=', skip)
 
--- TODO fix link error when using loaded map
 local map = Map:new()
-if fs.exists(map_file) then
-    log:warning('LOAD MAP IS DISABLED')
-    -- map:load(map_file)
-end
 local location = Location:new(map)
 local tmc = Motion:new(location)
 tmc:enable_dig()
@@ -291,6 +286,15 @@ end
 -- Mine through wall to last shaft for dump
 
 local function main()
+    -- TODO fix link error when using loaded map
+    if not location.has_fix then
+        log:info('GPS location not available, map will not be loaded')
+    elseif fs.exists(map_file) then
+        map:load(map_file)
+    else
+        log:info('Map file does not exist, creating new map')
+    end
+
     -- assert_torch() -- Disabled because of torch re-stock on dump
     assert_fuel()
     estimate_time()
@@ -405,3 +409,7 @@ local function main()
 end
 
 telem:run_parallel_with('main', log.catch_errors, log, main)
+
+if location.has_fix then
+    map:dump(map_file)
+end
