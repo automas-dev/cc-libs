@@ -129,8 +129,7 @@ function Map:load(path)
     log:info('Loading map from', path)
 
     local file = assert(io.open(path, 'r'))
-    ---@diagnostic disable-next-line: param-type-mismatch
-    local data = json.decode(file:read('*all'))
+    local data = json.decode(file:read('a'))
     file:close()
     self.graph = data.graph
     self.waypoints = data.waypoints
