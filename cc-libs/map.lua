@@ -48,6 +48,10 @@ function Point:new(x, y, z)
     return o
 end
 
+function Point._eq(a, b)
+    return a.pid == b.pid
+end
+
 ---Create a Point from a Vec3
 ---@param vec Vec3
 ---@return Point
@@ -104,6 +108,7 @@ end
 
 ---@class Map
 ---@field graph { [PointId]: Point }
+---@field waypoints { [string]: PointId }
 local Map = {}
 
 --- Create a new empty map
@@ -111,6 +116,7 @@ local Map = {}
 function Map:new()
     local o = {
         graph = {},
+        waypoints = {},
     }
     setmetatable(o, self)
     self.__index = self
@@ -139,35 +145,90 @@ function Map:dump(path)
     file:close()
 end
 
----Get a point by it's id
----@param pid PointId
----@return Point
-function Map:get(pid)
+---Add a named waypoint
+---@param point Vec3|Point
+---@param name string
+function Map:add_waypoint(point, name)
+    local pid = point_id(point.x, point.y, point.z)
+    self.waypoints[name] = pid
+end
+
+---Get a named waypoint
+---@param name string
+---@return Point? point
+function Map:get_waypoint(name)
+    local pid = self.waypoints[name]
+    if pid == nil then
+        return nil
+    end
+    return self:get_point(pid)
+end
+
+---Remove a waypoint by name
+---@param name string
+function Map:remove_waypoint(name)
+    self.waypoints[name] = nil
+end
+
+---Add a point to the map
+---@param point Point
+function Map:add_point(point)
+    self.graph[point.id] = point
+end
+
+---Get a point from it's id
+---@param pid string
+---@return Point?
+function Map:get_point(pid)
     return self.graph[pid]
 end
 
----Get a point by it's components
+---Get a point by location
+---@param x number
+---@param y number
+---@param z number
+---@return Point?
+function Map:get_pos(x, y, z)
+    local pid = point_id(x, y, z)
+    return self.graph[pid]
+end
+
+---Remove a point using it's id
+---@param pid string
+function Map:remove_point(pid)
+    self.graph[pid] = nil
+end
+
+---Remove a point by location
+---@param x number
+---@param y number
+---@param z number
+function Map:remove_pos(x, y, z)
+    local pid = point_id(x, y, z)
+    self.graph[pid] = nil
+end
+
+---Get or create a point by it's components
 ---@param x number
 ---@param y number
 ---@param z number
 ---@return Point
 function Map:point(x, y, z)
-    local pid = point_id(x, y, z)
-    local point = self:get(pid)
+    local point = self:get_pos(x, y, z)
     if point == nil then
-        log:trace('Creating point for id', pid)
         point = Point:new(x, y, z)
         self.graph[point.id] = point
+        log:trace('Created point', point)
     else
-        log:trace('Got point', point, 'for id', pid)
+        log:trace('Got existing point', point)
     end
     return point
 end
 
----Get a point by Vec3 position
+---Get or create a point by Vec3 position
 ---@param pos Vec3
 ---@return Point
-function Map:point_from_vec3(pos)
+function Map:pos(pos)
     return self:point(pos.x, pos.y, pos.z)
 end
 
@@ -205,34 +266,34 @@ function Map:link_adjacent(point)
     local p
 
     -- +x
-    p = self:get(point_id(point.x + 1, point.y, point.z))
+    p = self:get_pos(point.x + 1, point.y, point.z)
     if p ~= nil then
         point:link(p, 1)
     end
     -- -x
-    p = self:get(point_id(point.x - 1, point.y, point.z))
+    p = self:get_pos(point.x - 1, point.y, point.z)
     if p ~= nil then
         point:link(p, 1)
     end
 
     -- +y
-    p = self:get(point_id(point.x, point.y + 1, point.z))
+    p = self:get_pos(point.x, point.y + 1, point.z)
     if p ~= nil then
         point:link(p, 1)
     end
     -- -y
-    p = self:get(point_id(point.x, point.y - 1, point.z))
+    p = self:get_pos(point.x, point.y - 1, point.z)
     if p ~= nil then
         point:link(p, 1)
     end
 
     -- +z
-    p = self:get(point_id(point.x, point.y, point.z + 1))
+    p = self:get_pos(point.x, point.y, point.z + 1)
     if p ~= nil then
         point:link(p, 1)
     end
     -- -z
-    p = self:get(point_id(point.x, point.y, point.z - 1))
+    p = self:get_pos(point.x, point.y, point.z - 1)
     if p ~= nil then
         point:link(p, 1)
     end
@@ -246,22 +307,23 @@ function Map:find_path(p1, p2)
     log:debug('Searching for path between', p1, 'and', p2)
 
     local function neighbors(pid)
-        local point = self:get(pid)
+        local point = self:get_point(pid)
+        assert(point ~= nil)
         log:trace('neighbors', pid, table_size(point.links))
         return point.links
     end
 
     local function f(n1, n2)
         log:trace('f n1=', n1, 'n2=', n2)
-        local dx = math.abs(self:get(n1).x - self:get(n2).x)
-        local dy = math.abs(self:get(n1).y - self:get(n2).y)
+        local dx = math.abs(self:get_point(n1).x - self:get_point(n2).x)
+        local dy = math.abs(self:get_point(n1).y - self:get_point(n2).y)
         return dx + dy
     end
 
     local function h(n1, n2)
         log:trace('h n1=', n1, 'n2=', n2)
-        local dx = math.abs(self:get(n1).x - self:get(n2).x)
-        local dy = math.abs(self:get(n1).y - self:get(n2).y)
+        local dx = math.abs(self:get_point(n1).x - self:get_point(n2).x)
+        local dy = math.abs(self:get_point(n1).y - self:get_point(n2).y)
         return math.sqrt(dx * dx + dy * dy)
     end
 
@@ -274,7 +336,7 @@ function Map:find_path(p1, p2)
 
     local path_points = {}
     for i = 1, #path do
-        path_points[i] = self:get(path[i])
+        path_points[i] = self:get_point(path[i])
     end
 
     return path_points
