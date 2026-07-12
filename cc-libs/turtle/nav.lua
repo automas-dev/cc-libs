@@ -102,10 +102,10 @@ function Nav:follow_path(path)
     assert(#path > 1, 'Not enough points in path')
     assert(path[1]:to_vec3() == self.motion.location.pos, 'Path does not start at current location')
 
-    local f = fs.open('path.json', 'w')
+    local f = io.open('path.json', 'w')
     if f ~= nil then
-        f.write(json.encode(path))
-        f.close()
+        f:write(json.encode(path))
+        f:close()
     end
 
     local actions = {}
@@ -157,10 +157,10 @@ function Nav:follow_path(path)
 
     log:debug('Path of length', #path, 'results in', #actions, 'actions')
 
-    f = fs.open('motion_actions.json', 'w')
+    f = io.open('motion_actions.json', 'w')
     if f ~= nil then
-        f.write(json.encode(actions))
-        f.close()
+        f:write(json.encode(actions))
+        f:close()
     end
 
     for i, step in ipairs(actions) do
