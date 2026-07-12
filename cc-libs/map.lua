@@ -229,7 +229,7 @@ function Map:point(x, y, z)
 end
 
 ---Get or create a point by Vec3 position
----@param pos Vec3
+---@param pos Vec3|Point
 ---@return Point
 function Map:pos(pos)
     return self:point(pos.x, pos.y, pos.z)

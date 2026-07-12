@@ -32,20 +32,32 @@ end
 ---Add a point of interest using motion location if point is nil
 ---@param name string name of the point of interest
 ---@param point? Point point or nil to use motion location
----@return PointId? previous point id of `name`
 function Nav:mark_poi(name, point)
     if point == nil then
         point = self.map:pos(self.motion.location.pos)
     end
-    local previous = self.poi[name]
     self.poi[name] = point.id
     log:info('Mark poi', name, point.id)
-    return previous
 end
 
 ---Mark the current location as `resume` poi using motion location
 function Nav:mark_resume()
     self:mark_poi('resume')
+end
+
+---Add a point of interest from a map waypoint
+---@param name string name of the waypoint
+function Nav:poi_from_waypoint(name)
+    self:mark_poi(name, self.map:get_waypoint(name))
+end
+
+---Copy a point of interest to the map as a waypoint
+---@param name string name of the point of interest
+function Nav:poi_to_waypoint(name)
+    local point = self:get_poi(name)
+    if point ~= nil then
+        self.map:add_waypoint(point, name)
+    end
 end
 
 ---Get the map `Point` for a point of interest

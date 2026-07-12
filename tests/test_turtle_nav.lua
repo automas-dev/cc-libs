@@ -73,6 +73,26 @@ function test.mark_poi_here()
     expect_eq('1,2,3', poi)
 end
 
+function test.poi_from_waypoint()
+    local nav, map = setup_nav()
+    map:add_waypoint(map:point(1, 2, 3), 'a')
+    nav:poi_from_waypoint('a')
+    local poi = nav.poi['a']
+    expect_eq('1,2,3', poi)
+end
+
+function test.poi_to_waypoint()
+    local nav, map = setup_nav(Vec3:new(4, 4, 4))
+    local point = map:point(1, 2, 3)
+    nav:mark_poi('a', point)
+    nav:poi_to_waypoint('a')
+    assert_eq(1, table_size(map.waypoints))
+    local waypoint = map:get_waypoint('a')
+    assert_ne(nil, waypoint)
+    ---@cast waypoint Point
+    expect_eq('1,2,3', waypoint.id)
+end
+
 function test.clear_poi()
     local nav = setup_nav()
     local point = Point:new(1, 2, 3)
