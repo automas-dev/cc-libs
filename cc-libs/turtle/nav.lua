@@ -35,7 +35,7 @@ end
 ---@return PointId? previous point id of `name`
 function Nav:mark_poi(name, point)
     if point == nil then
-        point = self.map:point_from_vec3(self.location.pos)
+        point = self.map:pos(self.location.pos)
     end
     local previous = self.poi[name]
     self.poi[name] = point.id

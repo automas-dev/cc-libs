@@ -208,7 +208,7 @@ function Map:remove_pos(x, y, z)
     self.graph[pid] = nil
 end
 
----Get a point by it's components
+---Get or create a point by it's components
 ---@param x number
 ---@param y number
 ---@param z number
@@ -225,10 +225,10 @@ function Map:point(x, y, z)
     return point
 end
 
----Get a point by Vec3 position
+---Get or create a point by Vec3 position
 ---@param pos Vec3
 ---@return Point
-function Map:point_from_vec3(pos)
+function Map:pos(pos)
     return self:point(pos.x, pos.y, pos.z)
 end
 
