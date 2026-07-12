@@ -7,6 +7,8 @@ local uuid = require 'cc-libs.util.uuid'
 
 local TELEMETRY_PROTOCOL = 'telemetry'
 
+local DEFAULT_HEARTBEAT_SLEEP_S = 1
+
 ---@enum PayloadType
 local PayloadType = {
     ---Payload with `state` field
@@ -43,7 +45,7 @@ local PayloadType = {
 ---@class Telemetry
 ---@field subsystem string?
 ---@field location Location?
----@field telemetry_sleep_s number
+---@field heartbeat_sleep_s number
 ---@field os_events_enabled boolean
 local Telemetry = {}
 
@@ -56,7 +58,7 @@ function Telemetry:new(subsystem, location)
     local o = {
         subsystem = subsystem,
         location = location,
-        telemetry_sleep_s = 1,
+        heartbeat_sleep_s = DEFAULT_HEARTBEAT_SLEEP_S,
         os_events_enabled = true,
     }
     setmetatable(o, self)
@@ -328,13 +330,13 @@ function Telemetry:run_parallel_with(name, fn, ...)
     local runner = self:make_runner()
     runner:add_thread(name, true, run_fn)
 
-    local function run_state_thread()
+    local function run_heartbeat_thread()
         while true do
-            self:update_state()
-            os.sleep(self.telemetry_sleep_s)
+            self:send_event('heartbeat', 'Heartbeat')
+            os.sleep(self.heartbeat_sleep_s)
         end
     end
-    runner:add_thread('state_thread', false, run_state_thread)
+    runner:add_thread('heartbeat', false, run_heartbeat_thread)
 
     local success = runner:run()
     return success, result
