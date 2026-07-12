@@ -257,7 +257,14 @@ end
 
 local function mine_tunnel()
     log:debug('Mining tunnel at z=', location.pos.z)
-    assert(location.pos.x == 0, 'Mining tunnel but not at x=0')
+    local station = nav:get_poi('station')
+    if station == nil then
+        log:fatal('Missing station poi')
+        -- Unreachable, but here so type checker knows that
+        return
+    end
+    -- TODO make this the correct orientation
+    -- assert(location.pos.x == station.x, 'Mining tunnel but not at x=' .. station.x .. ' got ' .. location.pos.x)
 
     tmc:face(Compass.NORTH)
 
