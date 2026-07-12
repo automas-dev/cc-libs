@@ -5,6 +5,9 @@ local ccl_location = require 'cc-libs.turtle.location'
 local Compass = ccl_location.Compass
 local CompassName = ccl_location.CompassName
 
+local ccl_map = require 'cc-libs.map'
+local Point = ccl_map.Point
+
 local json = require 'cc-libs.util.json'
 
 ---@class Nav
@@ -100,7 +103,7 @@ end
 ---@param path Point[]
 function Nav:follow_path(path)
     assert(#path > 1, 'Not enough points in path')
-    assert(path[1]:to_vec3() == self.motion.location.pos, 'Path does not start at current location')
+    assert(Point.to_vec3(path[1]) == self.motion.location.pos, 'Path does not start at current location')
 
     local f = io.open('path.json', 'w')
     if f ~= nil then

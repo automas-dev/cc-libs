@@ -72,7 +72,7 @@ function Point:link(other, weight)
     weight = weight or 1
     self.links[other.id] = weight
     if other.links[self.id] == nil then
-        other:link(self, weight)
+        Point.link(other, self, weight)
     end
 end
 
@@ -248,14 +248,17 @@ function Map:add(p1, p2, weight)
     local g_p1 = self:point(p1.x, p1.y, p1.z)
     local g_p2 = self:point(p2.x, p2.y, p2.z)
 
+    log:debug('g_p1 =', g_p1, 'g_p2 =', g_p2)
+
     if weight == nil then
-        weight = (g_p1:to_vec3() - g_p2:to_vec3()):get_length()
+        log:debug('get weight')
+        weight = (Point.to_vec3(g_p1) - Point.to_vec3(g_p2)):get_length()
     end
 
-    assert(g_p1:inline(g_p2), 'p1 is not inline with p2')
+    assert(Point.inline(g_p1, g_p2), 'p1 is not inline with p2')
 
     -- Creates link in both directions
-    g_p1:link(g_p2, weight)
+    Point.link(g_p1, g_p2, weight)
 
     self:link_adjacent(g_p1)
     self:link_adjacent(g_p2)
@@ -273,34 +276,34 @@ function Map:link_adjacent(point)
     -- +x
     p = self:get_pos(point.x + 1, point.y, point.z)
     if p ~= nil then
-        point:link(p, 1)
+        Point.link(point, p, 1)
     end
     -- -x
     p = self:get_pos(point.x - 1, point.y, point.z)
     if p ~= nil then
-        point:link(p, 1)
+        Point.link(point, p, 1)
     end
 
     -- +y
     p = self:get_pos(point.x, point.y + 1, point.z)
     if p ~= nil then
-        point:link(p, 1)
+        Point.link(point, p, 1)
     end
     -- -y
     p = self:get_pos(point.x, point.y - 1, point.z)
     if p ~= nil then
-        point:link(p, 1)
+        Point.link(point, p, 1)
     end
 
     -- +z
     p = self:get_pos(point.x, point.y, point.z + 1)
     if p ~= nil then
-        point:link(p, 1)
+        Point.link(point, p, 1)
     end
     -- -z
     p = self:get_pos(point.x, point.y, point.z - 1)
     if p ~= nil then
-        point:link(p, 1)
+        Point.link(point, p, 1)
     end
 end
 
