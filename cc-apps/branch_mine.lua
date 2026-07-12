@@ -156,8 +156,8 @@ local function dump()
     tmc:face(Compass.WEST)
     local success, err = turtle.suck(turtle.getItemSpace())
     log:debug('When sucking torches, got return', tostring(success))
-    if not success then
-        log:fatal('Could not pull torches from inventory:', err)
+    if not success and not action.find_torch() then
+        log:fatal('Out of torches and could not pull torches from inventory:', err)
     end
 
     -- Resume
