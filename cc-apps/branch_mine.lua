@@ -10,6 +10,8 @@ local log = logging.get_logger('main')
 
 local map_file = 'branch_map.json'
 
+local json = require 'cc-libs.util.json'
+
 local ccl_motion = require 'cc-libs.turtle.motion'
 local Motion = ccl_motion.Motion
 
@@ -294,6 +296,32 @@ local function mine_tunnel()
     return true
 end
 
+local STATION_FILE = 'station.json'
+
+---@return { heading: Compass?, relative: boolean }
+local function load_station()
+    local file = io.open(STATION_FILE, 'r')
+    if file == nil then
+        return {
+            heading = nil,
+            relative = true,
+        }
+    end
+    log:debug('Loading station')
+    local data = json.decode(file:read('a'))
+    file:close()
+    log:trace('Finished loading station file')
+    return data
+end
+
+local function store_station(station)
+    log:debug('Storing station file')
+    local file = assert(io.open(STATION_FILE, 'w'))
+    file:write(json.encode(station))
+    file:close()
+    log:trace('Finished storing station file')
+end
+
 -- TODO
 -- Smart check for inventory full
 -- Don't mine fortune ores (eg. diamond)
@@ -310,6 +338,8 @@ local function main()
         log:info('Map file does not exist, creating new map')
     end
 
+    local station = load_station()
+
     -- assert_torch() -- Disabled because of torch re-stock on dump
     assert_fuel()
     estimate_time()
@@ -323,6 +353,25 @@ local function main()
 
     tmc:up()
     nav:mark_poi('station')
+    if map:get_waypoint('station') == nil then
+        nav:poi_from_waypoint('station')
+    end
+    if station.heading == nil or station.relative and location.has_fix then
+        if not location.has_heading then
+            log:debug('Attempting to get heading for station')
+            tmc:forward()
+            tmc:backward()
+        end
+        if location.has_fix and location.has_heading then
+            log:debug('Have heading', location.heading, 'for station')
+            station.heading = location.heading
+            station.relative = false
+        else
+            log:debug('No heading for station, using relative NORTH')
+            station.heading = Compass.NORTH
+            station.relative = true
+        end
+    end
     if not dig_forward() then
         return false
     end
@@ -426,11 +475,14 @@ local function main()
 
     map:dump(map_file)
 
+    store_station(station)
+
+    if location.has_fix then
+        map:dump(map_file)
+    end
+
     log:info('Done!')
 end
 
-log:catch_errors(telem.run_parallel_with, telem, 'main', main)
-
-if location.has_fix then
-    map:dump(map_file)
-end
+-- log:catch_errors(main)
+log:catch_errors(telem.run_parallel_with, telem, 'main', log.catch_errors, log, main)
