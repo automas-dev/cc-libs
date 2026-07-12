@@ -6,6 +6,7 @@ local Compass = ccl_location.Compass
 local CompassName = ccl_location.CompassName
 local Action = ccl_location.Action
 local Location = ccl_location.Location
+local LocalFrame = ccl_location.LocalFrame
 
 local ccl_vec = require 'cc-libs.util.vec'
 local Vec3 = ccl_vec.Vec3
@@ -346,6 +347,125 @@ function test.update_map()
     expect_eq(mock_map, mock_map.add.args[1])
     expect_eq(Vec3:new(0, 0, 0), mock_map.add.args[2])
     expect_eq(Vec3:new(0, 0, -1), mock_map.add.args[3])
+end
+
+function test.frame_new()
+    local frame = LocalFrame:new(Vec3:new(1, 2, 3), Compass.EAST)
+    expect_eq(Vec3:new(1, 2, 3), frame.origin)
+    expect_eq(Compass.EAST, frame.heading)
+end
+
+function test.frame_global_to_local()
+    local frame = LocalFrame:new(Vec3:new(1, 2, 3))
+    local pos, heading = frame:to_local(Vec3:new(4, 4, 4))
+    expect_eq(Vec3:new(3, 2, 1), pos)
+    expect_eq(Compass.NORTH, heading)
+end
+
+function test.frame_global_to_local_north_frame_heading()
+    local frame = LocalFrame:new(Vec3:new(0, 0, 0), Compass.NORTH)
+    local _, heading
+    _, heading = frame:to_local(Vec3:new(1, 2, 3), Compass.NORTH)
+    expect_eq(Compass.NORTH, heading)
+    _, heading = frame:to_local(Vec3:new(1, 2, 3), Compass.EAST)
+    expect_eq(Compass.EAST, heading)
+    _, heading = frame:to_local(Vec3:new(1, 2, 3), Compass.SOUTH)
+    expect_eq(Compass.SOUTH, heading)
+    _, heading = frame:to_local(Vec3:new(1, 2, 3), Compass.WEST)
+    expect_eq(Compass.WEST, heading)
+end
+
+function test.frame_global_to_local_north_frame_pos()
+    local frame = LocalFrame:new(Vec3:new(0, 0, 0), Compass.NORTH)
+    local pos
+    pos = frame:to_local(Vec3:new(1, 2, 3), Compass.NORTH)
+    expect_eq(Vec3:new(1, 2, 3), pos)
+    pos = frame:to_local(Vec3:new(1, 2, 3), Compass.EAST)
+    expect_eq(Vec3:new(1, 2, 3), pos)
+    pos = frame:to_local(Vec3:new(1, 2, 3), Compass.SOUTH)
+    expect_eq(Vec3:new(1, 2, 3), pos)
+    pos = frame:to_local(Vec3:new(1, 2, 3), Compass.WEST)
+    expect_eq(Vec3:new(1, 2, 3), pos)
+end
+
+function test.frame_global_to_local_east_frame_heading()
+    local frame = LocalFrame:new(Vec3:new(0, 0, 0), Compass.EAST)
+    local _, heading
+    _, heading = frame:to_local(Vec3:new(1, 2, 3), Compass.NORTH)
+    expect_eq(Compass.EAST, heading)
+    _, heading = frame:to_local(Vec3:new(1, 2, 3), Compass.EAST)
+    expect_eq(Compass.SOUTH, heading)
+    _, heading = frame:to_local(Vec3:new(1, 2, 3), Compass.SOUTH)
+    expect_eq(Compass.WEST, heading)
+    _, heading = frame:to_local(Vec3:new(1, 2, 3), Compass.WEST)
+    expect_eq(Compass.NORTH, heading)
+end
+
+function test.frame_global_to_local_east_frame_pos()
+    local frame = LocalFrame:new(Vec3:new(0, 0, 0), Compass.EAST)
+    local pos
+    pos = frame:to_local(Vec3:new(1, 2, 3), Compass.NORTH)
+    expect_eq(Vec3:new(-3, 2, 1), pos)
+    pos = frame:to_local(Vec3:new(1, 2, 3), Compass.EAST)
+    expect_eq(Vec3:new(-3, 2, 1), pos)
+    pos = frame:to_local(Vec3:new(1, 2, 3), Compass.SOUTH)
+    expect_eq(Vec3:new(-3, 2, 1), pos)
+    pos = frame:to_local(Vec3:new(1, 2, 3), Compass.WEST)
+    expect_eq(Vec3:new(-3, 2, 1), pos)
+    pos = frame:to_local(Vec3:new(1, 2, 3), Compass.NORTH)
+    expect_eq(Vec3:new(-3, 2, 1), pos)
+end
+
+function test.frame_global_to_local_south_frame_heading()
+    local frame = LocalFrame:new(Vec3:new(0, 0, 0), Compass.SOUTH)
+    local _, heading
+    _, heading = frame:to_local(Vec3:new(1, 2, 3), Compass.NORTH)
+    expect_eq(Compass.SOUTH, heading)
+    _, heading = frame:to_local(Vec3:new(1, 2, 3), Compass.EAST)
+    expect_eq(Compass.WEST, heading)
+    _, heading = frame:to_local(Vec3:new(1, 2, 3), Compass.SOUTH)
+    expect_eq(Compass.NORTH, heading)
+    _, heading = frame:to_local(Vec3:new(1, 2, 3), Compass.WEST)
+    expect_eq(Compass.EAST, heading)
+end
+
+function test.frame_global_to_local_south_frame_pos()
+    local frame = LocalFrame:new(Vec3:new(0, 0, 0), Compass.SOUTH)
+    local pos
+    pos = frame:to_local(Vec3:new(1, 2, 3), Compass.NORTH)
+    expect_eq(Vec3:new(-1, 2, -3), pos)
+    pos = frame:to_local(Vec3:new(1, 2, 3), Compass.EAST)
+    expect_eq(Vec3:new(-1, 2, -3), pos)
+    pos = frame:to_local(Vec3:new(1, 2, 3), Compass.SOUTH)
+    expect_eq(Vec3:new(-1, 2, -3), pos)
+    pos = frame:to_local(Vec3:new(1, 2, 3), Compass.WEST)
+    expect_eq(Vec3:new(-1, 2, -3), pos)
+end
+
+function test.frame_global_to_local_west_frame_heading()
+    local frame = LocalFrame:new(Vec3:new(0, 0, 0), Compass.WEST)
+    local _, heading
+    _, heading = frame:to_local(Vec3:new(1, 2, 3), Compass.NORTH)
+    expect_eq(Compass.WEST, heading)
+    _, heading = frame:to_local(Vec3:new(1, 2, 3), Compass.EAST)
+    expect_eq(Compass.NORTH, heading)
+    _, heading = frame:to_local(Vec3:new(1, 2, 3), Compass.SOUTH)
+    expect_eq(Compass.EAST, heading)
+    _, heading = frame:to_local(Vec3:new(1, 2, 3), Compass.WEST)
+    expect_eq(Compass.SOUTH, heading)
+end
+
+function test.frame_global_to_local_west_frame_pos()
+    local frame = LocalFrame:new(Vec3:new(0, 0, 0), Compass.WEST)
+    local pos
+    pos = frame:to_local(Vec3:new(1, 2, 3), Compass.NORTH)
+    expect_eq(Vec3:new(3, 2, -1), pos)
+    pos = frame:to_local(Vec3:new(1, 2, 3), Compass.EAST)
+    expect_eq(Vec3:new(3, 2, -1), pos)
+    pos = frame:to_local(Vec3:new(1, 2, 3), Compass.SOUTH)
+    expect_eq(Vec3:new(3, 2, -1), pos)
+    pos = frame:to_local(Vec3:new(1, 2, 3), Compass.WEST)
+    expect_eq(Vec3:new(3, 2, -1), pos)
 end
 
 return test
