@@ -44,7 +44,7 @@ local static_delta = {
 ---@field has_fix boolean location is known
 ---@field has_heading boolean heading is known
 ---@field debug_location boolean use gps to validate location after updates
----@field map? Map optional map to update
+---@field maps Map[] optional maps to update
 local Location = {}
 
 ---Create a new Location object with locate function.
@@ -65,11 +65,28 @@ function Location:new(map)
         has_fix = x ~= nil,
         has_heading = false,
         debug_location = false,
-        map = map,
+        maps = { map },
     }
     setmetatable(o, self)
     self.__index = self
     return o
+end
+
+---Assign the map to be updated
+---@param map Map
+function Location:add_map(map)
+    for _, m in ipairs(self.maps) do
+        if m == map then
+            -- Using tostring here to get map hash instead of pretty table
+            log:warning('Tried to re-add map', tostring(map))
+            return false
+        end
+    end
+
+    -- Using tostring here to get map hash instead of pretty table
+    log:debug('Adding map', tostring(map), 'to Location')
+    table.insert(self.maps, map)
+    return true
 end
 
 ---Get the current location as position and heading
@@ -172,8 +189,8 @@ function Location:update(action)
     end
 
     -- Add a connection to the map
-    if self.map ~= nil then
-        self.map:add(pos_before_move, self.pos)
+    for _, map in ipairs(self.maps) do
+        map:add(pos_before_move, self.pos)
     end
 end
 
@@ -182,6 +199,18 @@ local M = {
     CompassName = static_name,
     Action = Action,
     Location = Location,
+    ---@type Location?
+    _location = nil,
 }
+
+---Get global location object
+---@return Location
+function M.get_location()
+    if M._location == nil then
+        log:debug('Creating global Location object')
+        M._location = Location:new()
+    end
+    return M._location
+end
 
 return M

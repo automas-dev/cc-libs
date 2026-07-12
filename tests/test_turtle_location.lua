@@ -56,7 +56,8 @@ end
 function test.new_with_map()
     local mock_map = Mock()
     local loc = Location:new(mock_map)
-    expect_eq(mock_map, loc.map)
+    assert_eq(1, #loc.maps)
+    expect_eq(mock_map, loc.maps[1])
 end
 
 function test.new_with_gps()
