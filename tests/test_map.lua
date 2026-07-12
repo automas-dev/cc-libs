@@ -106,6 +106,13 @@ function test.map_dump()
     -- TODO
 end
 
+function test.map_add_waypoint()
+    local map = Map:new()
+    map:add_waypoint(Point:new(1, 2, 3), 'poi')
+    expect_eq(1, #map.waypoints)
+    expect_eq(Vec3:new(1, 2, 3), map.waypoints['poi']:to_vec3())
+end
+
 function test.map_get()
     local map = Map:new()
     local point = Point:new(1, 2, 3)

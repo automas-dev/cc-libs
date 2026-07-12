@@ -48,6 +48,10 @@ function Point:new(x, y, z)
     return o
 end
 
+function Point._eq(a, b)
+    return a.pid == b.pid
+end
+
 ---Create a Point from a Vec3
 ---@param vec Vec3
 ---@return Point
@@ -104,6 +108,7 @@ end
 
 ---@class Map
 ---@field graph { [PointId]: Point }
+---@field waypoints { [string]: PointId }
 local Map = {}
 
 --- Create a new empty map
@@ -111,6 +116,7 @@ local Map = {}
 function Map:new()
     local o = {
         graph = {},
+        waypoints = {},
     }
     setmetatable(o, self)
     self.__index = self
@@ -137,6 +143,25 @@ function Map:dump(path)
     local file = assert(io.open(path, 'w'))
     file:write(json.encode(self))
     file:close()
+end
+
+---Add a named waypoint
+---@param point Vec3|Point
+---@param name string
+function Map:add_waypoint(point, name)
+    local pid = point_id(point.x, point.y, point.z)
+    self.waypoints[name] = pid
+end
+
+---Get a named waypoint
+---@param name string
+---@return Point? point
+function Map:get_poi(name)
+    local pid = self.waypoints[name]
+    if pid == nil then
+        return nil
+    end
+    return self:get(pid)
 end
 
 ---Get a point by it's id
