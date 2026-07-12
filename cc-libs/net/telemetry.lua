@@ -194,6 +194,7 @@ local M = {
     Telemetry = Telemetry,
     TELEMETRY_PROTOCOL = TELEMETRY_PROTOCOL,
     PayloadType = PayloadType,
+    ---@type { [string]: Telemetry }
     subsystems = {},
 }
 
@@ -203,11 +204,33 @@ local M = {
 ---@return Telemetry
 function M.get_telemetry(subsystem, location)
     local subsystem_key = subsystem or '_'
+    local is_root = subsystem == nil
     local telem = M.subsystems[subsystem_key]
+
+    -- Create Telemetry for subsystem if one does not already exist
     if telem == nil then
+        log:debug('Creating telemetry for subsystem', subsystem)
         telem = Telemetry:new(subsystem, location)
         M.subsystems[subsystem_key] = telem
+    else
+        -- Subsystem already exists, update location if missing
+        if telem.location == nil and location ~= nil then
+            log:trace('Adding location to existing subsystem', subsystem)
+            telem.location = location
+        end
     end
+
+    -- Copy root location to existing telemetry subsystems (in case root is created after)
+    if is_root and telem.location ~= nil then
+        for s, sub in pairs(M.subsystems) do
+            -- Only update not root subsystems that are missing location
+            if s ~= '_' and sub.location == nil then
+                log:trace('Using root location for subsystem', s)
+                sub.location = telem.location
+            end
+        end
+    end
+
     return telem
 end
 
