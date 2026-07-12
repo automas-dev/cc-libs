@@ -158,36 +158,186 @@ function Telemetry:send_alert(type, msg, data)
     return payload
 end
 
+---Thread manager with telemetry broadcast
+---@class TelemetryRunner
+---@field telem Telemetry
+---@field running boolean
+---@field os_events_enabled boolean send telemetry events for os events
+---@field private threads { name: string, can_kill: boolean, co: thread, filter: string? }[]
+local TelemetryRunner = {}
+
+---@return TelemetryRunner
+---@param telem Telemetry
+---@param os_events_enabled? boolean send telemetry events for os events
+function TelemetryRunner:new(telem, os_events_enabled)
+    local o = {
+        telem = telem,
+        running = false,
+        os_events_enabled = os_events_enabled or false,
+        threads = {},
+    }
+    setmetatable(o, self)
+    self.__index = self
+    return o
+end
+
+---Add a new thread to the runner
+---@param name string name of the thread used in telemetry
+---@param can_kill boolean if this process exists, kill the rest
+---@param fn function thread function
+---@param ... any arguments passed to `fn`
+---@return boolean success
+function TelemetryRunner:add_thread(name, can_kill, fn, ...)
+    if self.running then
+        log:warning('Tried to add thread', name, 'while running')
+        return false
+    end
+
+    local args = { ... }
+    local co = coroutine.create(function()
+        return fn(table.unpack(args))
+    end)
+    table.insert(self.threads, {
+        name = name,
+        can_kill = can_kill,
+        co = co,
+        filter = nil,
+    })
+    return true
+end
+
+function TelemetryRunner:terminate_all()
+    log:debug('Terminating all threads')
+    self.telem:send_event('runner.terminate_all', 'Terminating ' .. #self.threads .. ' threads', self)
+
+    local did_kill = 0
+    for _, thread in ipairs(self.threads) do
+        if coroutine.status(thread.co) ~= 'dead' then
+            log:debug('Thread', thread.name, 'is alive, sending terminate')
+            coroutine.resume(thread.co, 'terminate')
+            did_kill = did_kill + 1
+        else
+            log:trace('Thread', thread.name, 'is already dead')
+        end
+    end
+
+    log:debug('Finished terminating', did_kill, 'threads')
+end
+
+---Run all threads to completion
+---@return boolean success
+---@return string? err
+function TelemetryRunner:run()
+    if self.running then
+        log:warning('Tried to start TelemetryRunner twice')
+        return false, 'already running'
+    end
+
+    log:debug('Starting telemetry runner with', #self.threads, 'threads')
+    if #self.threads == 0 then
+        log:debug('No threads, exiting early')
+        return true
+    end
+
+    -- Modified version of parallel.waitForAny and parallel.waitForAll
+
+    self.running = true
+
+    -- Start with empty event to launch all threads
+    local event = { n = 0 }
+    while true do
+        for _, thread in ipairs(self.threads) do
+            if thread.filter == nil or thread.filter == event[1] or event[1] == 'terminate' then
+                local ok, param = coroutine.resume(thread.co, table.unpack(event, 1, event.n))
+                if not ok then
+                    log:warning('Thread', thread.name, 'failed with', param)
+                    self.telem:send_alert(
+                        'runner.thread_error',
+                        'Thread ' .. thread.name .. ' failed',
+                        { name = thread.name, can_kill = thread.can_kill, filter = thread.filter, param = param }
+                    )
+                    if thread.can_kill then
+                        self:terminate_all()
+                        self.running = false
+                        return false, 'error in thread ' .. thread.name
+                    end
+                end
+
+                -- Abort if this coroutine has finished
+                if coroutine.status(thread.co) == 'dead' and thread.can_kill then
+                    log:info('Thread', thread.name, 'exited so all other threads will be terminated')
+                    self.telem:send_event(
+                        'runner.thread_died',
+                        'Thread ' .. thread.name .. ' died',
+                        { name = thread.name, can_kill = thread.can_kill }
+                    )
+                    self:terminate_all()
+                    self.running = false
+                    return true
+                end
+
+                thread.filter = param
+            end
+        end
+
+        local i = 1
+        while i <= #self.threads do
+            local thread = self.threads[i]
+            if coroutine.status(thread.co) == 'dead' then
+                log:debug('Removing dead thread', thread.name)
+                table.remove(self.threads, i)
+            else
+                i = i + 1
+            end
+        end
+
+        if #self.threads == 0 then
+            log:info('All threads are dead, exiting')
+            self.running = false
+            return true
+        end
+
+        event = table.pack(os.pullEventRaw())
+        if self.os_events_enabled then
+            self.telem:send_event('runner.os_event', 'Received OS event ' .. event[1], event)
+        end
+        log:trace('Next event is', event)
+    end
+end
+
+---Get TelemetryRunner
+---@return TelemetryRunner runner
+function Telemetry:make_runner()
+    local runner = TelemetryRunner:new(self, self.os_events_enabled)
+    return runner
+end
+
 ---Run fn in parallel with telemetry thread
 ---@param fn fun(...):... function to run
 ---@param ... any args to the function
+---@return boolean success no errors occurred during execution
 ---@return any ... the result from fn
-function Telemetry:run_parallel_with(fn, ...)
+function Telemetry:run_parallel_with(name, fn, ...)
     local args = { ... }
     local result = nil
+
     local function run_fn()
         result = fn(table.unpack(args))
     end
+
+    local runner = self:make_runner()
+    runner:add_thread(name, true, run_fn)
+
     local function run_state_thread()
         while true do
             self:update_state()
             os.sleep(self.telemetry_sleep_s)
         end
     end
-    local function run_event_thread()
-        while true do
-            local event_data = { os.pullEvent() }
-            self:send_event('os_event', 'Received OS event ' .. event_data[1], event_data)
-        end
-    end
+    runner:add_thread('state_thread', false, run_state_thread)
 
-    if self.os_events_enabled then
-        parallel.waitForAny(run_fn, run_state_thread, run_event_thread)
-    else
-        parallel.waitForAny(run_fn, run_state_thread)
-    end
-
-    return result
+    local success = runner:run()
+    return success, result
 end
 
 local M = {
