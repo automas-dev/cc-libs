@@ -212,22 +212,31 @@ function M.get_telemetry(subsystem, location)
         log:debug('Creating telemetry for subsystem', subsystem)
         telem = Telemetry:new(subsystem, location)
         M.subsystems[subsystem_key] = telem
-    else
-        -- Subsystem already exists, update location if missing
-        if telem.location == nil and location ~= nil then
-            log:trace('Adding location to existing subsystem', subsystem)
-            telem.location = location
-        end
     end
 
-    -- Copy root location to existing telemetry subsystems (in case root is created after)
-    if is_root and telem.location ~= nil then
-        for s, sub in pairs(M.subsystems) do
-            -- Only update not root subsystems that are missing location
-            if s ~= '_' and sub.location == nil then
-                log:trace('Using root location for subsystem', s)
-                sub.location = telem.location
+    local root = M.subsystems['_']
+
+    if is_root then
+        if root.location ~= nil then
+            -- For all subsystems missing location, copy root location
+            log:trace('Copying root location to existing subsystems')
+            for s, sub in pairs(M.subsystems) do
+                local sub_is_root = s ~= '_'
+                -- Only update not root subsystems that are missing location
+                if not sub_is_root and sub.location == nil then
+                    log:trace('Using root location for subsystem', s)
+                    sub.location = root.location
+                end
             end
+        end
+    elseif telem.location == nil then
+        -- Update location if missing
+        if location ~= nil then
+            log:trace('Adding location to subsystem', subsystem)
+            telem.location = location
+        elseif root ~= nil and root.location ~= nil then
+            log:trace('Adding root location to subsystem', subsystem)
+            telem.location = root.location
         end
     end
 
