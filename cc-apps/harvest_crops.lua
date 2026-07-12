@@ -21,15 +21,15 @@ local length = tonumber(args.length)
 
 log:info('Start farm with width=', width, 'length=', length)
 
-local ccl_motion = require 'cc-libs.turtle.controller'
-local MotionController = ccl_motion.MotionController
+local ccl_motion = require 'cc-libs.turtle.motion'
+local Motion = ccl_motion.Motion
 
 local ccl_location = require 'cc-libs.turtle.location'
 local Compass = ccl_location.Compass
 
 local actions = require 'cc-libs.turtle.actions'
 
-local tmc = MotionController:new()
+local tmc = Motion:new()
 tmc.location.debug_location = true
 
 local seed_name_map = {
