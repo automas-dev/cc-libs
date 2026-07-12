@@ -57,7 +57,7 @@ end
 ---@param name string
 ---@return Point?
 function Nav:get_poi(name)
-    return self.map:get(self.poi[name])
+    return self.map:get_point(self.poi[name])
 end
 
 ---Mark the current location as resume poi
