@@ -5,9 +5,6 @@ local json = require 'cc-libs.util.json'
 
 local table_size = require 'cc-libs.util.table_size'
 
-local ccl_vec = require 'cc-libs.util.vec'
-local Vec3 = ccl_vec.Vec3
-
 local astar = require 'cc-libs.astar'
 
 ---@alias PointId string
@@ -21,90 +18,52 @@ local function point_id(x, y, z)
     return x .. ',' .. y .. ',' .. z
 end
 
+---Check if another point is inline with one of this points axis (ie. 2 axes match)
+---@param a Vec3|Point
+---@param b Vec3|Point
+---@return boolean
+local function inline(a, b)
+    if a.x ~= b.x then
+        return a.y == b.y and a.z == b.z
+    elseif a.y ~= b.y then
+        return a.x == b.x and a.z == b.z
+    elseif a.z ~= b.z then
+        return a.x == b.x and a.y == b.y
+    else
+        return true
+    end
+end
+
+---Link two Points
+---@param p1 Point
+---@param p2 Point
+---@param weight number
+local function link_points(p1, p2, weight)
+    if p1.links[p2.id] == nil then
+        log:trace('Creating link from', p1.id, 'to', p2.id)
+        p1.links[p2.id] = weight
+    end
+    if p2.links[p1.id] == nil then
+        log:trace('Creating link from', p2.id, 'to', p1.id)
+        p2.links[p1.id] = weight
+    end
+end
+
+---Get weight from distance between p1 and p2
+---@param p1 Point
+---@param p2 Point
+---@return number weight
+local function point_weight(p1, p2)
+    local length2 = (p2.x - p1.x) ^ 2 + (p2.y - p1.y) ^ 2 + (p2.z - p1.z) ^ 2
+    return math.sqrt(length2)
+end
+
 ---@class Point
 ---@field id string
 ---@field x number
 ---@field y number
 ---@field z number
 ---@field links { [PointId]: number } value is the weight
-local Point = {}
-
----Construct a new Point
----@param x number
----@param y number
----@param z number
----@return Point
-function Point:new(x, y, z)
-    local o = {
-        id = point_id(x, y, z),
-        -- TODO vec instead of x, y, z
-        x = x,
-        y = y,
-        z = z,
-        links = {},
-    }
-    setmetatable(o, self)
-    self.__index = self
-    return o
-end
-
-function Point._eq(a, b)
-    return a.pid == b.pid
-end
-
----Create a Point from a Vec3
----@param vec Vec3
----@return Point
-function Point:from_vec3(vec)
-    return Point:new(vec.x, vec.y, vec.z)
-end
-
----Convert Point to a Vec3
----@return Vec3
-function Point:to_vec3()
-    return Vec3:new(self.x, self.y, self.z)
-end
-
----Connect this point to another. This will create the link on both points to each other.
----@param other Point point to link with
----@param weight? number weight of this link
-function Point:link(other, weight)
-    weight = weight or 1
-    self.links[other.id] = weight
-    if other.links[self.id] == nil then
-        Point.link(other, self, weight)
-    end
-end
-
----Check if another point is inline with one of this points axis (ie. 2 axes match)
----@param other Vec3|Point
----@return boolean
-function Point:inline(other)
-    if self.x ~= other.x then
-        return self.y == other.y and self.z == other.z
-    elseif self.y ~= other.y then
-        return self.x == other.x and self.z == other.z
-    elseif self.z ~= other.z then
-        return self.x == other.x and self.y == other.y
-    else
-        return true
-    end
-end
-
----String conversion overload
-function Point:__tostring()
-    return 'Point(id="'
-        .. self.id
-        .. '",x='
-        .. self.x
-        .. ',y='
-        .. self.y
-        .. ',z='
-        .. self.z
-        .. ',#links='
-        .. table_size(self.links)
-        .. ')'
-end
 
 ---@class Map
 ---@field graph { [PointId]: Point }
@@ -184,7 +143,7 @@ function Map:add_point(point)
 end
 
 ---Get a point from it's id
----@param pid string
+---@param pid PointId
 ---@return Point?
 function Map:get_point(pid)
     return self.graph[pid]
@@ -201,7 +160,7 @@ function Map:get_pos(x, y, z)
 end
 
 ---Remove a point using it's id
----@param pid string
+---@param pid PointId
 function Map:remove_point(pid)
     self.graph[pid] = nil
 end
@@ -223,7 +182,13 @@ end
 function Map:point(x, y, z)
     local point = self:get_pos(x, y, z)
     if point == nil then
-        point = Point:new(x, y, z)
+        point = {
+            id = point_id(x, y, z),
+            x = x,
+            y = y,
+            z = z,
+            links = {},
+        }
         self.graph[point.id] = point
         log:trace('Created point', point)
     else
@@ -239,33 +204,23 @@ function Map:pos(pos)
     return self:point(pos.x, pos.y, pos.z)
 end
 
----Add two points to the graph and link them. The two points must be inline.
+---Link two points to the graph. The two points must be inline.
 ---@param p1 Vec3|Point the first point
 ---@param p2 Vec3|Point the second point
----@param weight? number weight of the link
-function Map:add(p1, p2, weight)
+function Map:link(p1, p2)
     -- Get by x, y, z instead of id to support vec and auto-add missing points
-    local g_p1 = self:point(p1.x, p1.y, p1.z)
-    local g_p2 = self:point(p2.x, p2.y, p2.z)
+    p1 = self:pos(p1)
+    p2 = self:pos(p2)
+    local weight = point_weight(p1, p2)
 
-    log:debug('g_p1 =', g_p1, 'g_p2 =', g_p2)
+    log:debug('p1 =', p1.id, 'p2 =', p2.id, 'weight =', weight)
 
-    if weight == nil then
-        log:debug('get weight')
-        weight = (Point.to_vec3(g_p1) - Point.to_vec3(g_p2)):get_length()
-    end
+    assert(inline(p1, p2), 'p1 is not inline with p2')
 
-    assert(Point.inline(g_p1, g_p2), 'p1 is not inline with p2')
+    link_points(p1, p2, weight)
 
-    -- Creates link in both directions
-    Point.link(g_p1, g_p2, weight)
-
-    self:link_adjacent(g_p1)
-    self:link_adjacent(g_p2)
-
-    -- TODO check for points between p1 and p2
-
-    log:trace('p1 becomes', g_p1, 'p2 becomes', g_p2)
+    self:link_adjacent(p1)
+    self:link_adjacent(p2)
 end
 
 ---Link adjacent points if they exist
@@ -276,34 +231,34 @@ function Map:link_adjacent(point)
     -- +x
     p = self:get_pos(point.x + 1, point.y, point.z)
     if p ~= nil then
-        Point.link(point, p, 1)
+        link_points(point, p, 1)
     end
     -- -x
     p = self:get_pos(point.x - 1, point.y, point.z)
     if p ~= nil then
-        Point.link(point, p, 1)
+        link_points(point, p, 1)
     end
 
     -- +y
     p = self:get_pos(point.x, point.y + 1, point.z)
     if p ~= nil then
-        Point.link(point, p, 1)
+        link_points(point, p, 1)
     end
     -- -y
     p = self:get_pos(point.x, point.y - 1, point.z)
     if p ~= nil then
-        Point.link(point, p, 1)
+        link_points(point, p, 1)
     end
 
     -- +z
     p = self:get_pos(point.x, point.y, point.z + 1)
     if p ~= nil then
-        Point.link(point, p, 1)
+        link_points(point, p, 1)
     end
     -- -z
     p = self:get_pos(point.x, point.y, point.z - 1)
     if p ~= nil then
-        Point.link(point, p, 1)
+        link_points(point, p, 1)
     end
 end
 
@@ -351,7 +306,6 @@ function Map:find_path(p1, p2)
 end
 
 local M = {
-    Point = Point,
     Map = Map,
 }
 
