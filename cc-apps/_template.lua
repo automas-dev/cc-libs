@@ -23,15 +23,26 @@ local args = parser:parse_args({ ... })
 -- Import libraries
 local actions = require 'cc-libs.turtle.actions'
 
+local ccl_location = require 'cc-libs.turtle.location'
+local Location = ccl_location.Location
+
 local ccl_motion = require 'cc-libs.turtle.motion'
 local Motion = ccl_motion.Motion
+
+local ccl_telemetry = require 'cc-libs.net.telemetry'
+local get_telemetry = ccl_telemetry.get_telemetry
 
 -- Gather arguments
 local n = args.new
 
 -- Create objects
-local tmc = Motion:new()
+local location = Location:new()
+local tmc = Motion:new(location)
 tmc:enable_dig()
+
+local telem = get_telemetry()
+telem:set_location(location)
+tmc:attach_telemetry(telem)
 
 -- Main function
 local function main()
@@ -39,4 +50,4 @@ local function main()
 end
 
 -- Call main and log an error if raised
-log:catch_errors(main)
+telem:run_parallel_with('main', log.catch_errors, log, main)
