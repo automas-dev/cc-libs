@@ -11,8 +11,6 @@ local DEFAULT_HEARTBEAT_SLEEP_S = 1
 
 ---@enum PayloadType
 local PayloadType = {
-    ---Payload with `state` field
-    STATE = 'PAYLOAD_STATE',
     ---Payload with `event` field
     EVENT = 'PAYLOAD_EVENT',
     ---Payload with `alert` field
@@ -32,9 +30,8 @@ local PayloadType = {
 ---@field has_fix boolean
 ---@field has_heading boolean
 ---@field subsystem string?
-
----@class StateTelemetryPayload : TelemetryPayload
----@field state? table
+---@field state table
+---@field stack string[]
 
 ---@class EventTelemetryPayload : TelemetryPayload
 ---@field event { id: string, type: string, message: string, data: table? }
@@ -45,7 +42,9 @@ local PayloadType = {
 ---@class Telemetry
 ---@field subsystem string?
 ---@field location Location?
+---@field local_state table
 ---@field heartbeat_sleep_s number
+---@field subroutine_stack string[]
 local Telemetry = {}
 
 ---Construct a new Telemetry object
@@ -57,7 +56,9 @@ function Telemetry:new(subsystem, location)
     local o = {
         subsystem = subsystem,
         location = location,
+        local_state = {},
         heartbeat_sleep_s = DEFAULT_HEARTBEAT_SLEEP_S,
+        subroutine_stack = {},
     }
     setmetatable(o, self)
     self.__index = self
@@ -84,6 +85,8 @@ function Telemetry:_build_payload(type)
         host_id = os.getComputerID(),
         host_name = os.getComputerLabel() or '',
         subsystem = self.subsystem,
+        state = self.local_state,
+        stack = self.subroutine_stack,
     }
     if self.location then
         payload.pos, payload.heading = self.location:location()
@@ -98,18 +101,43 @@ function Telemetry:_build_payload(type)
     return payload
 end
 
----Send telemetry data
----@param state? table
----@return StateTelemetryPayload payload
+---Push new subroutine name onto stack
+---@param name string subroutine name
+function Telemetry:push_subroutine(name)
+    table.insert(self.subroutine_stack, name)
+end
+
+---Pop the top subroutine from the stack
+function Telemetry:pop_subroutine()
+    if #self.subroutine_stack > 0 then
+        table.remove(self.subroutine_stack)
+    end
+end
+
+---Wrap a function to label it's state during execution
+---@generic T : function
+---@param name string
+---@param fn T
+---@return T
+function Telemetry:make_routine(name, fn)
+    return function(...)
+        self:push_subroutine(name)
+        local res = table.pack(pcall(fn, ...))
+        self:pop_subroutine()
+        local success = res[1]
+        if not success then
+            error(res[2], 2)
+        end
+        return table.unpack(res, 2)
+    end
+end
+
+---Update local state included in telemetry packets
+---@param state table
 function Telemetry:update_state(state)
-    local payload = self:_build_payload(PayloadType.STATE)
-    ---@cast payload StateTelemetryPayload
-    -- TODO replace this with current program and other stats about it
-    payload.state = state
-    local message = json.encode(payload)
-    rednet.broadcast(message, TELEMETRY_PROTOCOL)
-    log:trace('Sent state to protocol', TELEMETRY_PROTOCOL, 'with message', message)
-    return payload
+    for k, v in pairs(state) do
+        self.local_state[k] = v
+    end
 end
 
 ---Send telemetry event
