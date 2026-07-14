@@ -77,7 +77,6 @@ end)
 ---@param n number
 ---@return boolean success
 local mine_line = telem:make_routine('mine_layer', function(n)
-    log:debug(type(n))
     for _ = 1, n do
         if not mine_step() then
             return false
