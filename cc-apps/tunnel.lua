@@ -41,8 +41,7 @@ local telem = get_telemetry()
 telem:set_location(location)
 tmc:attach_telemetry(telem)
 
-local lineup_start = telem:make_routine('lineup_start', function()
-    nav:mark_poi('start')
+local lineup_start = telem:span('lineup_start', function()
     if not tmc:up() then
         return false
     end
@@ -51,11 +50,12 @@ local lineup_start = telem:make_routine('lineup_start', function()
         return false
     end
     tmc:left()
+    return true
 end)
 
 ---Mine and move forward, then mine up and down if blocks exist
 ---@return boolean success
-local mine_step = telem:make_routine('mine_step', function()
+local mine_step = telem:span('mine_step', function()
     if turtle.detect() then
         turtle.dig()
     end
@@ -76,7 +76,7 @@ end)
 ---Mine forward n block mining up and down along the path
 ---@param n number
 ---@return boolean success
-local mine_line = telem:make_routine('mine_layer', function(n)
+local mine_line = telem:span('mine_layer', function(n)
     for _ = 1, n do
         if not mine_step() then
             return false
@@ -88,7 +88,7 @@ end)
 ---Mine forward n block mining up and down along the path
 ---@param direction 'left'|'right'
 ---@return boolean success
-local turn_to_next = telem:make_routine('turn_to_next', function(direction)
+local turn_to_next = telem:span('turn_to_next', function(direction)
     if direction == 'left' then
         tmc:left()
     elseif direction == 'right' then
@@ -107,11 +107,12 @@ local turn_to_next = telem:make_routine('turn_to_next', function(direction)
     return true
 end)
 
-local return_to_start = telem:make_routine('return_to_start', function()
+local return_to_start = telem:span('return_to_start', function()
     map:dump('tunnel_map.json')
     local path = nav:find_path('start')
     log:trace('Path is', path)
     nav:follow_path(path)
+    return true
 end)
 
 -- Main function
@@ -123,16 +124,34 @@ local function main()
     end
 
     local start_heading = location.heading
+    nav:mark_poi('start')
 
-    lineup_start()
-    mine_line(length)
-    turn_to_next('left')
-    mine_line(length)
-    turn_to_next('right')
-    mine_line(length)
-    return_to_start()
+    ---@type [fun(...): ..., ...][]
+    local mission = {
+        { lineup_start },
+        { mine_line, { length } },
+        { turn_to_next, { 'left' } },
+        { mine_line, { length } },
+        { turn_to_next, { 'right' } },
+        { mine_line, { length } },
+    }
+
+    for i, step in ipairs(mission) do
+        local fn = step[1]
+        local success, res = fn(table.unpack(step[2] or {}))
+        if not success then
+            log:error('Failed on step', i, { i = i, step = step, success = success, res = res })
+            break
+        end
+    end
+
+    if not return_to_start() then
+        log:error('Failed to return to station')
+        return false
+    end
 
     tmc:face(start_heading)
+    return true
 end
 
 -- Call main and log an error if raised
