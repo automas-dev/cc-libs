@@ -3,6 +3,7 @@ local log = logging.get_logger('map')
 
 local json = require 'cc-libs.util.json'
 
+local table_copy = require 'cc-libs.util.table_copy'
 local table_size = require 'cc-libs.util.table_size'
 
 local astar = require 'cc-libs.astar'
@@ -109,6 +110,16 @@ function Map:dump(path)
     file:write(json.encode(self))
     file:close()
     log:debug('Finished dumping map to', path)
+end
+
+-- TODO test
+---Return a copy of this map
+---@return Map copy
+function Map:copy()
+    local new = Map:new()
+    new.graph = table_copy(self.graph)
+    new.waypoints = table_copy(self.waypoints)
+    return new
 end
 
 ---Add a named waypoint, creating point if missing
