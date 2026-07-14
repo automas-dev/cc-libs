@@ -190,7 +190,7 @@ function Location:update(action)
 
     -- Add a connection to the map
     for _, map in ipairs(self.maps) do
-        map:add(pos_before_move, self.pos)
+        map:link(pos_before_move, self.pos)
     end
 end
 

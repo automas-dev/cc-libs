@@ -5,9 +5,6 @@ local ccl_location = require 'cc-libs.turtle.location'
 local Compass = ccl_location.Compass
 local CompassName = ccl_location.CompassName
 
-local ccl_map = require 'cc-libs.map'
-local Point = ccl_map.Point
-
 local json = require 'cc-libs.util.json'
 
 ---@class Nav
@@ -84,12 +81,10 @@ function Nav:clear_poi(name)
 end
 
 ---Find a path from start to goal
----@param start_poi_name string
 ---@param goal_poi_name string
 ---@return Point[] path from start to goal
-function Nav:find_path(start_poi_name, goal_poi_name)
-    local start = self:get_poi(start_poi_name)
-    assert(start ~= nil, 'Missing start poi ' .. start_poi_name)
+function Nav:find_path(goal_poi_name)
+    local start = self.map:pos(self.motion.location.pos)
 
     local goal = self:get_poi(goal_poi_name)
     assert(goal ~= nil, 'Missing goal poi ' .. goal_poi_name)
@@ -103,7 +98,8 @@ end
 ---@param path Point[]
 function Nav:follow_path(path)
     assert(#path > 1, 'Not enough points in path')
-    assert(Point.to_vec3(path[1]) == self.motion.location.pos, 'Path does not start at current location')
+    local pos = self.motion.location.pos
+    assert(path[1].x == pos.x and path[1].y == pos.y and path[1].z == pos.z, 'Path does not start at current location')
 
     local f = io.open('path.json', 'w')
     if f ~= nil then

@@ -127,7 +127,7 @@ function test.find_path()
     nav:mark_poi('start', p1)
     nav:mark_poi('goal', p3)
 
-    local path = nav:find_path('start', 'goal')
+    local path = nav:find_path('goal')
     assert_ne(nil, path)
     expect_eq(3, #path)
     -- Not part of test, only here for type check on next lines
