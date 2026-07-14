@@ -44,7 +44,7 @@ local PayloadType = {
 ---@field location Location?
 ---@field local_state table
 ---@field heartbeat_sleep_s number
----@field subroutine_stack string[]
+---@field stack string[]
 local Telemetry = {}
 
 ---Construct a new Telemetry object
@@ -58,7 +58,7 @@ function Telemetry:new(subsystem, location)
         location = location,
         local_state = {},
         heartbeat_sleep_s = DEFAULT_HEARTBEAT_SLEEP_S,
-        subroutine_stack = {},
+        stack = {},
     }
     setmetatable(o, self)
     self.__index = self
@@ -86,7 +86,7 @@ function Telemetry:_build_payload(type)
         host_name = os.getComputerLabel() or '',
         subsystem = self.subsystem,
         state = self.local_state,
-        stack = self.subroutine_stack,
+        spans = self.stack,
     }
     if self.location then
         payload.pos, payload.heading = self.location:location()
@@ -103,15 +103,14 @@ end
 
 ---Push new subroutine name onto stack
 ---@param name string subroutine name
-function Telemetry:push_subroutine(name)
-    table.insert(self.subroutine_stack, name)
+function Telemetry:push_span(name)
+    table.insert(self.stack, name)
 end
 
 ---Pop the top subroutine from the stack
-function Telemetry:pop_subroutine()
-    if #self.subroutine_stack > 0 then
-        table.remove(self.subroutine_stack)
-    end
+function Telemetry:pop_span()
+    assert(#self.stack > 0)
+    table.remove(self.stack)
 end
 
 ---Wrap a function to label it's state during execution
@@ -119,20 +118,22 @@ end
 ---@param name string
 ---@param fn T
 ---@return T
-function Telemetry:make_routine(name, fn)
+function Telemetry:span(name, fn)
     return function(...)
-        log:debug('Start routine', name)
-        self:push_subroutine(name)
+        log:debug('Start span', name)
+        self:push_span(name)
+        -- local start = os.clock()
         local res = table.pack(pcall(fn, ...))
-        self:pop_subroutine()
+        -- local delta = os.clock() - start
+        self:pop_span()
 
         local success = res[1]
         if not success then
-            log:error('Error in routine', name, res[2])
+            log:error('Error in span', name, res[2])
             error(res[2], 2)
         end
 
-        log:debug('End routine', name)
+        log:debug('End span', name)
         return table.unpack(res, 2)
     end
 end
