@@ -117,7 +117,7 @@ local function main()
     end
 
     nav:mark_poi('resume')
-    nav:follow_path(nav:find_path('resume', 'station'))
+    nav:follow_path(nav:find_path('station'))
     tmc:right()
 end
 
