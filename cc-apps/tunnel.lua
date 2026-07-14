@@ -24,9 +24,6 @@ local Nav = ccl_nav.Nav
 local ccl_telemetry = require 'cc-libs.net.telemetry'
 local get_telemetry = ccl_telemetry.get_telemetry
 
-local ccl_planner = require 'cc-libs.turtle.planner'
-local Planner = ccl_planner.Planner
-
 local argparse = require 'cc-libs.util.argparse'
 local parser = argparse.ArgParse:new('tunnel', 'Dig a 3x3 tunnel')
 parser:add_arg('length', { help = 'length of the tunnel' })
@@ -114,7 +111,7 @@ end)
 local return_to_start = telem:make_routine('return_to_start', function()
     map:dump('tunnel_map.json')
     local path = nav:find_path('start')
-    log:debug('Path is', path)
+    log:trace('Path is', path)
     nav:follow_path(path)
 end)
 
