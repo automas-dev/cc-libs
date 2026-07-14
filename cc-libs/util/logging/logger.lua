@@ -156,15 +156,16 @@ end
 ---@param fn fun() function to run catching and logging errors
 ---@param ... any to the function
 ---@return boolean status true if an error was caught
----@return any result of `fn`
+---@return ... result of `fn`
 function Logger:catch_errors(fn, ...)
-    local status, res = xpcall(fn, debug.traceback, ...)
+    local res = table.pack(xpcall(fn, debug.traceback, ...))
+    local success = res[1]
 
-    if not status then
-        self:error(res)
+    if not success then
+        self:error(res[2])
     end
 
-    return status, res
+    return table.unpack(res)
 end
 
 return {

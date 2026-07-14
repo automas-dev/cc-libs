@@ -232,4 +232,30 @@ function test.catch_errors()
     expect_true(string.find(l.log.args[3], 'fn error'))
 end
 
+function test.catch_errors_multiple_results()
+    local l = Logger:new('ss')
+    l.log = Mock()
+
+    local function good()
+        return 'a', 'b', 'c'
+    end
+
+    local status, a, b, c = l:catch_errors(good)
+    assert_true(status)
+    assert_eq('a', a)
+    assert_eq('b', b)
+    assert_eq('c', c)
+    l.log.reset()
+
+    local function bad()
+        error('fn error')
+    end
+
+    local status2, err = l:catch_errors(bad)
+    assert_false(status2)
+    assert_eq(1, l.log.call_count)
+    expect_eq(Level.ERROR, l.log.args[2])
+    expect_true(string.find(l.log.args[3], 'fn error'))
+end
+
 return test
