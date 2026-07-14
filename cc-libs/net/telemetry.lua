@@ -121,13 +121,18 @@ end
 ---@return T
 function Telemetry:make_routine(name, fn)
     return function(...)
+        log:debug('Start routine', name)
         self:push_subroutine(name)
         local res = table.pack(pcall(fn, ...))
         self:pop_subroutine()
+
         local success = res[1]
         if not success then
+            log:error('Error in routine', name, res[2])
             error(res[2], 2)
         end
+
+        log:debug('End routine', name)
         return table.unpack(res, 2)
     end
 end
