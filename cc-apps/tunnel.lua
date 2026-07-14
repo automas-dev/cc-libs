@@ -108,7 +108,6 @@ local turn_to_next = telem:span('turn_to_next', function(direction)
 end)
 
 local return_to_start = telem:span('return_to_start', function()
-    map:dump('tunnel_map.json')
     local path = nav:find_path('start')
     log:trace('Path is', path)
     nav:follow_path(path)
