@@ -38,20 +38,23 @@ Apps can be used via the `cc/` prefix (eg. `cc/dig_down` or `cc/branch_mine`).
 
 ## Development
 
+> [!IMPORTANT]
 > If you choose to clone this repo, there are a few things you will need to do
-> first. See the **ComputerCraft Mod Config** section bellow.
+> first. See the [ComputerCraft Mod Config](#computercraft-mod-config) section
+> bellow.
 
 Clone the repo into a computer or turtle directory (`cc-libs` should be in the
 root directory). Lua scripts in the project root can be executed on a turtle or
 computer, or the `cc-libs` directory can be used in other projects.
 
 ```sh
-git clone git@github.com:automas-dev/cc-libs.git # <computer_or_turtle_dir>
+git clone git@github.com:automas-dev/cc-libs.git <computer_or_turtle_dir>
+cd <computer_or_turtle_dir>
+git submodule update --init --recursive
 ```
 
-> [lua-ls-cc-tweaked](https://github.com/nvim-computercraft/lua-ls-cc-tweaked)
-> is used to provide type hints / annotations in vscode. Download this repo and
-> place it somewhere in this repo. Add a `.gitignore` file with the line `*`.
+[cc-tweaked-documentation](https://gitlab.com/carsakiller/cc-tweaked-documentation)
+is used to provide type hints / annotations in vscode.
 
 ### Test
 
