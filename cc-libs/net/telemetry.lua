@@ -339,6 +339,15 @@ end
 ---@return TelemetryRunner runner
 function Telemetry:make_runner()
     local runner = TelemetryRunner:new(self)
+
+    local function run_heartbeat_thread()
+        while true do
+            self:send_event('heartbeat', 'Heartbeat')
+            os.sleep(self.heartbeat_sleep_s)
+        end
+    end
+    runner:add_thread('heartbeat', false, run_heartbeat_thread)
+
     return runner
 end
 
@@ -357,14 +366,6 @@ function Telemetry:run_parallel_with(name, fn, ...)
 
     local runner = self:make_runner()
     runner:add_thread(name, true, run_fn)
-
-    local function run_heartbeat_thread()
-        while true do
-            self:send_event('heartbeat', 'Heartbeat')
-            os.sleep(self.heartbeat_sleep_s)
-        end
-    end
-    runner:add_thread('heartbeat', false, run_heartbeat_thread)
 
     local success = runner:run()
     return success, result

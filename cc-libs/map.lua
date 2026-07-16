@@ -201,6 +201,8 @@ function Map:point(x, y, z)
             links = {},
         }
         self.graph[point.id] = point
+        -- TODO test this link
+        self:link_adjacent(point)
         log:trace('Created point', point)
     else
         log:trace('Got existing point', point)

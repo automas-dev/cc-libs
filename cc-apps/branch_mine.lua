@@ -23,6 +23,7 @@ local action = require 'cc-libs.turtle.actions'
 local ccl_location = require 'cc-libs.turtle.location'
 local Location = ccl_location.Location
 local Compass = ccl_location.Compass
+local LocalFrame = ccl_location.LocalFrame
 
 local ccl_nav = require 'cc-libs.turtle.nav'
 local Nav = ccl_nav.Nav
