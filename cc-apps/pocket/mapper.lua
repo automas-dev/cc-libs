@@ -24,10 +24,10 @@ local location = Location:new()
 local telem = get_telemetry()
 telem:set_location(location)
 
-local map_host
+local client
 
 local function main()
-    local client = ProtocolClient:new('map', 'server')
+    client = ProtocolClient:new('map', 'server')
 
     local last = { x = nil, y = nil, z = nil }
     while true do
@@ -76,52 +76,41 @@ local function main()
     end
 end
 
--- local function mark_waypoint()
---     while true do
---         io.stdout:write('waypoint> ')
---         local name = io.stdin:read()
---         if name then
---             local x, y, z = gps.locate(2, false)
---             if x == nil or y == nil or z == nil then
---                 log:warning('Timeout waiting for GPS location')
---             else
---                 x = math.floor(x)
---                 y = math.floor(y)
---                 z = math.floor(z)
---                 local pos = { x = x, y = y, z = z }
---                 log:info('Creating waypoint', name, 'at', pos)
---                 local request = {
---                     id = uuid(),
---                     ask = 'add_waypoint',
---                     waypoint = {
---                         name = name,
---                         pos = pos,
---                     },
---                 }
---                 rednet.send(map_host, json.encode(request), 'map')
---                 local sender, message = rednet.receive('map_response', 5)
---                 if sender == nil then
---                     log:warning('Timeout waiting for response from map server')
---                 else
---                     local response = json.decode(message)
---                     if response.id ~= nil and response.id ~= request.id then
---                         log:error('Got someone elses response')
---                     elseif not response.ok then
---                         log:error('Server responded with error', response.err)
---                     else
---                         log:info('Response from map server', response.message)
---                     end
---                 end
---             end
---         end
---     end
--- end
+local function mark_waypoint()
+    while true do
+        io.stdout:write('waypoint> ')
+        local name = io.stdin:read()
+        if name then
+            local x, y, z = gps.locate(2, false)
+            if x == nil or y == nil or z == nil then
+                log:warning('Timeout waiting for GPS location')
+            else
+                x = math.floor(x)
+                y = math.floor(y)
+                z = math.floor(z)
+                local pos = { x = x, y = y, z = z }
+                log:info('Creating waypoint', name, 'at', pos)
+                local success, status, response =
+                    client:request('add_waypoint', { waypoint = { name = name, pos = pos } }, 5)
+                if not success then
+                    log:error('Server responded with error', response)
+                elseif response == nil or type(response) ~= 'table' then
+                    log:warning('Unknown response from map server', response)
+                elseif response.action == 'waypoint added' then
+                    log:info('New waypoint created', response.waypoint.id)
+                elseif response.action == 'waypoint replaced' then
+                    log:debug('Replaced exists waypoint', response.waypoint.id)
+                else
+                    log:warning('Unknown response from map server', response)
+                end
+            end
+        end
+    end
+end
 
--- local runner = telem:make_runner()
--- runner:add_thread('mark_waypoint', false, mark_waypoint)
+local runner = telem:make_runner()
+runner:add_thread('mark_waypoint', false, mark_waypoint)
 
--- -- Call main and log an error if raised
--- runner:add_thread('main', true, log.catch_errors, log, main)
--- runner:run()
-
-telem:run_parallel_with('main', log.catch_errors, log, main)
+-- Call main and log an error if raised
+runner:add_thread('main', true, log.catch_errors, log, main)
+runner:run()
