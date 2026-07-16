@@ -1,6 +1,6 @@
 {
     "Lua.workspace.library": [
-        "library/"
+        "stub/"
     ],
     "Lua.diagnostics.globals": [
         "colors",
@@ -47,6 +47,9 @@
         "patch_local",
         "reset_patches",
         "sleep"
+    ],
+    "Lua.diagnostics.disable": [
+        "lowercase-global"
     ],
     "Lua.runtime.version": "Lua 5.2",
     "Lua.format.defaultConfig": {
