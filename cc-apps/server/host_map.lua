@@ -10,253 +10,127 @@ logging.basic_config {
 }
 local log = logging.get_logger('main')
 
+local ccl_proto = require 'cc-libs.net.proto'
+local ProtocolServer = ccl_proto.ProtocolServer
+
 local ccl_map = require 'cc-libs.map'
 local Map = ccl_map.Map
 
-local json = require 'cc-libs.util.json'
-
 local MAP_FILE = 'map.json'
-local MAP_PROTOCOL = 'map'
-local MAP_RESPONSE_PROTOCOL = 'map_response'
+
+---@type Map
+local map
 
 local function load_map()
-    local map = Map:new()
+    map = Map:new()
     if not pcall(map.load, map, MAP_FILE) then
         log:info('Map does not exist, creating')
         map:dump(MAP_FILE)
     else
         log:info('Map loaded from', MAP_FILE)
     end
-    return map
 end
 
----@class Server
----@field map Map
-local Server = {}
+local server = ProtocolServer:new('map', 'server')
 
----Create a new Server object
----@param map Map
----@return Server
-function Server:new(map)
-    local o = {
+---@param request Request
+server:route('get', function(request)
+    return request:ok_response({
         map = map,
-    }
-    setmetatable(o, self)
-    self.__index = self
-    return o
-end
+    })
+end)
 
----Encode `response` in json and send to `recipient` on the map response protocol
----@param recipient number
----@param response any
----@return boolean success
-function Server:send_response(recipient, response)
-    local ok, message = pcall(json.encode, response)
-    if not ok then
-        log:error('Failed to encode response in json', message)
-        return false
-    end
-    if not rednet.send(recipient, message, MAP_RESPONSE_PROTOCOL) then
-        log:warning('Failed to send response to recipient', recipient)
-        return false
+---Validate a waypoint packet
+---@param waypoint any
+---@return boolean ok
+---@return string? reason if not ok
+local function validate_waypoint(waypoint)
+    if waypoint == nil then
+        return false, 'Missing field waypoint'
+    elseif type(waypoint) ~= 'table' then
+        return false, 'Message is not a table'
+    elseif waypoint.name == nil then
+        return false, 'Missing field waypoint.name'
+    elseif waypoint.pos == nil then
+        return false, 'Missing field waypoint.pos'
+    elseif waypoint.pos.x == nil or waypoint.pos.y == nil or waypoint.pos.z == nil then
+        return false, 'Components of waypoint.pos are nil'
     end
     return true
 end
 
----Handle a single message from sender
----@param recipient number
----@param message any
-function Server:handle_message(recipient, message)
-    local ok, request = pcall(json.decode, message)
+---@param request Request
+server:route('add_waypoint', function(request)
+    local body = request.message.body
+    if type(body) ~= 'table' then
+        return request:err_response('Body must be a table')
+    end
+
+    local ok, reason = validate_waypoint(body.waypoint)
     if not ok then
-        self:send_response(recipient, { ok = false, err = 'Invalid Message' })
-        return
+        return request:err_response(reason)
     end
 
-    if request.id == nil then
-        self:send_response(recipient, { ok = false, err = 'Missing field id' })
-        return
+    local name = body.waypoint.name
+    local pos = body.waypoint.pos
+
+    local exists = map:get_waypoint(name) ~= nil
+    local point = map:pos(pos)
+    map:add_waypoint(point, name)
+    map:dump(MAP_FILE)
+    log:info('Added waypoint', name)
+
+    return request:ok_response(exists and 'waypoint replaced' or 'waypoint added')
+end)
+
+---Validate a node packet
+---@param node any
+---@return boolean ok
+---@return string? reason if not ok
+local function validate_node(node)
+    if node == nil then
+        return false, 'Missing field node'
+    elseif type(node) ~= 'table' then
+        return false, 'Message is not a table'
+    elseif node.pos == nil then
+        return false, 'Missing field node.pos'
+    elseif node.pos.x == nil or node.pos.y == nil or node.pos.z == nil then
+        return false, 'Components of node.pos are nil'
+    end
+    return true
+end
+
+---@param request Request
+server:route('add_node', function(request)
+    local body = request.message.body
+    if type(body) ~= 'table' then
+        return request:err_response('Body must be a table')
     end
 
-    if request.ask == nil then
-        self:send_response(recipient, { ok = false, err = 'Missing field ask' })
-        return
+    local ok, reason = validate_node(body.node)
+    if not ok then
+        return request:err_response(reason)
     end
 
-    if request.ask == 'get' then
-        self:send_response(recipient, {
-            ok = true,
-            request_id = request.id,
-            map = self.map,
-        })
-    elseif request.ask == 'add_waypoint' then
-        if request.waypoint == nil then
-            self:send_response(recipient, {
-                ok = false,
-                id = request.id,
-                err = 'Missing field waypoint',
-            })
-            return
-        end
+    local pos = body.waypoint.pos
 
-        local name = request.waypoint.name
-        if name == nil then
-            self:send_response(recipient, {
-                ok = false,
-                id = request.id,
-                err = 'Missing field waypoint.name',
-            })
-            return
-        end
-
-        local pos = request.waypoint.pos
-        if pos == nil then
-            self:send_response(recipient, {
-                ok = false,
-                id = request.id,
-                err = 'Missing field waypoint.pos',
-            })
-            return
-        end
-
-        if pos.x == nil then
-            self:send_response(recipient, {
-                ok = false,
-                id = request.id,
-                err = 'Missing field waypoint.pos.x',
-            })
-            return
-        elseif pos.y == nil then
-            self:send_response(recipient, {
-                ok = false,
-                id = request.id,
-                err = 'Missing field waypoint.pos.y',
-            })
-            return
-        elseif pos.z == nil then
-            self:send_response(recipient, {
-                ok = false,
-                id = request.id,
-                err = 'Missing field waypoint.pos.z',
-            })
-            return
-        end
-
-        local exists = self.map:get_waypoint(name) ~= nil
-        local point = self.map:pos(pos)
-        self.map:add_waypoint(point, name)
-        self.map:dump(MAP_FILE)
-        log:info('Added waypoint', name)
-
-        self:send_response(recipient, {
-            ok = true,
-            id = request.id,
-            message = exists and 'waypoint replaced' or 'waypoint added',
-        })
-    elseif request.ask == 'add_node' then
-        if request.node == nil then
-            self:send_response(recipient, {
-                ok = false,
-                id = request.id,
-                err = 'Missing field node',
-            })
-            return
-        end
-
-        local pos = request.node.pos
-        if pos == nil then
-            self:send_response(recipient, {
-                ok = false,
-                id = request.id,
-                err = 'Missing field waypoint.pos',
-            })
-            return
-        end
-
-        if pos.x == nil then
-            self:send_response(recipient, {
-                ok = false,
-                id = request.id,
-                err = 'Missing field waypoint.pos.x',
-            })
-            return
-        elseif pos.y == nil then
-            self:send_response(recipient, {
-                ok = false,
-                id = request.id,
-                err = 'Missing field waypoint.pos.y',
-            })
-            return
-        elseif pos.z == nil then
-            self:send_response(recipient, {
-                ok = false,
-                id = request.id,
-                err = 'Missing field waypoint.pos.z',
-            })
-            return
-        end
-
-        local point = self.map:get_pos(pos.x, pos.y, pos.z)
-        if point == nil then
-            point = self.map:pos(pos)
-            self.map:dump(MAP_FILE)
-            log:info('Added node', point.id)
-
-            self:send_response(recipient, {
-                ok = true,
-                id = request.id,
-                message = 'node added',
-                node = point,
-            })
-        else
-            self:send_response(recipient, {
-                ok = true,
-                id = request.id,
-                message = 'node exists',
-                node = point,
-            })
-        end
+    local point = map:get_pos(pos.x, pos.y, pos.z)
+    if point == nil then
+        point = map:pos(pos)
+        map:dump(MAP_FILE)
+        log:info('Added node', point.id)
+        return request:ok_response('node added')
     else
-        self:send_response(recipient, {
-            ok = false,
-            id = request.id,
-            err = 'Unknown ask',
-        })
+        return request:ok_response('node exists')
     end
-end
-
-function Server:serve_forever()
-    log:info('Serving forever')
-    while true do
-        local sender, message, protocol = rednet.receive(MAP_PROTOCOL)
-        if sender ~= nil then
-            log:trace('Got message from sender', sender, { message = message, protocol = protocol })
-            if protocol ~= MAP_PROTOCOL then
-                self:send_response(sender, { ok = false, err = 'Invalid Protocol' })
-            else
-                local success = log:catch_errors(self.handle_message, self, sender, message)
-                if not success then
-                    self:send_response(sender, { ok = false, err = 'Server Error' })
-                end
-            end
-        end
-    end
-end
+end)
 
 -- Main function
 local function main()
-    peripheral.find('modem', rednet.open)
-    rednet.host(MAP_PROTOCOL, 'server')
-    log:info('Protocol map registered for hostname server')
-
-    local map = load_map()
+    load_map()
     log:info('Map loaded')
-
-    local server = Server:new(map)
     server:serve_forever()
 end
 
 -- Call main and log an error if raised
 log:catch_errors(main)
-rednet.unhost(MAP_PROTOCOL)
-log:info('Unregistered map protocol')

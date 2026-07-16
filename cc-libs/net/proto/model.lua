@@ -17,7 +17,7 @@ local ResponseStatus = {
 ---@param message any
 ---@param is_response? boolean message fields of ResponseMessage
 ---@return boolean ok
----@return string? error
+---@return string? reason if not ok
 local function validate_message(message, is_response)
     if type(message) ~= 'table' then
         return false, 'Message is not a table'
