@@ -80,7 +80,7 @@ server:route('add_waypoint', function(request)
     map:dump(MAP_FILE)
     log:info('Added waypoint', name)
 
-    return request:ok_response(exists and 'waypoint replaced' or 'waypoint added')
+    return request:ok_response({ waypoint = point, action = exists and 'waypoint replaced' or 'waypoint added' })
 end)
 
 ---Validate a node packet
@@ -112,23 +112,22 @@ server:route('add_node', function(request)
         return request:err_response(reason)
     end
 
-    local pos = body.waypoint.pos
+    local pos = body.node.pos
 
     local point = map:get_pos(pos.x, pos.y, pos.z)
-    if point == nil then
+    local exists = point ~= nil
+    if not exists then
         point = map:pos(pos)
         map:dump(MAP_FILE)
         log:info('Added node', point.id)
-        return request:ok_response('node added')
-    else
-        return request:ok_response('node exists')
     end
+    return request:ok_response({ node = point, action = exists and 'node exists' or 'node added' })
+    -- return request:ok_response('node exists')
 end)
 
 -- Main function
 local function main()
     load_map()
-    log:info('Map loaded')
     server:serve_forever()
 end
 

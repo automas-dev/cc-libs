@@ -7,6 +7,9 @@ logging.basic_config {
 }
 local log = logging.get_logger('main')
 
+local ccl_proto = require 'cc-libs.net.proto'
+local ProtocolClient = ccl_proto.ProtocolClient
+
 local json = require 'cc-libs.util.json'
 
 local uuid = require 'cc-libs.util.uuid'
@@ -24,12 +27,8 @@ telem:set_location(location)
 local map_host
 
 local function main()
-    peripheral.find('modem', rednet.open)
-    map_host = rednet.lookup('map', 'server')
-    if map_host == nil then
-        log:error('Failed to find map host')
-        return
-    end
+    local client = ProtocolClient:new('map', 'server')
+
     local last = { x = nil, y = nil, z = nil }
     while true do
         local x, y, z = gps.locate(2, false)
@@ -43,100 +42,86 @@ local function main()
                 local pos = { x = x, y = y, z = z }
                 last = pos
                 log:debug('Adding node at', pos)
-                local request = {
-                    id = uuid(),
-                    ask = 'add_node',
-                    node = {
-                        pos = pos,
-                    },
-                }
-                rednet.send(map_host, json.encode(request), 'map')
-                local sender, message = rednet.receive('map_response', 5)
-                if sender == nil then
-                    log:warning('Timeout waiting for response from map server')
+                -- Add point at head
+                local success, status, response = client:request('add_node', { node = { pos = pos } }, 5)
+                if not success then
+                    log:error('Server responded with error', response)
+                elseif response == nil or type(response) ~= 'table' then
+                    log:warning('Unknown response from map server', response)
+                elseif response.action == 'node added' then
+                    log:info('New node created', response.node.id)
+                elseif response.action == 'node exists' then
+                    log:debug('New already exists', response.node.id)
                 else
-                    local response = json.decode(message)
-                    if response.id ~= nil and response.id ~= request.id then
-                        log:error('Got someone elses response')
-                    elseif not response.ok then
-                        log:error('Server responded with error', response.err)
-                    elseif response.message == 'node added' then
-                        log:info('New node created', response.node.id)
-                    elseif response.message == 'node exists' then
-                        log:debug('New already exists', response.node.id)
-                    else
-                        log:info('Response from map server', response.message)
-                    end
+                    log:warning('Unknown response from map server', response)
                 end
+
                 -- Add point at feet
-                request.id = uuid()
-                request.node.pos.y = request.node.pos.y - 1
-                rednet.send(map_host, json.encode(request), 'map')
-                sender, message = rednet.receive('map_response', 5)
-                if sender == nil then
-                    log:warning('Timeout waiting for response from map server')
+                success, status, response = client:request('add_node', {
+                    node = { pos = { x = x, y = y - 1, z = z } },
+                }, 5)
+                if not success then
+                    log:error('Server responded with error', response)
+                elseif response == nil or type(response) ~= 'table' then
+                    log:warning('Unknown response from map server', response)
+                elseif response.action == 'node added' then
+                    log:debug('New node created for feet', response.node.id)
+                elseif response.action == 'node exists' then
+                    log:debug('New already exists for feet', response.node.id)
                 else
-                    local response = json.decode(message)
-                    if response.id ~= nil and response.id ~= request.id then
-                        log:error('Got someone elses response')
-                    elseif not response.ok then
-                        log:error('Server responded with error', response.err)
-                    elseif response.message == 'node added' then
-                        log:debug('New node created for feet', response.node.id)
-                    elseif response.message == 'node exists' then
-                        log:debug('New already exists for feet', response.node.id)
-                    else
-                        log:debug('Response from map server', response.message)
-                    end
+                    log:warning('Unknown response from map server', response)
                 end
             end
         end
     end
 end
 
-local function mark_waypoint()
-    while true do
-        io.stdout:write('waypoint> ')
-        local name = io.stdin:read()
-        if name then
-            local x, y, z = gps.locate(2, false)
-            if x == nil or y == nil or z == nil then
-                log:warning('Timeout waiting for GPS location')
-            else
-                x = math.floor(x)
-                y = math.floor(y)
-                z = math.floor(z)
-                local pos = { x = x, y = y, z = z }
-                log:info('Creating waypoint', name, 'at', pos)
-                local request = {
-                    id = uuid(),
-                    ask = 'add_waypoint',
-                    waypoint = {
-                        name = name,
-                        pos = pos,
-                    },
-                }
-                rednet.send(map_host, json.encode(request), 'map')
-                local sender, message = rednet.receive('map_response', 5)
-                if sender == nil then
-                    log:warning('Timeout waiting for response from map server')
-                else
-                    local response = json.decode(message)
-                    if response.id ~= nil and response.id ~= request.id then
-                        log:error('Got someone elses response')
-                    elseif not response.ok then
-                        log:error('Server responded with error', response.err)
-                    else
-                        log:info('Response from map server', response.message)
-                    end
-                end
-            end
-        end
-    end
-end
+-- local function mark_waypoint()
+--     while true do
+--         io.stdout:write('waypoint> ')
+--         local name = io.stdin:read()
+--         if name then
+--             local x, y, z = gps.locate(2, false)
+--             if x == nil or y == nil or z == nil then
+--                 log:warning('Timeout waiting for GPS location')
+--             else
+--                 x = math.floor(x)
+--                 y = math.floor(y)
+--                 z = math.floor(z)
+--                 local pos = { x = x, y = y, z = z }
+--                 log:info('Creating waypoint', name, 'at', pos)
+--                 local request = {
+--                     id = uuid(),
+--                     ask = 'add_waypoint',
+--                     waypoint = {
+--                         name = name,
+--                         pos = pos,
+--                     },
+--                 }
+--                 rednet.send(map_host, json.encode(request), 'map')
+--                 local sender, message = rednet.receive('map_response', 5)
+--                 if sender == nil then
+--                     log:warning('Timeout waiting for response from map server')
+--                 else
+--                     local response = json.decode(message)
+--                     if response.id ~= nil and response.id ~= request.id then
+--                         log:error('Got someone elses response')
+--                     elseif not response.ok then
+--                         log:error('Server responded with error', response.err)
+--                     else
+--                         log:info('Response from map server', response.message)
+--                     end
+--                 end
+--             end
+--         end
+--     end
+-- end
 
-local runner = telem:make_runner()
-runner:add_thread('mark_waypoint', false, mark_waypoint)
+-- local runner = telem:make_runner()
+-- runner:add_thread('mark_waypoint', false, mark_waypoint)
 
--- Call main and log an error if raised
+-- -- Call main and log an error if raised
+-- runner:add_thread('main', true, log.catch_errors, log, main)
+-- runner:run()
+
 telem:run_parallel_with('main', log.catch_errors, log, main)
