@@ -52,7 +52,10 @@ local Telemetry = {}
 ---@param location? Location used for position and heading metadata
 ---@return Telemetry
 function Telemetry:new(subsystem, location)
-    peripheral.find('modem', rednet.open)
+    if not rednet.isOpen() then
+        log:debug('Opening rednet')
+        peripheral.find('modem', rednet.open)
+    end
     local o = {
         subsystem = subsystem,
         location = location,
