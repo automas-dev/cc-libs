@@ -10,10 +10,6 @@ local log = logging.get_logger('main')
 local ccl_proto = require 'cc-libs.net.proto'
 local ProtocolClient = ccl_proto.ProtocolClient
 
-local json = require 'cc-libs.util.json'
-
-local uuid = require 'cc-libs.util.uuid'
-
 local ccl_location = require 'cc-libs.turtle.location'
 local Location = ccl_location.Location
 
