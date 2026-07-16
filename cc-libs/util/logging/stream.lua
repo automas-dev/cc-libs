@@ -36,6 +36,8 @@ function ConsoleStream:send(message, record)
             term.setTextColor(colors.yellow)
         elseif record.level == _level.Level.DEBUG then
             term.setTextColor(colors.cyan)
+        elseif record.level == _level.Level.TRACE then
+            term.setTextColor(colors.lime)
         else
             term.setTextColor(colors.white)
         end
