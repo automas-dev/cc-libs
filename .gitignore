@@ -18,6 +18,7 @@
 *.map
 .settings
 test_report.json
+rom.2
 
 .luarocks
 
