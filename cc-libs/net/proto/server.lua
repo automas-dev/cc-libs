@@ -8,8 +8,8 @@ local Request = proto_model.Request
 local validate_message = proto_model.validate_message
 
 ---@class RouteOptions
----@field request_model Model?
----@field response_model Model?
+---@field request_model Schema?
+---@field response_model Schema?
 
 ---@class Route
 ---@field fn fun(Request): Response

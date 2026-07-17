@@ -8,24 +8,24 @@ local FieldType = {
     OBJECT = 'object',
 }
 
----@class Field
+---@class SchemaField
 ---@field type FieldType
 ---@field optional boolean?
 ---TODO
 ---@field validate? fun(val: any): boolean
----@field array Field? defines elements of array type
----@field object Schema? defines fields of object type
+---@field array SchemaField? defines elements of array type
+---@field object SchemaObject? defines fields of object type
 
----@alias Schema { [string]: Field }
+---@alias SchemaObject { [string]: SchemaField }
 
----@class Model
----@field schema Schema
-local Model = {}
+---@class Schema
+---@field schema SchemaObject
+local Schema = {}
 
 ---Create a new Model object and check schema
----@param schema Schema
----@return Model
-function Model:new(schema)
+---@param schema SchemaObject
+---@return Schema
+function Schema:new(schema)
     local o = {
         schema = schema,
     }
@@ -40,12 +40,12 @@ end
 
 ---Check a single field object is valid
 ---@private
----@param field Field
+---@param field SchemaField
 ---@param path string
 ---@return boolean valid
 ---@return string? error_path
 ---@return string? error
-function Model:check_field(field, path)
+function Schema:check_field(field, path)
     if field.type == nil then
         return false, path, 'Type is nil'
     end
@@ -94,12 +94,12 @@ end
 
 ---Check all fields of a schema
 ---@private
----@param schema Schema
+---@param schema SchemaObject
 ---@param path? string
 ---@return boolean valid
 ---@return string? error_path
 ---@return string? error
-function Model:check_schema(schema, path)
+function Schema:check_schema(schema, path)
     for k, field in pairs(schema) do
         if path then
             k = path .. '.' .. k
@@ -140,7 +140,7 @@ end
 ---@return boolean valid
 ---@return string? error_path
 ---@return string? error
-function Model:validate_type(field_type, value, path)
+function Schema:validate_type(field_type, value, path)
     if field_type == FieldType.BOOL then
         if type(value) ~= 'boolean' then
             return false, path, 'Invalid type ' .. type(value) .. ' expected ' .. field_type
@@ -178,14 +178,14 @@ end
 ---Validate a value against it's field
 ---This is being defined in validate_schema so it can call validate_schema
 ---@private
----@param field Field
+---@param field SchemaField
 ---@param value any
 ---@param path string
 ---@param allow_extra boolean
 ---@return boolean valid
 ---@return string? error_path
 ---@return string? error
-function Model:validate_field(field, value, path, allow_extra)
+function Schema:validate_field(field, value, path, allow_extra)
     if field.optional and value == nil then
         return true
     end
@@ -205,7 +205,7 @@ function Model:validate_field(field, value, path, allow_extra)
         end
     elseif field.type == FieldType.OBJECT then
         if field.object ~= nil then
-            valid, error_path, error = self:validate_schema(field.object, value, path, allow_extra)
+            valid, error_path, error = self:validate_object(field.object, value, path, allow_extra)
             if not valid then
                 return valid, error_path, error
             end
@@ -216,14 +216,14 @@ end
 
 ---Validate elements of an array
 ---@private
----@param arr_field Field
+---@param arr_field SchemaField
 ---@param value any
 ---@param path string
 ---@param allow_extra boolean
 ---@return boolean valid
 ---@return string? error_path
 ---@return string? error
-function Model:validate_array(arr_field, value, path, allow_extra)
+function Schema:validate_array(arr_field, value, path, allow_extra)
     assert(arr_field ~= nil)
     for i, elem in ipairs(value) do
         local valid, error_path, error =
@@ -237,14 +237,14 @@ end
 
 ---Validate data against a schema
 ---@private
----@param schema Schema
+---@param schema SchemaObject
 ---@param value any
 ---@param path string
 ---@param allow_extra boolean
 ---@return boolean valid
 ---@return string? error_path
 ---@return string? error
-function Model:validate_schema(schema, value, path, allow_extra)
+function Schema:validate_object(schema, value, path, allow_extra)
     if type(value) ~= 'table' then
         return false, path, 'Value is not table'
     end
@@ -277,14 +277,14 @@ end
 ---@return boolean valid
 ---@return string? error_path
 ---@return string? error
-function Model:validate(value, allow_extra)
+function Schema:validate(value, allow_extra)
     if allow_extra == nil then
         allow_extra = true
     end
-    return self:validate_schema(self.schema, value, '', allow_extra)
+    return self:validate_object(self.schema, value, '', allow_extra)
 end
 
 return {
     FieldType = FieldType,
-    Model = Model,
+    Schema = Schema,
 }

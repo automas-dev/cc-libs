@@ -15,7 +15,7 @@ local ProtocolServer = ccl_proto.ProtocolServer
 
 local ccl_model = require 'cc-libs.net.proto.model_validate'
 local FieldType = ccl_model.FieldType
-local Model = ccl_model.Model
+local Schema = ccl_model.Schema
 
 local server = ProtocolServer:new('mock', 'server')
 
@@ -30,11 +30,11 @@ server:route(
     end
 )
 
-local req_model = Model:new({
+local req_model = Schema:new({
     name = { type = FieldType.STRING },
 })
 
-local resp_model = Model:new({
+local resp_model = Schema:new({
     data = { type = FieldType.STRING },
 })
 
