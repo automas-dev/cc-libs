@@ -14,14 +14,16 @@ local uuid = require 'cc-libs.util.uuid'
 ---@field server_hostname string
 ---@field server_id number
 ---@field response_protocol string
+---@field timeout number?
 ---@field logger Logger
 local ProtocolClient = {}
 
 ---Create a new ProtocolClient object
 ---@param protocol string
 ---@param server_hostname string server hostname
+---@param timeout? number
 ---@return ProtocolClient
-function ProtocolClient:new(protocol, server_hostname)
+function ProtocolClient:new(protocol, server_hostname, timeout)
     local log = logging.get_logger(table.concat({ 'proto_client', protocol, server_hostname }, '.'))
     open_rednet()
     log:trace('Lookup protocol', protocol, 'on host', server_hostname)
@@ -35,7 +37,7 @@ function ProtocolClient:new(protocol, server_hostname)
         server_hostname = server_hostname,
         server_id = server_id,
         response_protocol = protocol .. '_response',
-        routes = {},
+        timeout = timeout,
         logger = log,
     }
     setmetatable(o, self)
@@ -52,6 +54,10 @@ end
 ---@return ResponseStatus|nil status
 ---@return string|table|nil response
 function ProtocolClient:request(path, body, timeout)
+    if timeout == nil then
+        timeout = self.timeout
+    end
+
     local request_id = uuid()
     self.logger:trace('Request id is', request_id)
 
