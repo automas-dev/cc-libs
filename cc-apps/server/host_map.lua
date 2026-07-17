@@ -34,7 +34,7 @@ end
 local server = ProtocolServer:new('map', 'server')
 
 ---@param request Request
-server:route('get', function(request)
+server:route('get', nil, function(request)
     return request:ok_response({
         map = map,
     })
@@ -60,7 +60,7 @@ local function validate_waypoint(waypoint)
 end
 
 ---@param request Request
-server:route('add_waypoint', function(request)
+server:route('add_waypoint', nil, function(request)
     local body = request.message.body
     if type(body) ~= 'table' then
         return request:err_response('Body must be a table')
@@ -101,7 +101,7 @@ local function validate_node(node)
 end
 
 ---@param request Request
-server:route('add_node', function(request)
+server:route('add_node', nil, function(request)
     local body = request.message.body
     if type(body) ~= 'table' then
         return request:err_response('Body must be a table')
