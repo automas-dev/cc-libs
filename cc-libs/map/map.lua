@@ -83,6 +83,18 @@ function Map:new()
     return o
 end
 
+---Load the map from a table
+---@param t { graph: table?, waypoints: table?} map data
+function Map:from_table(t)
+    -- Use default or {} to handle empty graph or waypoints
+    if t.graph ~= nil then
+        self.graph = t.graph
+    end
+    if t.waypoints ~= nil then
+        self.waypoints = t.waypoints
+    end
+end
+
 ---Load the map from a file
 ---@param path string to load from
 function Map:load(path)
@@ -91,13 +103,7 @@ function Map:load(path)
     local file = assert(io.open(path, 'r'))
     local data = json.decode(file:read('a'))
     file:close()
-    -- Use default or {} to handle empty graph or waypoints
-    if data.graph ~= nil then
-        self.graph = data.graph
-    end
-    if data.waypoints ~= nil then
-        self.waypoints = data.waypoints
-    end
+    self:from_table(data)
     log:debug('Finished loading map from', path)
 end
 
