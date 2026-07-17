@@ -324,8 +324,6 @@ function Map:find_path(p1, p2)
     return path_points
 end
 
-local M = {
+return {
     Map = Map,
 }
-
-return M
