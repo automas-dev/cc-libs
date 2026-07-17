@@ -7,7 +7,13 @@ local proto_model = require 'cc-libs.net.proto.model'
 local Request = proto_model.Request
 local validate_message = proto_model.validate_message
 
----@alias Route fun(Request): Response
+---@class RouteOptions
+---@field request_model Model?
+---@field response_model Model?
+
+---@class Route
+---@field fn fun(Request): Response
+---@field options RouteOptions
 
 ---@class ProtocolSerer
 ---@field protocol string
@@ -36,10 +42,14 @@ end
 
 ---Add a route to the server
 ---@param path string
----@param fn Route
-function ProtocolServer:route(path, fn)
+---@param options? RouteOptions
+---@param fn fun(Request): Response
+function ProtocolServer:route(path, options, fn)
     self.logger:debug('Adding route for', path)
-    self.routes[path] = fn
+    self.routes[path] = {
+        fn = fn,
+        options = options or {},
+    }
 end
 
 ---Send a single response
@@ -61,16 +71,34 @@ function ProtocolServer:handle_request(request)
 
     local path = request.message.path
 
-    local route_fn = self.routes[path]
-    if route_fn == nil then
+    local route = self.routes[path]
+    if route == nil then
         self.logger:trace('Route not found for path', path)
         self:send(request:not_found_response('Route does not exist for path ' .. path))
         return
     end
 
+    if route.options.request_model ~= nil then
+        self.logger:trace('Validating request with model', route.options.request_model)
+        local valid, error_path, err = route.options.request_model:validate(request.message.body)
+        if not valid then
+            self:send(request:err_response('Request validation failed ' .. error_path .. ' ' .. err))
+            return
+        end
+    end
+
     self.logger:trace('Calling function for path', path)
-    local response = route_fn(request)
+    local response = route.fn(request)
     self.logger:trace('Route function returned', response)
+
+    if route.options.response_model ~= nil then
+        self.logger:trace('Validating response with model', route.options.response_model)
+        local valid, error_path, err = route.options.response_model:validate(response.message)
+        if not valid then
+            error('Response validation failed ' .. error_path .. ' ' .. err)
+        end
+    end
+
     self:send(response)
 end
 
