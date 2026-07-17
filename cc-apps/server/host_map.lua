@@ -17,7 +17,7 @@ local MAP_FILE = 'map.json'
 
 -- Main function
 local function main()
-    local server = MapServer(MAP_FILE)
+    local server = MapServer('server', MAP_FILE)
     server:serve_forever()
 end
 

@@ -51,10 +51,11 @@ local MapField = {
 }
 
 ---Create a new ProtocolServer for a map
+---@param hostname string
 ---@param map_path string
 ---@return ProtocolSerer
-local function MapServer(map_path)
-    local server = ProtocolServer:new('map', 'server')
+local function MapServer(hostname, map_path)
+    local server = ProtocolServer:new('map', hostname)
 
     local map = Map:new()
     if not pcall(map.load, map, map_path) then
