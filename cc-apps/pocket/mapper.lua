@@ -20,6 +20,8 @@ local location = Location:new()
 local telem = get_telemetry()
 telem:set_location(location)
 
+local GPS_TIMEOUT = 0.5
+
 ---@type MapClient
 local client
 
@@ -28,7 +30,7 @@ local function main()
 
     local last = { x = nil, y = nil, z = nil }
     while true do
-        local x, y, z = gps.locate(2, false)
+        local x, y, z = gps.locate(GPS_TIMEOUT, false)
         if x == nil or y == nil or z == nil then
             log:warning('Timeout waiting for GPS location')
         else
@@ -67,7 +69,7 @@ local function mark_waypoint()
         io.stdout:write('waypoint> ')
         local name = io.stdin:read()
         if name then
-            local x, y, z = gps.locate(2, false)
+            local x, y, z = gps.locate(GPS_TIMEOUT, false)
             if x == nil or y == nil or z == nil then
                 log:warning('Timeout waiting for GPS location')
             else
