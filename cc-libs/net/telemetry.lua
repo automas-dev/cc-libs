@@ -283,7 +283,7 @@ function TelemetryRunner:run()
         for _, thread in ipairs(self.threads) do
             if thread.filter == nil or thread.filter == event[1] or event[1] == 'terminate' then
                 local ok, param = coroutine.resume(thread.co, table.unpack(event, 1, event.n))
-                if not ok then
+                if not ok and param ~= 'Terminated' then
                     log:warning('Thread', thread.name, 'failed with', param)
                     self.telem:send_alert(
                         'runner.thread_error',
