@@ -20,27 +20,41 @@ local location = Location:new()
 local telem = get_telemetry()
 telem:set_location(location)
 
-local GPS_TIMEOUT = 0.5
+local GPS_TIMEOUT = 2
 
 ---@type MapClient
 local client
+
+local function delta(p1, p2)
+    local dist2 = (p2.x - p1.x) ^ 2 + (p2.y - p1.y) ^ 2 + (p2.z - p1.z) ^ 2
+    return math.sqrt(dist2)
+end
 
 local function main()
     client = MapClient:new('server')
 
     local last = { x = nil, y = nil, z = nil }
+    local raw_last = { x = nil, y = nil, z = nil }
     while true do
-        local x, y, z = gps.locate(GPS_TIMEOUT, false)
-        if x == nil or y == nil or z == nil then
+        local raw_x, raw_y, raw_z = gps.locate(GPS_TIMEOUT, false)
+        if raw_x == nil or raw_y == nil or raw_z == nil then
             log:warning('Timeout waiting for GPS location')
         else
-            x = math.floor(x)
-            y = math.floor(y)
-            z = math.floor(z)
+            local x, y, z
+            x = math.floor(raw_x)
+            y = math.floor(raw_y)
+            z = math.floor(raw_z)
             if x ~= last.x or y ~= last.y or z ~= last.z then
+                local raw_pos = { x = raw_x, y = raw_y, z = raw_z }
+                local dist
+                if last.x ~= nil then
+                    dist = delta(raw_last, raw_pos)
+                end
+                raw_last = raw_pos
                 local pos = { x = x, y = y, z = z }
                 last = pos
                 log:debug('Adding node at', pos)
+                log:debug('Delta distance is', dist)
                 local node, action = client:add_node(pos)
                 if node == nil then
                     log:error('Failed to create node at', pos)
@@ -95,5 +109,7 @@ local runner = telem:make_runner()
 runner:add_thread('mark_waypoint', false, mark_waypoint)
 
 -- Call main and log an error if raised
-runner:add_thread('main', true, log.catch_errors, log, main)
+runner:add_thread('main', true, main)
+
+log:info('For more accurate results, crouch while mapping')
 runner:run()
