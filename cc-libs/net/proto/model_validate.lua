@@ -31,7 +31,10 @@ function Model:new(schema)
     }
     setmetatable(o, self)
     self.__index = self
-    o:check_schema()
+    local valid, error_path, err = o:check_schema(schema)
+    if not valid then
+        error('Schema error ' .. error_path .. ' ' .. err)
+    end
     return o
 end
 
@@ -43,10 +46,13 @@ end
 ---@return string? error_path
 ---@return string? error
 function Model:check_field(field, path)
+    if field.type == nil then
+        return false, path, 'Type is nil'
+    end
     local type_found = false
     for _, v in pairs(FieldType) do
         if field.type == v then
-            found = true
+            type_found = true
             break
         end
     end
@@ -60,12 +66,11 @@ function Model:check_field(field, path)
         return false, path, 'validate is not a function'
     end
     if field.type == FieldType.ARRAY then
-        if field.array == nil then
-            return false, path, 'Missing array definition'
-        end
-        local valid, error_path, error = self:check_field(field.array, path .. '[]')
-        if not valid then
-            return valid, error_path, error
+        if field.array ~= nil then
+            local valid, error_path, error = self:check_field(field.array, path .. '[]')
+            if not valid then
+                return valid, error_path, error
+            end
         end
     else
         if field.array ~= nil then
@@ -73,12 +78,11 @@ function Model:check_field(field, path)
         end
     end
     if field.type == FieldType.OBJECT then
-        if field.object == nil then
-            return false, path, 'Missing array definition'
-        end
-        local valid, error_path, error = self:check_schema(field.object, path)
-        if not valid then
-            return valid, error_path, error
+        if field.object ~= nil then
+            local valid, error_path, error = self:check_schema(field.object, path)
+            if not valid then
+                return valid, error_path, error
+            end
         end
     else
         if field.object ~= nil then
@@ -274,14 +278,12 @@ end
 ---@return string? error_path
 ---@return string? error
 function Model:validate_schema(schema, value, path)
-    local validate_field
-
     for k, field in pairs(schema) do
         elem = value[k]
         if path then
             k = path .. '.' .. k
         end
-        if not validate_field(value, field, k) then
+        if not Model:validate_field(value, field, k) then
             return false
         end
     end
@@ -296,31 +298,6 @@ end
 function Model:validate(value)
     return self:validate_schema(self.schema, value, '')
 end
-
-local a = Model:new({
-    name = {
-        type = FieldType.STRING,
-    },
-    age = {
-        type = FieldType.INTEGER,
-        optional = true,
-    },
-    children = {
-        type = FieldType.ARRAY,
-        array = {
-            type = FieldType.OBJECT,
-            object = {
-                name = {
-                    type = FieldType.STRING,
-                },
-                age = {
-                    type = FieldType.STRING,
-                    optional = true,
-                },
-            },
-        },
-    },
-})
 
 return {
     FieldType = FieldType,
