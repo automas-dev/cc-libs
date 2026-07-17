@@ -132,51 +132,6 @@ local function table_is_array(t)
     return true
 end
 
----Coerce a single value into a type
----@param field_type FieldType
----@param value any
----@return boolean
-local function coerce_type(field_type, value)
-    if field_type == FieldType.BOOL then
-        if type(value) == 'string' then
-            value = string.lower(value)
-            if value == 'true' then
-                return true
-            elseif value == 'false' then
-                return false
-            else
-                error('Cannot coerce value ' .. value .. ' to boolean')
-            end
-        elseif type(value) == 'number' then
-            return value ~= 0
-        else
-            error('Cannot coerce type ' .. type(value) .. ' to boolean')
-        end
-    elseif field_type == FieldType.INTEGER then
-        if type(value) == 'string' then
-            value = tonumber(value)
-            if value == nil then
-                error('Cannot coerce value ' .. value .. ' to integer')
-            end
-        elseif type(value) ~= 'number' then
-            error('Cannot coerce type ' .. type(value) .. ' to integer')
-        end
-        if value % 1 ~= 0 then
-            -- TODO this is starting to be validation logic, update bool and this wip integer to be only coercion if possible. Default return unmodified value.
-        end
-    elseif field_type == FieldType.FLOAT then
-        return type(value) == 'number'
-    elseif field_type == FieldType.STRING then
-        return type(value) == 'string'
-    elseif field_type == FieldType.ARRAY then
-        return type(value) == 'table' and table_is_array(value)
-    elseif field_type == FieldType.OBJECT then
-        return type(value) == 'table' and not table_is_array(value)
-    else
-        error('Unknown field type ' .. field_type)
-    end
-end
-
 ---Validate a single value is of type
 ---@private
 ---@param field_type FieldType
@@ -193,7 +148,7 @@ function Model:validate_type(field_type, value, path)
     elseif field_type == FieldType.INTEGER then
         if type(value) ~= 'number' then
             return false, path, 'Invalid type ' .. type(value) .. ' expected ' .. field_type
-        elseif value % 1 == 0 then
+        elseif value % 1 ~= 0 then
             return false, path, 'Invalid type float expected ' .. field_type
         end
     elseif field_type == FieldType.FLOAT then
@@ -226,10 +181,14 @@ end
 ---@param field Field
 ---@param value any
 ---@param path string
+---@param allow_extra boolean
 ---@return boolean valid
 ---@return string? error_path
 ---@return string? error
-function Model:validate_field(field, value, path)
+function Model:validate_field(field, value, path, allow_extra)
+    if field.optional and value == nil then
+        return true
+    end
     if not field.optional and value == nil then
         return false, path, 'Missing required field'
     end
@@ -238,14 +197,18 @@ function Model:validate_field(field, value, path)
         return valid, error_path, error
     end
     if field.type == FieldType.ARRAY then
-        valid, error_path, error = self:validate_array(field.array, value, path)
-        if not valid then
-            return valid, error_path, error
+        if field.array ~= nil then
+            valid, error_path, error = self:validate_array(field.array, value, path, allow_extra)
+            if not valid then
+                return valid, error_path, error
+            end
         end
     elseif field.type == FieldType.OBJECT then
-        valid, error_path, error = self:validate_schema(field.object, value, path)
-        if not valid then
-            return valid, error_path, error
+        if field.object ~= nil then
+            valid, error_path, error = self:validate_schema(field.object, value, path, allow_extra)
+            if not valid then
+                return valid, error_path, error
+            end
         end
     end
     return true
@@ -256,12 +219,15 @@ end
 ---@param arr_field Field
 ---@param value any
 ---@param path string
+---@param allow_extra boolean
 ---@return boolean valid
 ---@return string? error_path
 ---@return string? error
-function Model:validate_array(arr_field, value, path)
+function Model:validate_array(arr_field, value, path, allow_extra)
+    assert(arr_field ~= nil)
     for i, elem in ipairs(value) do
-        local valid, error_path, error = self:validate_field(arr_field, elem, path .. '[' .. tostring(i) .. ']')
+        local valid, error_path, error =
+            self:validate_field(arr_field, elem, path .. '[' .. tostring(i) .. ']', allow_extra)
         if not valid then
             return valid, error_path, error
         end
@@ -274,17 +240,29 @@ end
 ---@param schema Schema
 ---@param value any
 ---@param path string
+---@param allow_extra boolean
 ---@return boolean valid
 ---@return string? error_path
 ---@return string? error
-function Model:validate_schema(schema, value, path)
+function Model:validate_schema(schema, value, path, allow_extra)
+    if not allow_extra then
+        for k, _ in pairs(value) do
+            if schema[k] == nil then
+                if path ~= nil and path ~= '' then
+                    k = path .. '.' .. k
+                end
+                return false, k, 'Unexpected field'
+            end
+        end
+    end
     for k, field in pairs(schema) do
         elem = value[k]
-        if path then
+        if path ~= nil and path ~= '' then
             k = path .. '.' .. k
         end
-        if not Model:validate_field(value, field, k) then
-            return false
+        local valid, error_type, error = self:validate_field(field, elem, k, allow_extra)
+        if not valid then
+            return valid, error_type, error
         end
     end
     return true
@@ -292,11 +270,15 @@ end
 
 ---Validate value against this model
 ---@param value any
+---@param allow_extra? boolean extra keys are ignored, defaults to true
 ---@return boolean valid
 ---@return string? error
 ---@return string? error_path
-function Model:validate(value)
-    return self:validate_schema(self.schema, value, '')
+function Model:validate(value, allow_extra)
+    if allow_extra == nil then
+        allow_extra = true
+    end
+    return self:validate_schema(self.schema, value, '', allow_extra)
 end
 
 return {
