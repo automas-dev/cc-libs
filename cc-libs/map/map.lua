@@ -99,6 +99,19 @@ end
 ---@param path string to load from
 function Map:load(path)
     log:info('Loading map from', path)
+    local write_path = '.' .. path
+
+    if fs.exists(write_path) then
+        log:warning('Found file at write path', write_path)
+        if fs.exists(path) then
+            fs.delete(write_path)
+            log:info('Removed incomplete write')
+        else
+            fs.delete(path)
+            fs.move(write_path, path)
+            log:info('Recovered map from partial write')
+        end
+    end
 
     local file = assert(io.open(path, 'r'))
     local data = json.decode(file:read('a'))
@@ -111,10 +124,12 @@ end
 ---@param path string file to dump to
 function Map:dump(path)
     log:info('Dumping map to', path)
-
-    local file = assert(io.open(path, 'w'))
+    local write_path = '.' .. path
+    local file = assert(io.open(write_path, 'w'))
     file:write(json.encode(self))
     file:close()
+    fs.delete(path)
+    fs.move(write_path, path)
     log:debug('Finished dumping map to', path)
 end
 
