@@ -15,8 +15,9 @@ local FieldType = {
 ---@field optional boolean?
 ---TODO
 ---@field validate? fun(val: any): boolean
----@field array SchemaField? defines elements of array type
----@field object SchemaObject? defines fields of object type
+---@field value SchemaField? defines elements of array type or object (if `object` is nil)
+---@field key SchemaField? defines keys of object type (if `object` is nil)
+---@field object SchemaObject? defines structure of object type
 
 ---@alias SchemaObject { [string]: SchemaField }
 
@@ -68,27 +69,49 @@ function Schema:check_field(field, path)
         return false, path, 'validate is not a function'
     end
     if field.type == FieldType.ARRAY then
-        if field.array ~= nil then
-            local valid, error_path, error = self:check_field(field.array, path .. '[]')
+        if field.value ~= nil then
+            local valid, error_path, error = self:check_field(field.value, path .. '[]')
             if not valid then
                 return valid, error_path, error
             end
         end
     else
-        if field.array ~= nil then
-            return false, path, 'array is defined for non array type ' .. field.type
+        if field.value ~= nil and field.type ~= FieldType.OBJECT then
+            return false, path, 'value is defined for non array type ' .. field.type
         end
     end
     if field.type == FieldType.OBJECT then
         if field.object ~= nil then
+            if field.key ~= nil or field.value ~= nil then
+                return false, path, 'Object type cannot have key or value fields if object is not nil'
+            end
             local valid, error_path, error = self:check_schema(field.object, path)
             if not valid then
                 return valid, error_path, error
             end
+        else
+            if field.key ~= nil then
+                local valid, error_path, error = self:check_field(field.key, path .. '.<key>')
+                if not valid then
+                    return valid, error_path, error
+                end
+            end
+            if field.value ~= nil then
+                local valid, error_path, error = self:check_field(field.value, path .. '.<value>')
+                if not valid then
+                    return valid, error_path, error
+                end
+            end
         end
     else
         if field.object ~= nil then
-            return false, path, 'array is defined for non array type ' .. field.type
+            return false, path, 'object is defined for non object type ' .. field.type
+        end
+        if field.key ~= nil then
+            return false, path, 'key is defined for non object type ' .. field.type
+        end
+        if field.key ~= nil and field.type ~= FieldType.ARRAY then
+            return false, path, 'key is defined for non object type ' .. field.type
         end
     end
     return true
@@ -199,8 +222,8 @@ function Schema:validate_field(field, value, path, allow_extra)
         return valid, error_path, error
     end
     if field.type == FieldType.ARRAY then
-        if field.array ~= nil then
-            valid, error_path, error = self:validate_array(field.array, value, path, allow_extra)
+        if field.value ~= nil then
+            valid, error_path, error = self:validate_array(field.value, value, path, allow_extra)
             if not valid then
                 return valid, error_path, error
             end
@@ -210,6 +233,14 @@ function Schema:validate_field(field, value, path, allow_extra)
             valid, error_path, error = self:validate_object(field.object, value, path, allow_extra)
             if not valid then
                 return valid, error_path, error
+            end
+        else
+            if field.key ~= nil or field.value ~= nil then
+                valid, error_path, error =
+                    self:validate_object_key_value(field.key, field.value, value, path, allow_extra)
+                if not valid then
+                    return valid, error_path, error
+                end
             end
         end
     end
@@ -232,6 +263,37 @@ function Schema:validate_array(arr_field, value, path, allow_extra)
             self:validate_field(arr_field, elem, path .. '[' .. tostring(i) .. ']', allow_extra)
         if not valid then
             return valid, error_path, error
+        end
+    end
+    return true
+end
+
+---Validate data against a schema
+---@private
+---@param key_type SchemaField?
+---@param value_type SchemaField?
+---@param value any
+---@param path string
+---@param allow_extra boolean
+---@return boolean valid
+---@return string? error_path
+---@return string? error
+function Schema:validate_object_key_value(key_type, value_type, value, path, allow_extra)
+    if type(value) ~= 'table' then
+        return false, path, 'Value is not table'
+    end
+    for k, elem in pairs(value) do
+        if key_type ~= nil then
+            local valid, error_type, error = self:validate_field(key_type, k, path .. '.<key>' .. k, allow_extra)
+            if not valid then
+                return valid, error_type, error
+            end
+        end
+        if value_type ~= nil then
+            local valid, error_type, error = self:validate_field(value_type, elem, path .. '.' .. k, allow_extra)
+            if not valid then
+                return valid, error_type, error
+            end
         end
     end
     return true

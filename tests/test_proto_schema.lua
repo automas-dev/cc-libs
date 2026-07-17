@@ -61,7 +61,7 @@ function test.check_schema_array()
     )
     expect_true(pcall(function()
         Schema:new({
-            a = { type = FieldType.ARRAY, array = { type = FieldType.INTEGER } },
+            a = { type = FieldType.ARRAY, value = { type = FieldType.INTEGER } },
         })
     end))
 end
@@ -70,7 +70,7 @@ function test.check_schema_array_invalid()
     expect_false(pcall(function()
         Schema:new({
             ---@diagnostic disable-next-line: assign-type-mismatch
-            a = { type = FieldType.ARRAY, array = { type = nil } },
+            a = { type = FieldType.ARRAY, value = { type = nil } },
         })
     end))
 end
@@ -79,10 +79,10 @@ function test.check_schema_array_field()
     expect_false(
         pcall(function()
             Schema:new({
-                a = { type = FieldType.INTEGER, array = { type = FieldType.INTEGER } },
+                a = { type = FieldType.INTEGER, value = { type = FieldType.INTEGER } },
             })
         end),
-        'not array has array field'
+        'not array has value field'
     )
 end
 
@@ -124,6 +124,28 @@ function test.check_schema_object_field()
     )
 end
 
+function test.check_schema_key_field()
+    expect_false(
+        pcall(function()
+            Schema:new({
+                a = { type = FieldType.INTEGER, key = { type = FieldType.INTEGER } },
+            })
+        end),
+        'not object has key field'
+    )
+end
+
+function test.check_schema_value_field()
+    expect_false(
+        pcall(function()
+            Schema:new({
+                a = { type = FieldType.INTEGER, value = { type = FieldType.INTEGER } },
+            })
+        end),
+        'not object has value field'
+    )
+end
+
 function test.validate()
     local valid, _, err = Schema:new({
         a = { type = FieldType.BOOL },
@@ -154,7 +176,7 @@ function test.validate()
     expect_true(valid, err)
 
     valid, _, err = Schema:new({
-        a = { type = FieldType.ARRAY, array = { type = FieldType.INTEGER } },
+        a = { type = FieldType.ARRAY, value = { type = FieldType.INTEGER } },
     }):validate({
         a = { 1, 2, 3 },
     })
@@ -165,6 +187,15 @@ function test.validate()
     }):validate({
         a = { g = 'foo' },
     })
+    expect_true(valid, err)
+
+    valid, _, err = Schema
+        :new({
+            a = { type = FieldType.OBJECT, key = { type = FieldType.STRING }, value = { type = FieldType.INTEGER } },
+        })
+        :validate({
+            a = { foo = 1 },
+        })
     expect_true(valid, err)
 end
 
@@ -199,7 +230,7 @@ end
 
 function test.validate_object_fails_array()
     local valid, error_path, err = Schema:new({
-        a = { type = FieldType.ARRAY, array = { type = FieldType.INTEGER } },
+        a = { type = FieldType.ARRAY, value = { type = FieldType.INTEGER } },
     }):validate({
         a = { g = 1 },
     })
@@ -217,6 +248,28 @@ function test.validate_object_fails_array_no_type()
     expect_false(valid)
     expect_eq('a', error_path)
     expect_eq('Invalid type object expected array', err)
+end
+
+function test.validate_object_fails_key_type()
+    local valid, error_path, err = Schema:new({
+        a = { type = FieldType.OBJECT, key = { type = FieldType.INTEGER } },
+    }):validate({
+        a = { g = 1 },
+    })
+    expect_false(valid)
+    expect_eq('a.<key>g', error_path)
+    expect_eq('Invalid type string expected integer', err)
+end
+
+function test.validate_object_fails_value_type()
+    local valid, error_path, err = Schema:new({
+        a = { type = FieldType.OBJECT, value = { type = FieldType.STRING } },
+    }):validate({
+        a = { g = 1 },
+    })
+    expect_false(valid)
+    expect_eq('a.g', error_path)
+    expect_eq('Invalid type number expected string', err)
 end
 
 function test.validate_int_fails_object()
