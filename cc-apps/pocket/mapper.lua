@@ -7,8 +7,8 @@ logging.basic_config {
 }
 local log = logging.get_logger('main')
 
-local ccl_proto = require 'cc-libs.net.proto'
-local ProtocolClient = ccl_proto.ProtocolClient
+local ccl_map = require 'cc-libs.map'
+local MapClient = ccl_map.MapClient
 
 local ccl_location = require 'cc-libs.turtle.location'
 local Location = ccl_location.Location
@@ -20,10 +20,11 @@ local location = Location:new()
 local telem = get_telemetry()
 telem:set_location(location)
 
+---@type MapClient
 local client
 
 local function main()
-    client = ProtocolClient:new('map', 'server')
+    client = MapClient:new('server')
 
     local last = { x = nil, y = nil, z = nil }
     while true do
@@ -38,34 +39,23 @@ local function main()
                 local pos = { x = x, y = y, z = z }
                 last = pos
                 log:debug('Adding node at', pos)
-                -- Add point at head
-                local success, status, response = client:request('add_node', { node = { pos = pos } }, 5)
-                if not success then
-                    log:error('Server responded with error', response)
-                elseif response == nil or type(response) ~= 'table' then
-                    log:warning('Unknown response from map server', response)
-                elseif response.action == 'node added' then
-                    log:info('New node created', response.node.id)
-                elseif response.action == 'node exists' then
-                    log:debug('New already exists', response.node.id)
-                else
-                    log:warning('Unknown response from map server', response)
+                local node, action = client:add_node(pos)
+                if node == nil then
+                    log:error('Failed to create node at', pos)
+                elseif action == 'added' then
+                    log:info('New node created', node.id)
+                elseif action == 'exists' then
+                    log:debug('Node already exists', node.id)
                 end
 
                 -- Add point at feet
-                success, status, response = client:request('add_node', {
-                    node = { pos = { x = x, y = y - 1, z = z } },
-                }, 5)
-                if not success then
-                    log:error('Server responded with error', response)
-                elseif response == nil or type(response) ~= 'table' then
-                    log:warning('Unknown response from map server', response)
-                elseif response.action == 'node added' then
-                    log:debug('New node created for feet', response.node.id)
-                elseif response.action == 'node exists' then
-                    log:debug('New already exists for feet', response.node.id)
-                else
-                    log:warning('Unknown response from map server', response)
+                node, action = client:add_node({ x = x, y = y - 1, z = z })
+                if node == nil then
+                    log:error('Failed to create node at', pos)
+                elseif action == 'node added' then
+                    log:debug('New node created for feet', node.id)
+                elseif action == 'node exists' then
+                    log:debug('Node already exists for feet', node.id)
                 end
             end
         end
@@ -86,18 +76,13 @@ local function mark_waypoint()
                 z = math.floor(z)
                 local pos = { x = x, y = y, z = z }
                 log:info('Creating waypoint', name, 'at', pos)
-                local success, status, response =
-                    client:request('add_waypoint', { waypoint = { name = name, pos = pos } }, 5)
-                if not success then
-                    log:error('Server responded with error', response)
-                elseif response == nil or type(response) ~= 'table' then
-                    log:warning('Unknown response from map server', response)
-                elseif response.action == 'waypoint added' then
-                    log:info('New waypoint created', response.waypoint.id)
-                elseif response.action == 'waypoint replaced' then
-                    log:debug('Replaced exists waypoint', response.waypoint.id)
-                else
-                    log:warning('Unknown response from map server', response)
+                local waypoint, action = client:add_waypoint(name, pos)
+                if waypoint == nil then
+                    log:error('Failed to create waypoint', name, 'at', pos)
+                elseif action == 'added' then
+                    log:info('New waypoint created', waypoint.id)
+                elseif action == 'replaced' then
+                    log:info('Waypoint replaced', waypoint.id)
                 end
             end
         end
