@@ -259,15 +259,15 @@ function test.validate_empty_table_is_array()
         a = {},
     })
     expect_true(valid, err)
+end
 
-    valid, error_path, err = Schema:new({
+function test.validate_empty_table_is_object()
+    local valid, error_path, err = Schema:new({
         a = { type = FieldType.OBJECT },
     }):validate({
         a = {},
     })
-    expect_false(valid, err)
-    expect_eq('a', error_path)
-    expect_eq('Invalid type array expected object', err)
+    expect_true(valid, err)
 end
 
 function test.validate_type_fails()

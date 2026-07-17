@@ -1,3 +1,5 @@
+local table_size = require 'cc-libs.util.table_size'
+
 ---@enum FieldType
 local FieldType = {
     BOOL = 'bool',
@@ -162,13 +164,13 @@ function Schema:validate_type(field_type, value, path)
     elseif field_type == FieldType.ARRAY then
         if type(value) ~= 'table' then
             return false, path, 'Invalid type ' .. type(value) .. ' expected ' .. field_type
-        elseif not table_is_array(value) then
+        elseif table_size(value) > 0 and not table_is_array(value) then
             return false, path, 'Invalid type object expected ' .. field_type
         end
     elseif field_type == FieldType.OBJECT then
         if type(value) ~= 'table' then
             return false, path, 'Invalid type ' .. type(value) .. ' expected ' .. field_type
-        elseif table_is_array(value) then
+        elseif table_size(value) > 0 and table_is_array(value) then
             return false, path, 'Invalid type array expected ' .. field_type
         end
     end
