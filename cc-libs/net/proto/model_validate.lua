@@ -245,6 +245,9 @@ end
 ---@return string? error_path
 ---@return string? error
 function Model:validate_schema(schema, value, path, allow_extra)
+    if type(value) ~= 'table' then
+        return false, path, 'Value is not table'
+    end
     if not allow_extra then
         for k, _ in pairs(value) do
             if schema[k] == nil then
@@ -272,8 +275,8 @@ end
 ---@param value any
 ---@param allow_extra? boolean extra keys are ignored, defaults to true
 ---@return boolean valid
----@return string? error
 ---@return string? error_path
+---@return string? error
 function Model:validate(value, allow_extra)
     if allow_extra == nil then
         allow_extra = true

@@ -292,4 +292,15 @@ function test.validate_extra_fails()
     expect_eq(err, 'Unexpected field')
 end
 
+function test.validate_nil_fails()
+    local m = Model:new({
+        a = { type = FieldType.INTEGER },
+    })
+
+    local valid, error_path, err = m:validate(nil)
+    expect_false(valid)
+    expect_eq('', error_path)
+    expect_eq(err, 'Value is not table')
+end
+
 return test
