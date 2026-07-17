@@ -5,8 +5,6 @@ local open_rednet = proto_util.open_rednet
 
 local proto_model = require 'cc-libs.net.proto.model'
 local Request = proto_model.Request
-local Response = proto_model.Response
-local ResponseStatus = proto_model.ResponseStatus
 local validate_message = proto_model.validate_message
 
 ---@alias Route fun(Request): Response
