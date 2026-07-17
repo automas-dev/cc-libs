@@ -1,4 +1,4 @@
-local model = require 'cc-libs.net.proto.model_validate'
+local model = require 'cc-libs.net.proto.schema'
 local Schema = model.Schema
 local FieldType = model.FieldType
 

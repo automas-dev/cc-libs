@@ -13,9 +13,9 @@ local log = logging.get_logger('main')
 local ccl_proto = require 'cc-libs.net.proto'
 local ProtocolServer = ccl_proto.ProtocolServer
 
-local ccl_model = require 'cc-libs.net.proto.model_validate'
-local FieldType = ccl_model.FieldType
-local Schema = ccl_model.Schema
+local ccl_schema = require 'cc-libs.net.proto.schema'
+local FieldType = ccl_schema.FieldType
+local Schema = ccl_schema.Schema
 
 local server = ProtocolServer:new('mock', 'server')
 
