@@ -13,14 +13,41 @@ local log = logging.get_logger('main')
 local ccl_proto = require 'cc-libs.net.proto'
 local ProtocolServer = ccl_proto.ProtocolServer
 
+local ccl_model = require 'cc-libs.net.proto.model_validate'
+local FieldType = ccl_model.FieldType
+local Model = ccl_model.Model
+
 local server = ProtocolServer:new('mock', 'server')
 
----@param request Request
-server:route('/guess', function(request)
-    return request:ok_response({
-        data = 'yes',
-    })
-end)
+server:route(
+    '/guess',
+    nil,
+    ---@param request Request
+    function(request)
+        return request:ok_response({
+            data = 'yes',
+        })
+    end
+)
+
+local req_model = Model:new({
+    name = { type = FieldType.STRING },
+})
+
+local resp_model = Model:new({
+    data = { type = FieldType.STRING },
+})
+
+server:route(
+    '/guess/who',
+    { request_model = req_model, response_model = resp_model },
+    ---@param request Request
+    function(request)
+        return request:ok_response({
+            data = 'yes',
+        })
+    end
+)
 
 -- Call serve_forever and log an error if raised
 log:catch_errors(server.serve_forever, server)

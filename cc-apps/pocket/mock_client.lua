@@ -20,6 +20,13 @@ local function main()
     else
         log:warning('Got unsuccessful response from server', status, resp)
     end
+
+    success, status, resp = client:request('/guess/who', { name = 'bob' }, 5)
+    if success then
+        log:info('Got success response from server', status, resp)
+    else
+        log:warning('Got unsuccessful response from server', status, resp)
+    end
 end
 
 -- Call main and log an error if raised
