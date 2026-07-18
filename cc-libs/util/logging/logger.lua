@@ -165,7 +165,11 @@ function Logger:catch_errors(fn, ...)
 
     if not success then
         local err = res[2]
-        self:error(err)
+        if string.match(err, 'Terminated') then
+            self:info('Terminated')
+        else
+            self:error(err)
+        end
     end
 
     return table.unpack(res)
@@ -183,8 +187,12 @@ function Logger:wrap_call(fn, ...)
 
     if not success then
         local err = res[2]
-        self:error(err)
-        error(err, 0) -- 0 to re-raise error since we already include the stack trace
+        if string.match(err, 'Terminated') then
+            self:info('Terminated')
+        else
+            self:error(err)
+            error(err, 0) -- 0 to re-raise error since we already include the stack trace
+        end
     end
 
     -- Unpack at 2 to exclude the success bool from xpcall
