@@ -1,22 +1,33 @@
 globals = {
-    "turtle",
-    "fs",
-    "rednet",
-    "peripheral",
-    "term",
-    "textutils",
+    -- cc globals
     "colors",
+    "colours",
+    "commands",
     "disk",
+    "fs",
     "gps",
+    "help",
     "http",
     "io",
     "keys",
     "os",
     "paintutils",
     "parallel",
+    "peripheral",
+    "pocket",
+    "printError",
+    "rednet",
+    "redstone",
+    "rs",
+    "settings",
     "shell",
+    "term",
+    "textutils",
+    "turtle",
     "vector",
     "window",
+    "write",
+    -- Test Harness
     "assert_true",
     "assert_false",
     "assert_eq",
@@ -46,8 +57,8 @@ globals = {
     "sleep",
 }
 ignore = {
-    "111",
-    "131",
+    -- "111", -- setting undefined global
+    "131", -- unused globals
 }
 unused = false
 max_line_length = false
@@ -55,6 +66,7 @@ allow_defined = true
 exclude_files = {
     ".luarocks",
     "install",
-    "stub",
+    -- "stub",
     "logs",
+    "rom.2",
 }
