@@ -19,7 +19,6 @@ local Compass = ccl_location.Compass
 ---@field log_fails boolean create a warning log message if an action fails
 local Motion = {}
 
--- TODO take map for updating
 ---Create a new motion controller
 ---@param location? Location location to be updated with motions
 ---@param motion_fail_cb? function called if an action fails
@@ -54,6 +53,23 @@ end
 ---Do not try to dig if a move fails
 function Motion:disable_dig()
     self.can_dig = false
+end
+
+---Broadcast an event using telemetry for a successful actions
+---@private
+---@param action string human readable name for action
+---@param attempts number how many retries occurred before succeeding
+function Motion:_telem_event_move(action, attempts)
+    local msg = 'Action ' .. action .. ' was successful after ' .. attempts .. ' attempts'
+    if self.telemetry ~= nil then
+        log:trace('Sending telemetry event turtle_move for', action)
+        self.telemetry:send_event('turtle_move', msg, {
+            action = action,
+            attempts = attempts,
+            max_attempts = self.max_tries,
+            subsystem = log.subsystem,
+        })
+    end
 end
 
 ---Broadcast an alert using telemetry for a failed action
@@ -132,6 +148,8 @@ function Motion:_attempt_move(action, action_fn, dig_fn)
     log:trace('Attempt to move took', tries, 'tries and was', (success and 'success' or 'fail'))
     if not success then
         self:_telem_alert_fail(action, tries)
+    else
+        self:_telem_event_move(action, tries)
     end
     return success
 end
