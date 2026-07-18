@@ -152,20 +152,53 @@ function Logger:fatal(...)
     error(table_to_string(...))
 end
 
----Call a function and log any errors that occur.
----@param fn fun() function to run catching and logging errors
----@param ... any to the function
+---Call a function and log any errors that occur. The error is caught and not raised again.
+---@generic T
+---@generic R
+---@param fn fun(T): R function to run catching and logging errors
+---@param ... T arguments passed to `fn`
 ---@return boolean status true if an error was caught
----@return ... result of `fn`
+---@return R ... result of `fn`
 function Logger:catch_errors(fn, ...)
     local res = table.pack(xpcall(fn, debug.traceback, ...))
     local success = res[1]
 
     if not success then
-        self:error(res[2])
+        local err = res[2]
+        self:error(err)
     end
 
     return table.unpack(res)
+end
+
+---Call a function and log any errors that occur. The error is then raised again.
+---@generic T
+---@generic R
+---@param fn fun(T): R function to run catching and logging errors
+---@param ... T to the function
+---@return R ... result of `fn`
+function Logger:wrap_call(fn, ...)
+    local res = table.pack(xpcall(fn, debug.traceback, ...))
+    local success = res[1]
+
+    if not success then
+        local err = res[2]
+        self:error(err)
+        error(err, 0) -- 0 to re-raise error since we already include the stack trace
+    end
+
+    -- Unpack at 2 to exclude the success bool from xpcall
+    return table.unpack(res, 2)
+end
+
+---Return a wrapped function that logs any errors that occur before raising it again.
+---@generic T : function
+---@param fn T function to run catching, logging and re-raising errors
+---@return T wrapped_fn function wrapping `fn`
+function Logger:wrap_fn(fn)
+    return function(...)
+        return self:wrap_call(fn, ...)
+    end
 end
 
 return {
