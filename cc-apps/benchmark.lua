@@ -7,7 +7,6 @@ local logging = require 'cc-libs.util.logging'
 logging.basic_config {
     level = logging.Level.INFO,
     file_level = logging.Level.TRACE,
-    -- TODO update log file path
     filepath = 'logs/benchmark.log',
 }
 local log = logging.get_logger('main')
