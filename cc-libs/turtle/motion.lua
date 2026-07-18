@@ -41,7 +41,6 @@ end
 ---Attach telemetry to broadcast alerts for failed actions
 ---@param telemetry Telemetry
 function Motion:attach_telemetry(telemetry)
-    -- TODO add more telemetry events from Motion
     self.telemetry = telemetry
 end
 
