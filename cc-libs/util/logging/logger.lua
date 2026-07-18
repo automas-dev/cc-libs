@@ -156,14 +156,16 @@ end
 ---@generic T
 ---@generic R
 ---@param fn fun(T): R function to run catching and logging errors
----@param ... T to the function
+---@param ... T arguments passed to `fn`
+---@return boolean status true if an error was caught
 ---@return R ... result of `fn`
 function Logger:catch_errors(fn, ...)
     local res = table.pack(xpcall(fn, debug.traceback, ...))
     local success = res[1]
 
     if not success then
-        self:error(res[2])
+        local err = res[2]
+        self:error(err)
     end
 
     return table.unpack(res)
