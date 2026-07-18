@@ -216,17 +216,47 @@ function test.catch_errors()
         return 'res'
     end
 
-    local status, res = l:catch_errors(good)
-    assert_true(status)
-    assert_eq('res', res)
+    local res = l:catch_errors(good)
+    expect_eq('res', res)
     l.log.reset()
 
     local function bad()
         error('fn error')
     end
 
-    local status2, err = l:catch_errors(bad)
-    assert_false(status2)
+    local status2, err = pcall(l.catch_errors, l, bad)
+    expect_false(status2)
+    assert_ne(nil, err)
+    ---@diagnostic disable-next-line: param-type-mismatch
+    expect_true(string.match(err, 'fn error'))
+    assert_eq(1, l.log.call_count)
+    expect_eq(Level.ERROR, l.log.args[2])
+    expect_true(string.find(l.log.args[3], 'fn error'))
+end
+
+function test.wrap_errors()
+    local l = Logger:new('ss')
+    l.log = Mock()
+
+    local function good()
+        return 'res'
+    end
+
+    local wrap = l:wrap_errors(good)
+    local res = wrap()
+    expect_eq('res', res)
+    l.log.reset()
+
+    local function bad()
+        error('fn error')
+    end
+
+    wrap = l:wrap_errors(bad)
+    local status2, err = pcall(wrap)
+    expect_false(status2)
+    assert_ne(nil, err)
+    ---@diagnostic disable-next-line: param-type-mismatch
+    expect_true(string.match(err, 'fn error'))
     assert_eq(1, l.log.call_count)
     expect_eq(Level.ERROR, l.log.args[2])
     expect_true(string.find(l.log.args[3], 'fn error'))

@@ -153,18 +153,32 @@ function Logger:fatal(...)
 end
 
 ---Call a function and log any errors that occur.
----@param fn fun() function to run catching and logging errors
----@param ... any to the function
----@return boolean status true if an error was caught
----@return any result of `fn`
+---@generic T
+---@generic R
+---@param fn fun(T): R function to run catching and logging errors
+---@param ... T to the function
+---@return R ... result of `fn`
 function Logger:catch_errors(fn, ...)
-    local status, res = xpcall(fn, debug.traceback, ...)
+    local res = table.pack(xpcall(fn, debug.traceback, ...))
+    local success = res[1]
 
-    if not status then
-        self:error(res)
+    if not success then
+        self:error(res[2])
+        error(res[2], 0) -- 0 to re-raise error since we already include the stack trace
     end
 
-    return status, res
+    return table.unpack(res, 2)
+end
+
+---Return a wrapped function that logs any errors that occur before raising it again.
+---TODO test
+---@generic T : function
+---@param fn T function to run catching, logging and re-raising errors
+---@return T wrapped_fn
+function Logger:wrap_errors(fn)
+    return function(...)
+        return self:catch_errors(fn, ...)
+    end
 end
 
 return {
