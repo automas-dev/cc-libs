@@ -216,7 +216,31 @@ function test.catch_errors()
         return 'res'
     end
 
-    local res = l:catch_errors(good)
+    local status, res = l:catch_errors(good)
+    assert_true(status)
+    assert_eq('res', res)
+    l.log.reset()
+
+    local function bad()
+        error('fn error')
+    end
+
+    local status2, err = l:catch_errors(bad)
+    assert_false(status2)
+    assert_eq(1, l.log.call_count)
+    expect_eq(Level.ERROR, l.log.args[2])
+    expect_true(string.find(l.log.args[3], 'fn error'))
+end
+
+function test.wrap_call()
+    local l = Logger:new('ss')
+    l.log = Mock()
+
+    local function good()
+        return 'res'
+    end
+
+    local res = l:wrap_call(good)
     expect_eq('res', res)
     l.log.reset()
 
@@ -224,7 +248,7 @@ function test.catch_errors()
         error('fn error')
     end
 
-    local status2, err = pcall(l.catch_errors, l, bad)
+    local status2, err = pcall(l.wrap_call, l, bad)
     expect_false(status2)
     assert_ne(nil, err)
     ---@diagnostic disable-next-line: param-type-mismatch
@@ -234,7 +258,7 @@ function test.catch_errors()
     expect_true(string.find(l.log.args[3], 'fn error'))
 end
 
-function test.wrap_errors()
+function test.wrap_fn()
     local l = Logger:new('ss')
     l.log = Mock()
 
@@ -242,7 +266,7 @@ function test.wrap_errors()
         return 'res'
     end
 
-    local wrap = l:wrap_errors(good)
+    local wrap = l:wrap_fn(good)
     local res = wrap()
     expect_eq('res', res)
     l.log.reset()
@@ -251,7 +275,7 @@ function test.wrap_errors()
         error('fn error')
     end
 
-    wrap = l:wrap_errors(bad)
+    wrap = l:wrap_fn(bad)
     local status2, err = pcall(wrap)
     expect_false(status2)
     assert_ne(nil, err)
