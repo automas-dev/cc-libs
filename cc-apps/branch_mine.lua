@@ -486,4 +486,4 @@ local function main()
 end
 
 -- log:catch_errors(main)
-log:catch_errors(telem.run_parallel_with, telem, 'main', log.catch_errors, log, main)
+telem:run_parallel_with('main', log:wrap_fn(main))

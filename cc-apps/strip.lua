@@ -254,4 +254,4 @@ local function main()
     return true
 end
 
-telem:run_parallel_with('main', log.catch_errors, log, main)
+telem:run_parallel_with('main', log:wrap_fn(main))

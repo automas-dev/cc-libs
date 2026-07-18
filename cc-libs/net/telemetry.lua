@@ -228,6 +228,9 @@ function TelemetryRunner:add_thread(name, can_kill, fn, ...)
     end
 
     local args = { ... }
+    -- local co = coroutine.create(function()
+    --     return log:wrap_call(fn, table.unpack(args))
+    -- end)
     local co = coroutine.create(function()
         return fn(table.unpack(args))
     end)
@@ -363,6 +366,7 @@ function Telemetry:run_parallel_with(name, fn, ...)
     local args = { ... }
     local result = nil
 
+    -- This function captures the result from the call to fn
     local function run_fn()
         result = fn(table.unpack(args))
     end

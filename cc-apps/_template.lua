@@ -50,4 +50,4 @@ local function main()
 end
 
 -- Call main and log an error if raised
-telem:run_parallel_with('main', log.catch_errors, log, main)
+telem:run_parallel_with('main', log:wrap_fn(main))
