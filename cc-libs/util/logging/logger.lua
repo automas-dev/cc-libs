@@ -171,7 +171,6 @@ function Logger:catch_errors(fn, ...)
 end
 
 ---Return a wrapped function that logs any errors that occur before raising it again.
----TODO test
 ---@generic T : function
 ---@param fn T function to run catching, logging and re-raising errors
 ---@return T wrapped_fn
