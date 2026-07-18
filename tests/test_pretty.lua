@@ -37,6 +37,10 @@ function test.fn()
     expect_true(string.match(pretty.format({ a = function() end }), '{a=function: 0x%x+}'))
 end
 
+function test.mixed_key_types()
+    expect_eq('{1=a,n=1}', pretty.format({ [1] = 'a', n = 1 }))
+end
+
 function test.pprint()
     local p = patch('print')
     pretty.pprint('hello', { a = 1, b = { c = 'three' } })
