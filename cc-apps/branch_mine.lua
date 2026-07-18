@@ -8,19 +8,24 @@ logging.basic_config {
 }
 local log = logging.get_logger('main')
 
-local map_file = 'branch_map.json'
+local json = require 'cc-libs.util.json'
+
+local ccl_vec = require 'cc-libs.util.vec'
+local Vec3 = ccl_vec.Vec3
 
 local ccl_motion = require 'cc-libs.turtle.motion'
 local Motion = ccl_motion.Motion
 
 local ccl_map = require 'cc-libs.map'
 local Map = ccl_map.Map
+local MapClient = ccl_map.MapClient
 
 local action = require 'cc-libs.turtle.actions'
 
 local ccl_location = require 'cc-libs.turtle.location'
 local Location = ccl_location.Location
 local Compass = ccl_location.Compass
+local LocalFrame = ccl_location.LocalFrame
 
 local ccl_nav = require 'cc-libs.turtle.nav'
 local Nav = ccl_nav.Nav
@@ -48,6 +53,13 @@ local skip = tonumber(args.skip)
 
 log:info('Starting with parameters shafts=', shafts, 'length=', length, 'torc=', torch, 'skip=', skip)
 
+---@type MapClient
+local map_client
+---Map has been received from the server, updates should be sent to the server
+local map_loaded = false
+
+local heading_offset = 0
+
 local map = Map:new()
 local location = Location:new(map)
 local tmc = Motion:new(location)
@@ -58,13 +70,16 @@ local telem = get_telemetry()
 telem:set_location(location)
 tmc:attach_telemetry(telem)
 
+---@type LocalFrame
+local local_frame
+
 tmc.motion_fail_cb = function(move_action, reason)
     log:info('Stopping execution for motion error', move_action, reason)
     error('Motion error ' .. move_action .. ' ' .. reason)
 end
 
 local function debug_location()
-    log:debug('Location is x=', location.pos.x, 'z=', location.pos.z, 'heading=', location:heading_name())
+    -- log:debug('Location is x=', location.pos.x, 'z=', location.pos.z, 'heading=', location:heading_name())
 end
 
 local function assert_torch()
@@ -113,6 +128,27 @@ local function inventory_full()
     return turtle.getItemCount(16) > 0
 end
 
+---Wrapper for Map:pos to add a point which also updates the remote map if connected
+---@param pos Vec3|Point
+local function add_map_point(pos)
+    local exists = map:get_pos(pos.x, pos.y, pos.z)
+    if exists == nil then
+        map:pos(pos)
+        if map_loaded then
+            map_client:add_node(pos)
+        end
+    end
+end
+
+---Wrapper for Map:pos to add a point which also updates the remote map if connected
+---@param pos Vec3|Point
+local function add_map_waypoint(name, pos)
+    map:add_waypoint(name, pos)
+    if map_loaded then
+        map_client:add_waypoint(name, pos)
+    end
+end
+
 local function return_to_station()
     log:info('Returning to station')
 
@@ -137,7 +173,7 @@ local function dump()
 
     -- Dump
 
-    tmc:face(Compass.EAST)
+    tmc:face(Compass.EAST, heading_offset)
 
     -- TODO check if target inventory is full and stop
     log:debug('At station, dumping inventory')
@@ -150,7 +186,7 @@ local function dump()
     turtle.select(1)
 
     log:info('Collecting more torches')
-    tmc:face(Compass.WEST)
+    tmc:face(Compass.WEST, heading_offset)
     local success, err = turtle.suck(turtle.getItemSpace())
     log:debug('When sucking torches, got return', tostring(success))
     if not success and not action.find_torch() then
@@ -162,9 +198,37 @@ local function dump()
 
     log:info('Returning to mining')
     nav:follow_path(nav:find_path('resume'))
-    tmc:face(state.heading)
+    tmc:face(state.heading, heading_offset)
 
     return true
+end
+
+local function check_for_ore()
+    local has_block, data
+    has_block, data = turtle.inspect()
+    if has_block then
+        if string.match(data.name, 'ore') then
+            telem:send_event('found_ore', 'Found ore ' .. data.name, { block = data })
+            log:info('Found ore', data.name, 'near', location.pos, 'block =', data)
+            return
+        end
+    end
+    has_block, data = turtle.inspectUp()
+    if has_block then
+        if string.match(data.name, 'ore') then
+            telem:send_event('found_ore', 'Found ore ' .. data.name, { block = data })
+            log:info('Found ore', data.name, 'near', location.pos, 'block =', data)
+            return
+        end
+    end
+    has_block, data = turtle.inspectDown()
+    if has_block then
+        if string.match(data.name, 'ore') then
+            telem:send_event('found_ore', 'Found ore ' .. data.name, { block = data })
+            log:info('Found ore', data.name, 'near', location.pos, 'block =', data)
+            return
+        end
+    end
 end
 
 local function dig_forward(n)
@@ -183,6 +247,8 @@ local function dig_forward(n)
             end
         end
 
+        check_for_ore()
+
         -- Detecting air is twice as fast as digging air (20 hz instead of 14 hz)
         if turtle.detect() then
             turtle.dig()
@@ -200,6 +266,13 @@ local function dig_forward(n)
                 turtle.digDown()
             end
         end
+
+        -- here
+        add_map_point(location.pos)
+        -- above
+        add_map_point(location.pos + Vec3:new(0, 1, 0))
+        -- below
+        add_map_point(location.pos - Vec3:new(0, 1, 0))
     end
 
     return true
@@ -208,12 +281,13 @@ end
 local function place_torch()
     log:debug('Place torch')
     if action.select_slot('minecraft:torch') == nil then
-        log:error('No torches found')
+        log:warning('No torches found')
         if not dump() then
             return false
         end
     end
     turtle.placeDown()
+    log:debug('Placed torch')
     return true
 end
 
@@ -227,9 +301,6 @@ local function mine_shaft()
 
         if i > 0 and i % torch == 0 then -- > 0 to prevent placing in tunnel
             if not place_torch() then
-                return_to_station()
-                tmc:face(Compass.NORTH)
-                tmc:down()
                 return false
             end
         end
@@ -239,12 +310,21 @@ end
 
 local function mine_tunnel()
     log:debug('Mining tunnel at z=', location.pos.z)
-    assert(location.pos.x == 0, 'Mining tunnel but not at x=0')
+    -- local station = nav:get_poi('station')
+    -- if station == nil then
+    --     log:fatal('Missing station poi')
+    --     -- Unreachable, but here so type checker knows that
+    --     return
+    -- end
+    -- TODO make this the correct orientation
+    -- assert(location.pos.x == station.x, 'Mining tunnel but not at x=' .. station.x .. ' got ' .. location.pos.x)
 
-    tmc:face(Compass.NORTH)
+    tmc:face(Compass.NORTH, heading_offset)
 
     for _ = 1, 3 do
-        if location.pos.z % torch == 1 then -- 1 is fix for gps starting a block behind
+        local local_pos = local_frame:to_local(location.pos)
+        log:debug('Transformed global', location.pos, 'to local', local_pos)
+        if local_pos.z % torch == 1 then
             if not place_torch() then
                 return false
             end
@@ -255,9 +335,36 @@ local function mine_tunnel()
         end
     end
 
-    tmc:face(Compass.SOUTH)
+    tmc:face(Compass.SOUTH, heading_offset)
     tmc:forward(3)
     return true
+end
+
+local STATION_FILE = 'station.json'
+
+---@return { heading: Compass?, relative: boolean }
+local function load_station()
+    local file = io.open(STATION_FILE, 'r')
+    if file == nil then
+        log:debug('Station file missing, creating new station state')
+        return {
+            heading = nil,
+            relative = true,
+        }
+    end
+    log:debug('Loading station')
+    local data = json.decode(file:read('a'))
+    file:close()
+    log:trace('Finished loading station file')
+    return data
+end
+
+local function store_station(station)
+    log:debug('Storing station file')
+    local file = assert(io.open(STATION_FILE, 'w'))
+    file:write(json.encode(station))
+    file:close()
+    log:trace('Finished storing station file')
 end
 
 -- TODO
@@ -267,14 +374,18 @@ end
 -- Mine through wall to last shaft for dump
 
 local function main()
-    -- TODO fix link error when using loaded map
-    if not location.has_fix then
-        log:info('GPS location not available, map will not be loaded')
-    elseif fs.exists(map_file) then
-        map:load(map_file)
+    map_client = MapClient:new('server')
+    local remote_map = map_client:get_map()
+    if remote_map ~= nil then
+        log:info('Loading map from server')
+        map:from_table(remote_map)
+        map_loaded = true
     else
-        log:info('Map file does not exist, creating new map')
+        log:warning('Failed to fetch map from server')
+        map_loaded = false
     end
+
+    local station = load_station()
 
     -- assert_torch() -- Disabled because of torch re-stock on dump
     assert_fuel()
@@ -287,11 +398,51 @@ local function main()
 
     -- Move to start
 
-    tmc:up()
-    nav:mark_poi('station')
+    local station_point = map:get_waypoint('station')
+    if station_point ~= nil then
+        log:debug('Found station waypoint', station_point)
+        nav:poi_from_waypoint('station')
+        local path_to_station = nav:find_path('station')
+        log:debug('Path to station has', #path_to_station, 'points')
+        if #path_to_station > 1 then
+            log:info('Moving to station before starting')
+            nav:follow_path(path_to_station)
+            log:debug('Finished move to station')
+        end
+    else
+        tmc:up()
+        add_map_waypoint('station', location.pos)
+        nav:poi_from_waypoint('station')
+    end
+
+    -- Save station heading if not already set
+    if station.heading == nil or station.relative and location.has_fix then
+        if not location.has_heading then
+            log:debug('Attempting to get heading for station')
+            tmc:forward()
+            tmc:backward()
+        end
+        if location.has_fix and location.has_heading then
+            log:debug('Have heading', location.heading, 'for station')
+            station.heading = location.heading
+            station.relative = false
+            store_station(station)
+        else
+            log:debug('No heading for station, using relative NORTH')
+            station.heading = Compass.NORTH
+            station.relative = true
+            store_station(station)
+        end
+    end
+
+    local_frame = LocalFrame:new(location.pos, station.heading)
+
+    -- Move out of station into start of first shaft
     if not dig_forward() then
         return false
     end
+
+    heading_offset = station.heading - 1
 
     -- Skip shafts
 
@@ -307,25 +458,29 @@ local function main()
 
     -- Mine each shaft
 
-    for i = 1, shafts - skip do
+    shafts = shafts - skip
+    for i = 1, shafts do
         log:info('Starting shaft', i + skip)
         debug_location()
 
         if i == 1 then
             log:debug('First shaft, starting at center in tunnel')
 
-            if not mine_tunnel() then
-                break
+            -- Don't mine tunnel after last branch
+            if i ~= shafts then
+                if not mine_tunnel() then
+                    break
+                end
             end
 
             -- Mine right half of shaft
-            tmc:face(Compass.EAST)
+            tmc:face(Compass.EAST, heading_offset)
             if not mine_shaft() then
                 break
             end
 
             -- Mine left half of shaft
-            tmc:face(Compass.WEST)
+            tmc:face(Compass.WEST, heading_offset)
             tmc:forward(length)
             if not mine_shaft() then
                 break
@@ -334,25 +489,28 @@ local function main()
             -- Turn to face next shaft
             if i % 2 == 0 then
                 log:debug('Shaft is even so facing East')
-                tmc:face(Compass.EAST)
+                tmc:face(Compass.EAST, heading_offset)
             else
                 log:debug('Shaft is odd so facing West')
-                tmc:face(Compass.WEST)
+                tmc:face(Compass.WEST, heading_offset)
             end
 
             if not mine_shaft() then
                 break
             end
-            if not mine_tunnel() then
-                break
+            -- Don't mine tunnel after last branch
+            if i ~= shafts then
+                if not mine_tunnel() then
+                    break
+                end
             end
 
             if i % 2 == 0 then
                 log:debug('Shaft is even so facing East')
-                tmc:face(Compass.EAST)
+                tmc:face(Compass.EAST, heading_offset)
             else
                 log:debug('Shaft is odd so facing West')
-                tmc:face(Compass.WEST)
+                tmc:face(Compass.WEST, heading_offset)
             end
 
             if not mine_shaft() then
@@ -360,9 +518,21 @@ local function main()
             end
         end
 
+        -- Mine to start of previous shaft
+        if i - skip > 1 then
+            tmc:face(Compass.SOUTH, heading_offset)
+            if not dig_forward(2) then
+                return false
+            end
+            tmc:face(Compass.NORTH, heading_offset)
+            if not tmc:forward(2) then
+                return false
+            end
+        end
+
         -- Mine to start of next shaft and push
         if i < shafts then
-            tmc:face(Compass.NORTH)
+            tmc:face(Compass.NORTH, heading_offset)
             if not dig_forward(3) then
                 return false
             end
@@ -373,7 +543,7 @@ local function main()
 
     return_to_station()
 
-    tmc:face(Compass.EAST)
+    tmc:face(Compass.EAST, heading_offset)
 
     log:debug('At station, dumping inventory')
     for i = 2, 16 do
@@ -384,13 +554,9 @@ local function main()
     end
     turtle.select(1)
 
-    tmc:face(Compass.NORTH)
+    tmc:face(Compass.NORTH, heading_offset)
     tmc:down()
     debug_location()
-
-    log:info('Writing map to file')
-
-    map:dump(map_file)
 
     log:info('Done!')
 end

@@ -274,8 +274,20 @@ end
 
 ---Turn to face a direction based on heading from self.location
 ---@param compass Compass
-function Motion:face(compass)
+---@param offset? number optional offset when calculating heading
+function Motion:face(compass, offset)
     assert(compass >= 1 and compass <= 4, 'Direction is an unknown value ' .. self.location.heading)
+    if offset ~= nil then
+        assert(offset >= 0 and offset <= 3)
+        log:trace('Altering heading', compass, 'with offset', offset)
+        compass = compass + offset
+        if compass > 4 then
+            compass = compass - 4
+        elseif compass < 1 then
+            compass = compass + 4
+        end
+        log:trace('Modified heading is', compass)
+    end
     log:trace('face', CompassName[compass])
 
     if not self.location.has_heading then

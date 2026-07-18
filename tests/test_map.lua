@@ -53,7 +53,7 @@ end
 function test.map_add_waypoint()
     local map = Map:new()
     local point = map:point(1, 2, 3)
-    map:add_waypoint(point, 'poi')
+    map:add_waypoint('poi', point)
     assert_eq(1, table_size(map.waypoints))
     expect_eq('1,2,3', map.waypoints['poi'])
 end

@@ -74,7 +74,7 @@ end
 
 function test.poi_from_waypoint()
     local nav, map = setup_nav()
-    map:add_waypoint(map:point(1, 2, 3), 'a')
+    map:add_waypoint('a', map:point(1, 2, 3))
     nav:poi_from_waypoint('a')
     local poi = nav.poi['a']
     expect_eq('1,2,3', poi)

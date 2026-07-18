@@ -30,7 +30,7 @@ function MapClient:get_map()
     if success then
         ---@cast resp table
         local map = Map:new()
-        map:from_table(resp.bod.map)
+        map:from_table(resp.map)
         return map
     else
         -- TODO remove this, is it somewhere else?

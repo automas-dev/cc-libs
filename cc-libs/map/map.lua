@@ -144,9 +144,9 @@ function Map:copy()
 end
 
 ---Add a named waypoint, creating point if missing
----@param pos Vec3|Point
 ---@param name string
-function Map:add_waypoint(pos, name)
+---@param pos Vec3|Point
+function Map:add_waypoint(name, pos)
     local point = self:pos(pos)
     self.waypoints[name] = point.id
 end
