@@ -1,5 +1,9 @@
 local M = {}
 
+local function comp(a, b)
+    return tostring(a) < tostring(b)
+end
+
 local function build_str(v, quote_string, comma_space, bracket_space)
     if type(v) == 'table' then
         local keys = {}
@@ -7,7 +11,7 @@ local function build_str(v, quote_string, comma_space, bracket_space)
             keys[#keys + 1] = i
         end
         -- Put keys in same order every time
-        table.sort(keys)
+        table.sort(keys, comp)
         local lines = {}
         for _, k in ipairs(keys) do
             lines[#lines + 1] = tostring(k) .. '=' .. build_str(v[k], quote_string, comma_space, bracket_space)
