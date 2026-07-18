@@ -131,7 +131,7 @@ local function MapServer(hostname, map_path)
 
             local exists = map:get_waypoint(name) ~= nil
             local point = map:pos(pos)
-            map:add_waypoint(point, name)
+            map:add_waypoint(name, point)
             map:dump(map_path)
             log:info('Added waypoint', name)
 

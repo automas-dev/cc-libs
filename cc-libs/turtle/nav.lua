@@ -56,7 +56,7 @@ end
 function Nav:poi_to_waypoint(name)
     local point = self:get_poi(name)
     if point ~= nil then
-        self.map:add_waypoint(point, name)
+        self.map:add_waypoint(name, point)
     end
 end
 
