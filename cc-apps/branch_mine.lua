@@ -10,8 +10,6 @@ local log = logging.get_logger('main')
 
 local map_file = 'branch_map.json'
 
-local json = require 'cc-libs.util.json'
-
 local ccl_motion = require 'cc-libs.turtle.motion'
 local Motion = ccl_motion.Motion
 
@@ -23,7 +21,6 @@ local action = require 'cc-libs.turtle.actions'
 local ccl_location = require 'cc-libs.turtle.location'
 local Location = ccl_location.Location
 local Compass = ccl_location.Compass
-local LocalFrame = ccl_location.LocalFrame
 
 local ccl_nav = require 'cc-libs.turtle.nav'
 local Nav = ccl_nav.Nav
@@ -170,34 +167,6 @@ local function dump()
     return true
 end
 
-local function check_for_ore()
-    local has_block, data
-    has_block, data = turtle.inspect()
-    if has_block then
-        if string.match(data.name, 'ore') then
-            telem:send_event('found_ore', 'Found ore ' .. data.name, { block = data })
-            log:info('Found ore', data.name, 'near', location.pos, 'block =', data)
-            return
-        end
-    end
-    has_block, data = turtle.inspectUp()
-    if has_block then
-        if string.match(data.name, 'ore') then
-            telem:send_event('found_ore', 'Found ore ' .. data.name, { block = data })
-            log:info('Found ore', data.name, 'near', location.pos, 'block =', data)
-            return
-        end
-    end
-    has_block, data = turtle.inspectDown()
-    if has_block then
-        if string.match(data.name, 'ore') then
-            telem:send_event('found_ore', 'Found ore ' .. data.name, { block = data })
-            log:info('Found ore', data.name, 'near', location.pos, 'block =', data)
-            return
-        end
-    end
-end
-
 local function dig_forward(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
@@ -213,8 +182,6 @@ local function dig_forward(n)
                 return false
             end
         end
-
-        check_for_ore()
 
         -- Detecting air is twice as fast as digging air (20 hz instead of 14 hz)
         if turtle.detect() then
@@ -260,6 +227,9 @@ local function mine_shaft()
 
         if i > 0 and i % torch == 0 then -- > 0 to prevent placing in tunnel
             if not place_torch() then
+                return_to_station()
+                tmc:face(Compass.NORTH)
+                tmc:down()
                 return false
             end
         end
@@ -269,14 +239,7 @@ end
 
 local function mine_tunnel()
     log:debug('Mining tunnel at z=', location.pos.z)
-    local station = nav:get_poi('station')
-    if station == nil then
-        log:fatal('Missing station poi')
-        -- Unreachable, but here so type checker knows that
-        return
-    end
-    -- TODO make this the correct orientation
-    -- assert(location.pos.x == station.x, 'Mining tunnel but not at x=' .. station.x .. ' got ' .. location.pos.x)
+    assert(location.pos.x == 0, 'Mining tunnel but not at x=0')
 
     tmc:face(Compass.NORTH)
 
@@ -297,32 +260,6 @@ local function mine_tunnel()
     return true
 end
 
-local STATION_FILE = 'station.json'
-
----@return { heading: Compass?, relative: boolean }
-local function load_station()
-    local file = io.open(STATION_FILE, 'r')
-    if file == nil then
-        return {
-            heading = nil,
-            relative = true,
-        }
-    end
-    log:debug('Loading station')
-    local data = json.decode(file:read('a'))
-    file:close()
-    log:trace('Finished loading station file')
-    return data
-end
-
-local function store_station(station)
-    log:debug('Storing station file')
-    local file = assert(io.open(STATION_FILE, 'w'))
-    file:write(json.encode(station))
-    file:close()
-    log:trace('Finished storing station file')
-end
-
 -- TODO
 -- Smart check for inventory full
 -- Don't mine fortune ores (eg. diamond)
@@ -339,8 +276,6 @@ local function main()
         log:info('Map file does not exist, creating new map')
     end
 
-    local station = load_station()
-
     -- assert_torch() -- Disabled because of torch re-stock on dump
     assert_fuel()
     estimate_time()
@@ -354,25 +289,6 @@ local function main()
 
     tmc:up()
     nav:mark_poi('station')
-    if map:get_waypoint('station') == nil then
-        nav:poi_from_waypoint('station')
-    end
-    if station.heading == nil or station.relative and location.has_fix then
-        if not location.has_heading then
-            log:debug('Attempting to get heading for station')
-            tmc:forward()
-            tmc:backward()
-        end
-        if location.has_fix and location.has_heading then
-            log:debug('Have heading', location.heading, 'for station')
-            station.heading = location.heading
-            station.relative = false
-        else
-            log:debug('No heading for station, using relative NORTH')
-            station.heading = Compass.NORTH
-            station.relative = true
-        end
-    end
     if not dig_forward() then
         return false
     end
@@ -475,12 +391,6 @@ local function main()
     log:info('Writing map to file')
 
     map:dump(map_file)
-
-    store_station(station)
-
-    if location.has_fix then
-        map:dump(map_file)
-    end
 
     log:info('Done!')
 end
