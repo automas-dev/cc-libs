@@ -8,7 +8,6 @@ logging.basic_config {
 }
 local log = logging.get_logger('main')
 
-local FORWARD_MAX_TRIES = 10
 local map_file = 'branch_map.json'
 
 local ccl_motion = require 'cc-libs.turtle.motion'
@@ -16,6 +15,8 @@ local Motion = ccl_motion.Motion
 
 local ccl_map = require 'cc-libs.map'
 local Map = ccl_map.Map
+
+local action = require 'cc-libs.turtle.actions'
 
 local ccl_location = require 'cc-libs.turtle.location'
 local Location = ccl_location.Location
@@ -47,18 +48,20 @@ local skip = tonumber(args.skip)
 
 log:info('Starting with parameters shafts=', shafts, 'length=', length, 'torc=', torch, 'skip=', skip)
 
--- TODO fix link error when using loaded map
 local map = Map:new()
-if fs.exists(map_file) then
-    log:warning('LOAD MAP IS DISABLED')
-    -- map:load(map_file)
-end
 local location = Location:new(map)
 local tmc = Motion:new(location)
+tmc:enable_dig()
 local nav = Nav:new(map, tmc)
 
 local telem = get_telemetry()
 telem:set_location(location)
+tmc:attach_telemetry(telem)
+
+tmc.motion_fail_cb = function(move_action, reason)
+    log:info('Stopping execution for motion error', move_action, reason)
+    error('Motion error ' .. move_action .. ' ' .. reason)
+end
 
 local function debug_location()
     log:debug('Location is x=', location.pos.x, 'z=', location.pos.z, 'heading=', location:heading_name())
@@ -95,6 +98,17 @@ local function assert_fuel()
     end
 end
 
+local function estimate_time()
+    local shafts_per_dump = 2
+    local total_shafts = shafts - skip
+    local total_distance = shafts * 6 + total_shafts * length * 2 + total_shafts * length * 2 / shafts_per_dump
+    local action_count = 4
+    local action_time = 0.4 -- s/action
+    local total_s = action_count * action_time * total_distance
+    local total_m = total_s / 60
+    log:info('This will take', total_s, 'seconds =', total_m, 'minutes')
+end
+
 local function inventory_full()
     return turtle.getItemCount(16) > 0
 end
@@ -104,7 +118,11 @@ local function return_to_station()
 
     debug_location()
     nav:mark_poi('resume')
-    nav:follow_path(nav:find_path('resume', 'station'))
+    if nav:get_poi('resume').id ~= nav:get_poi('station').id then
+        nav:follow_path(nav:find_path('station'))
+    end
+    debug_location()
+    log:debug('Finished returning to station')
 end
 
 local function dump()
@@ -121,6 +139,7 @@ local function dump()
 
     tmc:face(Compass.EAST)
 
+    -- TODO check if target inventory is full and stop
     log:debug('At station, dumping inventory')
     for i = 2, 16 do
         turtle.select(i)
@@ -134,37 +153,18 @@ local function dump()
     tmc:face(Compass.WEST)
     local success, err = turtle.suck(turtle.getItemSpace())
     log:debug('When sucking torches, got return', tostring(success))
-    if not success then
-        log:fatal('Could not pull torches from inventory:', err)
+    if not success and not action.find_torch() then
+        log:error('Out of torches and could not pull torches from inventory:', err)
+        return false
     end
 
     -- Resume
 
     log:info('Returning to mining')
-    nav:follow_path(nav:find_path('station', 'resume'))
+    nav:follow_path(nav:find_path('resume'))
     tmc:face(state.heading)
-end
 
-local function try_forward(n)
-    n = n or 1
-    assert(n >= 0, 'n must be positive')
-
-    for _ = 1, n do
-        local did_move = false
-        for _ = 1, FORWARD_MAX_TRIES do
-            if tmc:forward() then
-                did_move = true
-                break
-            else
-                log:debug('Could not move forward, trying to dig')
-                turtle.dig()
-            end
-        end
-
-        if not did_move then
-            log:fatal('Failed to move forward after', FORWARD_MAX_TRIES, 'attempts')
-        end
-    end
+    return true
 end
 
 local function dig_forward(n)
@@ -173,16 +173,26 @@ local function dig_forward(n)
 
     for _ = 1, n do
         if turtle.getFuelLevel() == 0 then
-            log:fatal('Ran out of fuel!')
+            log:error('Ran out of fuel!')
+            return false
         end
 
         if inventory_full() then
-            dump()
+            if not dump() then
+                return false
+            end
         end
 
-        turtle.dig()
-        try_forward()
-        turtle.digUp()
+        -- Detecting air is twice as fast as digging air (20 hz instead of 14 hz)
+        if turtle.detect() then
+            turtle.dig()
+        end
+
+        tmc:forward()
+
+        if turtle.detectUp() then
+            turtle.digUp()
+        end
 
         local has_block, data = turtle.inspectDown()
         if has_block then
@@ -191,23 +201,18 @@ local function dig_forward(n)
             end
         end
     end
+
+    return true
 end
 
 local function place_torch()
     log:debug('Place torch')
-    local data = turtle.getItemDetail(1)
-    if not data then
-        log:error('No torches in 1st slot')
-        return false
+    if action.select_slot('minecraft:torch') == nil then
+        log:error('No torches found')
+        if not dump() then
+            return false
+        end
     end
-    if data.name ~= 'minecraft:torch' then
-        log:error('Item in slot 1 is not torch')
-        return_to_station()
-        tmc:face(Compass.NORTH)
-        tmc:down()
-        return false
-    end
-    turtle.select(1)
     turtle.placeDown()
     return true
 end
@@ -216,7 +221,9 @@ local function mine_shaft()
     log:debug('Mining shaft at z=', location.pos.z, 'heading=', location:heading_name())
 
     for i = 1, length do
-        dig_forward()
+        if not dig_forward() then
+            return false
+        end
 
         if i > 0 and i % torch == 0 then -- > 0 to prevent placing in tunnel
             if not place_torch() then
@@ -239,31 +246,39 @@ local function mine_tunnel()
     for _ = 1, 3 do
         if location.pos.z % torch == 1 then -- 1 is fix for gps starting a block behind
             if not place_torch() then
-                return_to_station()
-                tmc:face(Compass.NORTH)
-                tmc:down()
                 return false
             end
         end
 
-        dig_forward()
+        if not dig_forward() then
+            return false
+        end
     end
 
     tmc:face(Compass.SOUTH)
-    try_forward(3)
+    tmc:forward(3)
     return true
 end
 
 -- TODO
 -- Smart check for inventory full
--- Check for fail to move
 -- Don't mine fortune ores (eg. diamond)
 -- Pickup fuel
 -- Mine through wall to last shaft for dump
 
 local function main()
+    -- TODO fix link error when using loaded map
+    if not location.has_fix then
+        log:info('GPS location not available, map will not be loaded')
+    elseif fs.exists(map_file) then
+        map:load(map_file)
+    else
+        log:info('Map file does not exist, creating new map')
+    end
+
     -- assert_torch() -- Disabled because of torch re-stock on dump
     assert_fuel()
+    estimate_time()
 
     -- Use relative heading for navigation if gps isn't available for heading
     if not location.has_fix then
@@ -274,7 +289,9 @@ local function main()
 
     tmc:up()
     nav:mark_poi('station')
-    dig_forward()
+    if not dig_forward() then
+        return false
+    end
 
     -- Skip shafts
 
@@ -282,7 +299,9 @@ local function main()
         log:info('Skipping', skip, 'shafts')
 
         for _ = 1, skip do
-            dig_forward(3)
+            if not dig_forward(3) then
+                return false
+            end
         end
     end
 
@@ -296,18 +315,20 @@ local function main()
             log:debug('First shaft, starting at center in tunnel')
 
             if not mine_tunnel() then
-                return
+                break
             end
 
             -- Mine right half of shaft
             tmc:face(Compass.EAST)
-            mine_shaft()
+            if not mine_shaft() then
+                break
+            end
 
             -- Mine left half of shaft
             tmc:face(Compass.WEST)
-            try_forward(length)
+            tmc:forward(length)
             if not mine_shaft() then
-                return
+                break
             end
         else
             -- Turn to face next shaft
@@ -320,10 +341,10 @@ local function main()
             end
 
             if not mine_shaft() then
-                return
+                break
             end
             if not mine_tunnel() then
-                return
+                break
             end
 
             if i % 2 == 0 then
@@ -335,14 +356,16 @@ local function main()
             end
 
             if not mine_shaft() then
-                return
+                break
             end
         end
 
         -- Mine to start of next shaft and push
         if i < shafts then
             tmc:face(Compass.NORTH)
-            dig_forward(3)
+            if not dig_forward(3) then
+                return false
+            end
         end
     end
 
@@ -372,4 +395,5 @@ local function main()
     log:info('Done!')
 end
 
-telem:run_parallel_with(log.catch_errors, log, main)
+-- log:catch_errors(main)
+telem:run_parallel_with('main', log:wrap_fn(main))

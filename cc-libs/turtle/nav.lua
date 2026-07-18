@@ -32,20 +32,32 @@ end
 ---Add a point of interest using motion location if point is nil
 ---@param name string name of the point of interest
 ---@param point? Point point or nil to use motion location
----@return PointId? previous point id of `name`
 function Nav:mark_poi(name, point)
     if point == nil then
         point = self.map:pos(self.motion.location.pos)
     end
-    local previous = self.poi[name]
     self.poi[name] = point.id
     log:info('Mark poi', name, point.id)
-    return previous
 end
 
 ---Mark the current location as `resume` poi using motion location
 function Nav:mark_resume()
     self:mark_poi('resume')
+end
+
+---Add a point of interest from a map waypoint
+---@param name string name of the waypoint
+function Nav:poi_from_waypoint(name)
+    self:mark_poi(name, self.map:get_waypoint(name))
+end
+
+---Copy a point of interest to the map as a waypoint
+---@param name string name of the point of interest
+function Nav:poi_to_waypoint(name)
+    local point = self:get_poi(name)
+    if point ~= nil then
+        self.map:add_waypoint(point, name)
+    end
 end
 
 ---Get the map `Point` for a point of interest
@@ -69,12 +81,10 @@ function Nav:clear_poi(name)
 end
 
 ---Find a path from start to goal
----@param start_poi_name string
 ---@param goal_poi_name string
 ---@return Point[] path from start to goal
-function Nav:find_path(start_poi_name, goal_poi_name)
-    local start = self:get_poi(start_poi_name)
-    assert(start ~= nil, 'Missing start poi ' .. start_poi_name)
+function Nav:find_path(goal_poi_name)
+    local start = self.map:pos(self.motion.location.pos)
 
     local goal = self:get_poi(goal_poi_name)
     assert(goal ~= nil, 'Missing goal poi ' .. goal_poi_name)
@@ -88,12 +98,13 @@ end
 ---@param path Point[]
 function Nav:follow_path(path)
     assert(#path > 1, 'Not enough points in path')
-    assert(path[1]:to_vec3() == self.motion.location.pos, 'Path does not start at current location')
+    local pos = self.motion.location.pos
+    assert(path[1].x == pos.x and path[1].y == pos.y and path[1].z == pos.z, 'Path does not start at current location')
 
-    local f = fs.open('path.json', 'w')
+    local f = io.open('path.json', 'w')
     if f ~= nil then
-        f.write(json.encode(path))
-        f.close()
+        f:write(json.encode(path))
+        f:close()
     end
 
     local actions = {}
@@ -145,10 +156,10 @@ function Nav:follow_path(path)
 
     log:debug('Path of length', #path, 'results in', #actions, 'actions')
 
-    f = fs.open('motion_actions.json', 'w')
+    f = io.open('motion_actions.json', 'w')
     if f ~= nil then
-        f.write(json.encode(actions))
-        f.close()
+        f:write(json.encode(actions))
+        f:close()
     end
 
     for i, step in ipairs(actions) do

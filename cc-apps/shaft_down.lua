@@ -88,4 +88,4 @@ local function main()
     log:info('Done!')
 end
 
-telem:run_parallel_with(log.catch_errors, log, main)
+telem:run_parallel_with('main', log:wrap_fn(main))

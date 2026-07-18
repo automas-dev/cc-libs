@@ -6,6 +6,7 @@ local Compass = ccl_location.Compass
 local CompassName = ccl_location.CompassName
 local Action = ccl_location.Action
 local Location = ccl_location.Location
+local LocalFrame = ccl_location.LocalFrame
 
 local ccl_vec = require 'cc-libs.util.vec'
 local Vec3 = ccl_vec.Vec3
@@ -56,7 +57,8 @@ end
 function test.new_with_map()
     local mock_map = Mock()
     local loc = Location:new(mock_map)
-    expect_eq(mock_map, loc.map)
+    assert_eq(1, #loc.maps)
+    expect_eq(mock_map, loc.maps[1])
 end
 
 function test.new_with_gps()
@@ -340,11 +342,11 @@ function test.update_map()
     local mock_map = Mock()
     local loc = Location:new(mock_map)
     loc:update(Action.FORWARD)
-    assert_eq(1, mock_map.add.call_count)
-    assert_eq(3, #mock_map.add.args)
-    expect_eq(mock_map, mock_map.add.args[1])
-    expect_eq(Vec3:new(0, 0, 0), mock_map.add.args[2])
-    expect_eq(Vec3:new(0, 0, -1), mock_map.add.args[3])
+    assert_eq(1, mock_map.link.call_count)
+    assert_eq(3, #mock_map.link.args)
+    expect_eq(mock_map, mock_map.link.args[1])
+    expect_eq(Vec3:new(0, 0, 0), mock_map.link.args[2])
+    expect_eq(Vec3:new(0, 0, -1), mock_map.link.args[3])
 end
 
 return test

@@ -10,7 +10,6 @@ local ccl_motion = require 'cc-libs.turtle.motion'
 local Motion = ccl_motion.Motion
 
 local ccl_map = require 'cc-libs.map'
-local Point = ccl_map.Point
 local Map = ccl_map.Map
 
 local ccl_vec = require 'cc-libs.util.vec'
@@ -60,8 +59,8 @@ function test.nav_new()
 end
 
 function test.mark_poi()
-    local nav = setup_nav()
-    local point = Point:new(1, 2, 3)
+    local nav, map = setup_nav()
+    local point = map:point(1, 2, 3)
     nav:mark_poi('a', point)
     expect_eq(point.id, nav.poi['a'])
 end
@@ -73,9 +72,29 @@ function test.mark_poi_here()
     expect_eq('1,2,3', poi)
 end
 
+function test.poi_from_waypoint()
+    local nav, map = setup_nav()
+    map:add_waypoint(map:point(1, 2, 3), 'a')
+    nav:poi_from_waypoint('a')
+    local poi = nav.poi['a']
+    expect_eq('1,2,3', poi)
+end
+
+function test.poi_to_waypoint()
+    local nav, map = setup_nav(Vec3:new(4, 4, 4))
+    local point = map:point(1, 2, 3)
+    nav:mark_poi('a', point)
+    nav:poi_to_waypoint('a')
+    assert_eq(1, table_size(map.waypoints))
+    local waypoint = map:get_waypoint('a')
+    assert_ne(nil, waypoint)
+    ---@cast waypoint Point
+    expect_eq('1,2,3', waypoint.id)
+end
+
 function test.clear_poi()
-    local nav = setup_nav()
-    local point = Point:new(1, 2, 3)
+    local nav, map = setup_nav()
+    local point = map:point(1, 2, 3)
     nav:mark_poi('a', point)
     expect_eq(point.id, nav.poi['a'])
     nav:clear_poi('a')
@@ -102,13 +121,13 @@ function test.find_path()
     local p1 = map:point(0, 0, 0)
     local p2 = map:point(1, 0, 0)
     local p3 = map:point(1, 1, 0)
-    map:add(p1, p2)
-    map:add(p2, p3)
+    map:link(p1, p2)
+    map:link(p2, p3)
 
     nav:mark_poi('start', p1)
     nav:mark_poi('goal', p3)
 
-    local path = nav:find_path('start', 'goal')
+    local path = nav:find_path('goal')
     assert_ne(nil, path)
     expect_eq(3, #path)
     -- Not part of test, only here for type check on next lines

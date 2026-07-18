@@ -36,6 +36,8 @@ function ConsoleStream:send(message, record)
             term.setTextColor(colors.yellow)
         elseif record.level == _level.Level.DEBUG then
             term.setTextColor(colors.cyan)
+        elseif record.level == _level.Level.TRACE then
+            term.setTextColor(colors.lime)
         else
             term.setTextColor(colors.white)
         end
@@ -46,7 +48,7 @@ end
 
 ---@class FileStream : Stream
 ---@field filename string
----@field file? file*|ccTweaked.fs.Handle
+---@field file? ccTweaked.fs.Handle
 local FileStream = {}
 
 ---Create a new FileStream instance
