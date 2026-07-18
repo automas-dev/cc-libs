@@ -70,6 +70,9 @@ local telem = get_telemetry()
 telem:set_location(location)
 tmc:attach_telemetry(telem)
 
+---@type LocalFrame
+local local_frame
+
 tmc.motion_fail_cb = function(move_action, reason)
     log:info('Stopping execution for motion error', move_action, reason)
     error('Motion error ' .. move_action .. ' ' .. reason)
@@ -278,12 +281,13 @@ end
 local function place_torch()
     log:debug('Place torch')
     if action.select_slot('minecraft:torch') == nil then
-        log:error('No torches found')
+        log:warning('No torches found')
         if not dump() then
             return false
         end
     end
     turtle.placeDown()
+    log:debug('Placed torch')
     return true
 end
 
@@ -318,8 +322,9 @@ local function mine_tunnel()
     tmc:face(Compass.NORTH, heading_offset)
 
     for _ = 1, 3 do
-        -- TODO handle gps location
-        if location.pos.z % torch == 1 then -- 1 is fix for gps starting a block behind
+        local local_pos = local_frame:to_local(location.pos)
+        log:debug('Transformed global', location.pos, 'to local', local_pos)
+        if local_pos.z % torch == 1 then
             if not place_torch() then
                 return false
             end
@@ -409,6 +414,8 @@ local function main()
         add_map_waypoint('station', location.pos)
         nav:poi_from_waypoint('station')
     end
+
+    -- Save station heading if not already set
     if station.heading == nil or station.relative and location.has_fix then
         if not location.has_heading then
             log:debug('Attempting to get heading for station')
@@ -427,6 +434,10 @@ local function main()
             store_station(station)
         end
     end
+
+    local_frame = LocalFrame:new(location.pos, station.heading)
+
+    -- Move out of station into start of first shaft
     if not dig_forward() then
         return false
     end
