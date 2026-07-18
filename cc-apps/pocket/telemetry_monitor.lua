@@ -27,31 +27,42 @@ local id_filter = args.id
 local host_filter = args.host
 local type_filter = args.types or 'EAS'
 
+log:info('Starting with args', args)
+
 local json = require 'cc-libs.util.json'
 
 local ccl_telemetry = require 'cc-libs.net.telemetry'
 local TELEMETRY_PROTOCOL = ccl_telemetry.TELEMETRY_PROTOCOL
 local PayloadType = ccl_telemetry.PayloadType
 
-peripheral.find('modem', rednet.open)
+local ccl_proto_util = require 'cc-libs.net.proto.util'
 
-while true do
-    local id, message = rednet.receive(TELEMETRY_PROTOCOL)
-    local success, data = pcall(json.decode, message)
-    if not success then
-        print('Failed to decode message from ' .. id)
-    else
-        local host = data['host_id'] .. ':' .. data['host_name']
-        local match_id = id_filter == nil or tostring(data['host_id']) ~= id_filter
-        local match_host = host_filter == nil or data['host_name'] ~= host_filter
-        if match_id and match_host then
-            if data._telem_type == PayloadType.EVENT and type_filter:match('E') then
-                print('[' .. host .. '] E', data.event.type, data.event.message, json.encode(data.event.data))
-            elseif data._telem_type == PayloadType.ALERT and type_filter:match('A') then
-                print('[' .. host .. '] A', data.alert.type, data.alert.message, json.encode(data.alert.data))
-                -- elseif data._telem_type == PayloadType.STATE  and type_filter:match('S') then
-                --     print('[' .. host .. '] S', json.encode(data.state))
+local function main()
+    ccl_proto_util.open_rednet()
+
+    while true do
+        local id, message = rednet.receive(TELEMETRY_PROTOCOL)
+        local success, data = pcall(json.decode, message)
+        if not success then
+            log:warning('Failed to decode message from ' .. id)
+        else
+            local host = data['host_id'] .. ':' .. data['host_name']
+            local match_id = id_filter == nil or tostring(data['host_id']) == id_filter
+            local match_host = host_filter == nil or data['host_name'] == host_filter
+            if match_id and match_host then
+                if id_filter == nil and host_filter == nil then
+                    write('[' .. host .. '] ')
+                end
+                if data._telem_type == PayloadType.EVENT and type_filter:match('E') then
+                    print('E', data.event.type, data.event.message, json.encode(data.event.data))
+                elseif data._telem_type == PayloadType.ALERT and type_filter:match('A') then
+                    print('A', data.alert.type, data.alert.message, json.encode(data.alert.data))
+                    -- elseif data._telem_type == PayloadType.STATE  and type_filter:match('S') then
+                    --     print('[' .. host .. '] S', json.encode(data.state))
+                end
             end
         end
     end
 end
+
+log:catch_errors(main)
