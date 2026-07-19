@@ -28,14 +28,64 @@ local KVItemType = {
 ---@field history KVItem[]
 
 ---@type SchemaField
-local ValueUnionField = {
+local NumberValueField = {
     type = FieldType.UNION,
     types = {
-        { type = FieldType.STRING },
         { type = FieldType.INTEGER },
         { type = FieldType.FLOAT },
     },
 }
+
+---@type SchemaField
+local OptionalNumberValueField = table_copy(NumberValueField)
+OptionalNumberValueField.optional = true
+
+---@type SchemaField
+local ValueField = {
+    type = FieldType.UNION,
+    types = {
+        { type = FieldType.INTEGER },
+        { type = FieldType.FLOAT },
+        { type = FieldType.STRING },
+    },
+}
+
+---@type SchemaField
+local CreateEntryField = {
+    type = FieldType.OBJECT,
+    object = {
+        key = { type = FieldType.STRING },
+        value = ValueField,
+        value_type = { type = FieldType.STRING },
+        set_by_host = { type = FieldType.STRING },
+        set_by_id = { type = FieldType.INTEGER },
+    },
+}
+
+---@type SchemaField
+local EntryField = table_copy(CreateEntryField)
+EntryField.object['last_update'] = { type = FieldType.STRING }
+
+---@type SchemaField
+local OptionalEntryField = table_copy(EntryField)
+OptionalEntryField.optional = true
+
+---@type SchemaField
+local CreateNumberEntryField = {
+    type = FieldType.OBJECT,
+    object = {
+        key = { type = FieldType.STRING },
+        value = NumberValueField,
+        value_default = OptionalNumberValueField,
+        value_type = { type = FieldType.STRING },
+        set_by_host = { type = FieldType.STRING },
+        set_by_id = { type = FieldType.INTEGER },
+    },
+}
+
+---@type SchemaField
+local NumberEntryField = table_copy(CreateNumberEntryField)
+NumberEntryField.object['last_update'] = { type = FieldType.STRING }
 
 ---Create a new ProtocolServer for a map
 ---@param hostname string
@@ -190,16 +240,7 @@ local function KVServer(hostname, kv_store_dir)
         'set',
         {
             request_model = Schema:new({
-                entry = {
-                    type = FieldType.OBJECT,
-                    object = {
-                        key = { type = FieldType.STRING },
-                        value = ValueUnionField,
-                        value_type = { type = FieldType.STRING },
-                        set_by_host = { type = FieldType.STRING },
-                        set_by_id = { type = FieldType.INTEGER },
-                    },
-                },
+                entry = CreateEntryField,
             }),
         },
         ---@param request Request
@@ -225,49 +266,10 @@ local function KVServer(hostname, kv_store_dir)
         'increment',
         {
             request_model = Schema:new({
-                entry = {
-                    type = FieldType.OBJECT,
-                    object = {
-                        key = { type = FieldType.STRING },
-                        value = {
-                            type = FieldType.UNION,
-                            types = {
-                                { type = FieldType.INTEGER },
-                                { type = FieldType.FLOAT },
-                            },
-                        },
-                        value_type = { type = FieldType.STRING },
-                        value_default = {
-                            type = FieldType.UNION,
-                            optional = true,
-                            types = {
-                                { type = FieldType.INTEGER },
-                                { type = FieldType.FLOAT },
-                            },
-                        },
-                        set_by_host = { type = FieldType.STRING },
-                        set_by_id = { type = FieldType.INTEGER },
-                    },
-                },
+                entry = CreateNumberEntryField,
             }),
             response_model = Schema:new({
-                entry = {
-                    type = FieldType.OBJECT,
-                    object = {
-                        key = { type = FieldType.STRING },
-                        value = {
-                            type = FieldType.UNION,
-                            types = {
-                                { type = FieldType.INTEGER },
-                                { type = FieldType.FLOAT },
-                            },
-                        },
-                        value_type = { type = FieldType.STRING },
-                        set_by_host = { type = FieldType.STRING },
-                        set_by_id = { type = FieldType.INTEGER },
-                        last_update = { type = FieldType.STRING },
-                    },
-                },
+                entry = NumberEntryField,
             }),
         },
         ---@param request Request
@@ -298,18 +300,7 @@ local function KVServer(hostname, kv_store_dir)
             }),
             response_model = Schema:new({
                 found = { type = FieldType.BOOL },
-                entry = {
-                    type = FieldType.OBJECT,
-                    optional = true,
-                    object = {
-                        key = { type = FieldType.STRING },
-                        value = ValueUnionField,
-                        value_type = { type = FieldType.STRING },
-                        set_by_host = { type = FieldType.STRING },
-                        set_by_id = { type = FieldType.INTEGER },
-                        last_update = { type = FieldType.STRING },
-                    },
-                },
+                entry = OptionalEntryField,
             }),
         },
         ---@param request Request
@@ -344,32 +335,11 @@ local function KVServer(hostname, kv_store_dir)
             }),
             response_model = Schema:new({
                 found = { type = FieldType.BOOL },
-                entry = {
-                    type = FieldType.OBJECT,
-                    optional = true,
-                    object = {
-                        key = { type = FieldType.STRING },
-                        value = ValueUnionField,
-                        value_type = { type = FieldType.STRING },
-                        set_by_host = { type = FieldType.STRING },
-                        set_by_id = { type = FieldType.INTEGER },
-                        last_update = { type = FieldType.STRING },
-                    },
-                },
+                entry = OptionalEntryField,
                 history = {
                     type = FieldType.ARRAY,
                     optional = true,
-                    value = {
-                        type = FieldType.OBJECT,
-                        object = {
-                            key = { type = FieldType.STRING },
-                            value = ValueUnionField,
-                            value_type = { type = FieldType.STRING, optional = true },
-                            set_by_host = { type = FieldType.STRING },
-                            set_by_id = { type = FieldType.INTEGER },
-                            last_update = { type = FieldType.STRING },
-                        },
-                    },
+                    value = EntryField,
                 },
             }),
         },
