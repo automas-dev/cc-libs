@@ -180,6 +180,37 @@ local function MapServer(hostname, map_path)
         end
     )
 
+    server:route(
+        'list_waypoints',
+        {
+            response_model = Schema:new({
+                waypoints = {
+                    type = FieldType.ARRAY,
+                    value = {
+                        type = FieldType.OBJECT,
+                        object = {
+                            name = { type = FieldType.STRING },
+                            waypoint = PointField,
+                        },
+                    },
+                },
+            }),
+        },
+        ---@param request Request
+        function(request)
+            local waypoints = {}
+
+            for name, pid in pairs(map.waypoints) do
+                table.insert(waypoints, {
+                    name = name,
+                    waypoint = map:get_point(pid),
+                })
+            end
+
+            return request:ok_response({ waypoints = waypoints })
+        end
+    )
+
     return server
 end
 

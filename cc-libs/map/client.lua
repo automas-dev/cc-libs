@@ -90,6 +90,19 @@ function MapClient:get_waypoint(name)
     end
 end
 
+---Get a waypoint
+---@return {name: string, waypoint: Point}[]? waypoints list of all waypoints
+function MapClient:list_waypoints()
+    local success, status, resp = self.client:request('list_waypoints')
+    if success then
+        ---@cast resp table
+        return resp.waypoints
+    else
+        -- TODO remove this, is it somewhere else?
+        log:warning('Got unsuccessful response from server', status, resp)
+    end
+end
+
 return {
     MapClient = MapClient,
 }
