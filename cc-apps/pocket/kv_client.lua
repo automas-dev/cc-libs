@@ -34,7 +34,7 @@ local ccl_kv = require 'cc-libs.kv'
 local KVClient = ccl_kv.KVClient
 
 local function main()
-    local client = KVClient:new('kv_store')
+    local client = KVClient:new('kv_server')
     if op == 'get' then
         local success, entry = client:get_entry(key)
         if success then
