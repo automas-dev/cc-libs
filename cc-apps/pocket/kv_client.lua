@@ -12,14 +12,14 @@ local log = logging.get_logger('main')
 -- Argument parsing
 local argparse = require 'cc-libs.util.argparse'
 local parser = argparse.ArgParse:new('kv_client', 'Get or set a value from the kv server')
-parser:add_arg('op', { help = 'get or set' })
+parser:add_arg('op', { help = 'get, set or history' })
 parser:add_arg('key', { help = 'key of entry' })
 parser:add_arg('value', { help = 'value if operations is set', required = false })
 parser:add_option('v', 'verbose', 'Output more information')
 local args = parser:parse_args({ ... })
 
 local op = args.op
-assert(op == 'get' or op == 'set', 'op must be get or set')
+assert(op == 'get' or op == 'set' or op == 'history', 'op must be get, set or history')
 local key = args.key
 local value = args.value
 local verbose = args.verbose or false
@@ -50,6 +50,23 @@ local function main()
                 else
                     pretty.pprint(entry.value)
                 end
+            end
+        else
+            log:error('Failed to get key', key, status, resp)
+        end
+    elseif op == 'history' then
+        local success, status, resp = client:request('get_history', { key = key })
+        ---@cast resp table
+        if success then
+            if not resp.found then
+                log:info('Key', key, 'is not set')
+            else
+                local entry = resp.entry
+                local history = resp.history
+                for _, v in ipairs(history) do
+                    pretty.pprint(v.last_update, v.value)
+                end
+                pretty.pprint(entry.last_update, entry.value)
             end
         else
             log:error('Failed to get key', key, status, resp)
