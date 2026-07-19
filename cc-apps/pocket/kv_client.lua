@@ -15,47 +15,63 @@ local parser = argparse.ArgParse:new('kv_client', 'Get or set a value from the k
 parser:add_arg('op', { help = 'get or set' })
 parser:add_arg('key', { help = 'key of entry' })
 parser:add_arg('value', { help = 'value if operations is set', required = false })
+parser:add_option('v', 'verbose', 'Output more information')
 local args = parser:parse_args({ ... })
 
-local id_filter = args.id
-local host_filter = args.host
-local type_filter = args.types or 'EAS'
+local op = args.op
+assert(op == 'get' or op == 'set', 'op must be get or set')
+local key = args.key
+local value = args.value
+local verbose = args.verbose or false
 
-log:info('Starting with args', args)
+if op == 'set' then
+    assert(value ~= nil, 'value must be given for set')
+end
 
-local json = require 'cc-libs.util.json'
+local pretty = require 'cc-libs.util.pretty'
 
-local ccl_telemetry = require 'cc-libs.net.telemetry'
-local TELEMETRY_PROTOCOL = ccl_telemetry.TELEMETRY_PROTOCOL
-local PayloadType = ccl_telemetry.PayloadType
-
-local ccl_proto_util = require 'cc-libs.net.proto.util'
+local ccl_proto = require 'cc-libs.net.proto'
+local ProtocolClient = ccl_proto.ProtocolClient
 
 local function main()
-    ccl_proto_util.open_rednet()
-
-    while true do
-        local id, message = rednet.receive(TELEMETRY_PROTOCOL)
-        local success, data = pcall(json.decode, message)
-        if not success then
-            log:warning('Failed to decode message from ' .. id)
-        else
-            local host = data['host_id'] .. ':' .. data['host_name']
-            local match_id = id_filter == nil or tostring(data['host_id']) == id_filter
-            local match_host = host_filter == nil or data['host_name'] == host_filter
-            if match_id and match_host then
-                if id_filter == nil and host_filter == nil then
-                    write('[' .. host .. '] ')
-                end
-                if data._telem_type == PayloadType.EVENT and type_filter:match('E') then
-                    print('E', data.event.type, data.event.message, json.encode(data.event.data))
-                elseif data._telem_type == PayloadType.ALERT and type_filter:match('A') then
-                    print('A', data.alert.type, data.alert.message, json.encode(data.alert.data))
-                    -- elseif data._telem_type == PayloadType.STATE  and type_filter:match('S') then
-                    --     print('[' .. host .. '] S', json.encode(data.state))
+    local client = ProtocolClient:new('kv_store', 'server', 5)
+    if op == 'get' then
+        local success, status, resp = client:request('get', { key = key })
+        ---@cast resp table
+        if success then
+            if not resp.found then
+                log:info('Key', key, 'is not set')
+            else
+                local entry = resp.entry
+                if verbose then
+                    pretty.pprint('Got value', entry.value)
+                    pretty.pprint('Set by', entry.set_by_id, entry.set_by_host)
+                    pretty.pprint('Last updated', entry.last_update)
+                else
+                    pretty.pprint(entry.value)
                 end
             end
+        else
+            log:error('Failed to get key', key, status, resp)
         end
+    elseif op == 'set' then
+        local success, status, resp = client:request('set', {
+            entry = {
+                key = key,
+                value = value,
+                set_by_host = os.getComputerLabel(),
+                set_by_id = os.getComputerID(),
+            },
+        })
+        if success then
+            if verbose then
+                pretty.pprint('Set value of', key, 'to', value)
+            end
+        else
+            log:error('Failed to assign key', key, status, resp)
+        end
+    else
+        error('Unknown op ' .. tostring(op))
     end
 end
 
