@@ -36,6 +36,16 @@ install_cc-apps
 
 Apps can be used via the `cc/` prefix (eg. `cc/dig_down` or `cc/branch_mine`).
 
+### Updates
+
+The library and apps install scripts can be called to updated using
+[update_cc.lua](install/update_cc.lua).
+
+```sh
+wget https://raw.githubusercontent.com/automas-dev/cc-libs/refs/heads/main/install/update_cc.lua
+update_cc
+```
+
 ## Development
 
 > [!IMPORTANT]
