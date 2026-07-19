@@ -43,6 +43,9 @@ function ConsoleStream:send(message, record)
         end
     end
     print(message)
+    if self.color_enabled then
+        term.setTextColor(colors.white)
+    end
     return true
 end
 
