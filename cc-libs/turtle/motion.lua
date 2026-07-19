@@ -141,7 +141,7 @@ function Motion:_attempt_move(action, action_fn, dig_fn)
             log:trace('Calling dig function after fail of action', action)
             dig_fn()
         else
-            log:warning('Dig function is disabled')
+            log:trace('Dig function is disabled')
         end
     end
     log:trace('Attempt to move took', tries, 'tries and was', (success and 'success' or 'fail'))
