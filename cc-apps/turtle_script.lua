@@ -59,7 +59,7 @@ local function print_help()
 end
 
 local function is_valid(cmd)
-    local valid = { 'f', 'b', 'l', 'r', 'u', 'd', 'enable', 'disable', 'm', 'mark', 'g', 'goto' }
+    local valid = { '[', ']', 'f', 'b', 'l', 'r', 'u', 'd', 'enable', 'disable', 'm', 'mark', 'g', 'goto' }
     for _, v in ipairs(valid) do
         if cmd == v then
             return true
@@ -85,6 +85,7 @@ local function parse_cmd(cmd)
     log:debug('all parts are', all_parts)
 
     local actions = {}
+    local nest = {}
 
     local i = 1
     while i <= #all_parts do
@@ -93,7 +94,28 @@ local function parse_cmd(cmd)
             log:error('Invalid command', w)
             return
         end
-        if w == 'm' or w == 'mark' then
+        if w == '[' then
+            table.insert(nest, actions)
+            actions = {}
+        elseif w == ']' then
+            if #nest == 0 then
+                log:error('Unclosed [')
+                return
+            end
+            local nest_actions = actions
+            actions = table.remove(nest)
+            local count = tonumber(all_parts[i + 1])
+            if count == nil then
+                count = 1
+            else
+                i = i + 1
+            end
+            for _ = 1, count do
+                for _, v in ipairs(nest_actions) do
+                    table.insert(actions, v)
+                end
+            end
+        elseif w == 'm' or w == 'mark' then
             local name = all_parts[i + 1]
             if name == nil then
                 log:error('Invalid marker name', name)
