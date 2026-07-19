@@ -153,7 +153,9 @@ end
 ---@return boolean status true if an error was caught
 ---@return R ... result of `fn`
 function Logger:catch_errors(fn, ...)
-    local res = table.pack(xpcall(fn, debug.traceback, ...))
+    -- TODO make this configurable
+    -- local res = table.pack(xpcall(fn, debug.traceback, ...))
+    local res = table.pack(pcall(fn, ...))
     local success = res[1]
 
     if not success then
@@ -175,7 +177,9 @@ end
 ---@param ... T to the function
 ---@return R ... result of `fn`
 function Logger:wrap_call(fn, ...)
-    local res = table.pack(xpcall(fn, debug.traceback, ...))
+    -- TODO make this configurable
+    -- local res = table.pack(xpcall(fn, debug.traceback, ...))
+    local res = table.pack(pcall(fn, ...))
     local success = res[1]
 
     if not success then
