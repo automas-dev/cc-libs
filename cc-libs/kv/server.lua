@@ -14,11 +14,8 @@ local Schema = ccl_schema.Schema
 
 ---@enum KVItemType
 local KVItemType = {
-    -- BOOL = 'bool',
     NUMBER = 'number',
     STRING = 'string',
-    -- ARRAY = 'array',
-    -- OBJECT = 'object',
 }
 
 ---@class KVItem
