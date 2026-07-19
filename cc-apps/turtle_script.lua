@@ -44,18 +44,23 @@ telem:set_location(location)
 tmc:attach_telemetry(telem)
 
 local function print_help()
-    print('combine commands with a space')
-    print('f [n|1] forward')
-    print('b [n|1] backward')
-    print('u [n|1] up')
-    print('d [n|1] down')
-    print('l turn left')
-    print('r turn right')
-    print('enable enable dig')
-    print('disable disable dig')
-    print('m/mark add poi at current location')
-    print('g/goto navigate to poi')
-    print('q/quit quit')
+    local lines = 'combine commands with a space, numbers following commands will repeat them\n'
+        .. 'f forward\n'
+        .. 'b backward\n'
+        .. 'u up\n'
+        .. 'd down\n'
+        .. 'l turn left\n'
+        .. 'r turn right\n'
+        .. 'enable enable dig\n'
+        .. 'disable disable dig\n'
+        .. 'm/mark add poi at current location\n'
+        .. 'g/goto navigate to poi\n'
+        .. '[ open loop\n'
+        .. '] close loop\n'
+        .. 'h/help show this message\n'
+        .. 'q/quit exit the repl'
+    local _, height = term.getCursorPos()
+    textutils.pagedPrint(lines, height - 2)
 end
 
 local function is_valid(cmd)
