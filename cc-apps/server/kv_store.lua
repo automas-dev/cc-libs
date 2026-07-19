@@ -14,7 +14,7 @@ local ccl_kv = require 'cc-libs.kv'
 local KVServer = ccl_kv.KVServer
 
 local function main()
-    local server = KVServer('kv_store', 'kv_store')
+    local server = KVServer(os.getComputerLabel() or 'kv_server', 'kv_store')
     server:serve_forever()
 end
 
