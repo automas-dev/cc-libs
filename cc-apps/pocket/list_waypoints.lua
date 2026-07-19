@@ -7,12 +7,8 @@ logging.basic_config {
 }
 local log = logging.get_logger('main')
 
--- TODO argparse commands to get and set waypoints, have option to use gps
-
 local ccl_map = require 'cc-libs.map'
 local MapClient = ccl_map.MapClient
-
-local GPS_TIMEOUT = 2
 
 local function main()
     client = MapClient:new('server')
