@@ -247,7 +247,7 @@ function Map:link(p1, p2)
     p2 = self:pos(p2)
     local weight = point_weight(p1, p2)
 
-    log:debug('p1 =', p1.id, 'p2 =', p2.id, 'weight =', weight)
+    log:trace('p1 =', p1.id, 'p2 =', p2.id, 'weight =', weight)
 
     assert(inline(p1, p2), 'p1 is not inline with p2')
 
