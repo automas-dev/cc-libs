@@ -10,6 +10,8 @@ logging.basic_config {
 }
 local log = logging.get_logger('main')
 
+local json = require 'cc-libs.util.json'
+
 local table_copy = require 'cc-libs.util.table_copy'
 
 local ccl_proto = require 'cc-libs.net.proto'
@@ -29,19 +31,50 @@ local server = ProtocolServer:new('kv_store', 'server')
 ---@field last_update string os.time of the creation or last update
 ---@field history KVStoreItem[]
 
----@type { [string] : KVStoreItem }
-local temp_kv_store = {}
+local KV_STORE_DIR = 'kv_store'
+fs.makeDir(KV_STORE_DIR)
 
+---Read a value from the kv store directory
+---@param key string
+---@return KVStoreItem? entry
+local function read_entry(key)
+    log:debug('Read', key)
+
+    local kv_path = fs.combine(KV_STORE_DIR, key .. '.json')
+    if fs.exists(kv_path) then
+        local file = io.open(kv_path, 'r')
+        if file == nil then
+            log:error('Failed to open file', kv_path)
+            return
+        end
+        local value = file:read('a')
+        local success, entry = pcall(json.decode, value)
+        if not success then
+            log:error('Failed to decode entry at', kv_path)
+            return
+        end
+        file:close()
+        return entry
+    end
+end
+
+---Assign a value to a key in the kv store directory
+---@param key string
+---@param value string
+---@param set_by_id number
+---@param set_by_host string
+---@return boolean success
 local function update_entry(key, value, set_by_id, set_by_host)
     log:debug('Update', key, 'to value', value, 'from', set_by_id, set_by_host)
-    local store = temp_kv_store
 
     local now = os.epoch('utc') / 1000
     local now_datetime = os.date('%Y-%m-%dT%H:%M:%S', now)
     ---@cast now_datetime string
 
-    if store[key] == nil then
-        store[key] = {
+    local entry = read_entry(key)
+
+    if entry == nil then
+        entry = {
             key = key,
             value = value,
             set_by_id = set_by_id,
@@ -50,8 +83,6 @@ local function update_entry(key, value, set_by_id, set_by_host)
             history = {},
         }
     else
-        local entry = store[key]
-
         -- Get copy of current entry without history
         local history = entry.history
         entry.history = nil
@@ -64,36 +95,33 @@ local function update_entry(key, value, set_by_id, set_by_host)
         entry.last_update = now_datetime
         entry.history = history
     end
+
+    local kv_path = fs.combine(KV_STORE_DIR, key .. '.json')
+    local file = io.open(kv_path, 'w')
+    if file == nil then
+        log:error('Failed to open', kv_path)
+        return false
+    end
+
+    file:write(json.encode(entry))
+    file:close()
+
+    return true
 end
-
----@type SchemaField
-local CreateKVItemField = {
-    type = FieldType.OBJECT,
-    object = {
-        key = { type = FieldType.STRING },
-        value = { type = FieldType.STRING },
-        set_by_host = { type = FieldType.STRING },
-        set_by_id = { type = FieldType.INTEGER },
-    },
-}
-
----@type SchemaField
-local KVItemField = {
-    type = FieldType.OBJECT,
-    object = {
-        key = { type = FieldType.STRING },
-        value = { type = FieldType.STRING },
-        set_by_host = { type = FieldType.STRING },
-        set_by_id = { type = FieldType.INTEGER },
-        last_update = { type = FieldType.STRING },
-    },
-}
 
 server:route(
     'set',
     {
         request_model = Schema:new({
-            entry = CreateKVItemField,
+            entry = {
+                type = FieldType.OBJECT,
+                object = {
+                    key = { type = FieldType.STRING },
+                    value = { type = FieldType.STRING },
+                    set_by_host = { type = FieldType.STRING },
+                    set_by_id = { type = FieldType.INTEGER },
+                },
+            },
         }),
         response_model = Schema:new({
             err = { type = FieldType.STRING, optional = true },
@@ -134,7 +162,7 @@ server:route(
     function(request)
         local body = request.message.body
         ---@cast body table
-        local entry = temp_kv_store[body.key]
+        local entry = read_entry(body.key)
 
         if entry == nil then
             return request:ok_response({ found = false })
@@ -174,8 +202,17 @@ server:route(
             },
             history = {
                 type = FieldType.ARRAY,
-                value = KVItemField,
                 optional = true,
+                value = {
+                    type = FieldType.OBJECT,
+                    object = {
+                        key = { type = FieldType.STRING },
+                        value = { type = FieldType.STRING },
+                        set_by_host = { type = FieldType.STRING },
+                        set_by_id = { type = FieldType.INTEGER },
+                        last_update = { type = FieldType.STRING },
+                    },
+                },
             },
         }),
     },
@@ -183,7 +220,7 @@ server:route(
     function(request)
         local body = request.message.body
         ---@cast body table
-        local entry = temp_kv_store[body.key]
+        local entry = read_entry(body.key)
 
         if entry == nil then
             return request:ok_response({ found = false })
