@@ -53,5 +53,5 @@ end)
 success = pcall(bar)
 assert(not success)
 
--- uncaught
+-- uncaught, because error is level 0, shell prints it in red instead of normal error format
 bar()
