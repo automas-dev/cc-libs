@@ -34,6 +34,19 @@ local PointField = {
 }
 
 ---@type SchemaField
+local OptionalPointField = {
+    type = FieldType.OBJECT,
+    optional = true,
+    object = {
+        id = { type = FieldType.STRING },
+        links = { type = FieldType.OBJECT, key = { type = FieldType.STRING }, value = { type = FieldType.FLOAT } },
+        x = { type = FieldType.FLOAT },
+        y = { type = FieldType.FLOAT },
+        z = { type = FieldType.FLOAT },
+    },
+}
+
+---@type SchemaField
 local MapField = {
     type = FieldType.OBJECT,
     object = {
@@ -136,6 +149,34 @@ local function MapServer(hostname, map_path)
             log:info('Added waypoint', name)
 
             return request:ok_response({ waypoint = point, action = exists and 'replaced' or 'added' })
+        end
+    )
+
+    server:route(
+        'get_waypoint',
+        {
+            request_model = Schema:new({
+                name = { type = FieldType.STRING },
+            }),
+            response_model = Schema:new({
+                found = { type = FieldType.BOOL },
+                waypoint = OptionalPointField,
+                name = { type = FieldType.STRING, optional = true },
+            }),
+        },
+        ---@param request Request
+        function(request)
+            local body = request.message.body
+            ---@cast body table
+
+            local name = body.name
+
+            local point = map:get_waypoint(name)
+            if point == nil then
+                return request:ok_response({ found = false })
+            end
+
+            return request:ok_response({ found = true, waypoint = point, name = name })
         end
     )
 

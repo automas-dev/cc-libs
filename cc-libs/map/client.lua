@@ -74,6 +74,22 @@ function MapClient:add_waypoint(name, pos)
     end
 end
 
+---Get a waypoint
+---@param name string
+---@return Point? waypoint the waypoint or nil for error
+function MapClient:get_waypoint(name)
+    local success, status, resp = self.client:request('get_waypoint', {
+        name = name,
+    })
+    if success then
+        ---@cast resp table
+        return resp.waypoint
+    else
+        -- TODO remove this, is it somewhere else?
+        log:warning('Got unsuccessful response from server', status, resp)
+    end
+end
+
 return {
     MapClient = MapClient,
 }
