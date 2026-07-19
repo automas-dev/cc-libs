@@ -5,7 +5,7 @@ package.path = '../?.lua;../?/init.lua;' .. package.path
 local logging = require 'cc-libs.util.logging'
 logging.basic_config {
     level = logging.Level.INFO,
-    file_level = logging.Level.TRACE,
+    file_level = logging.Level.DEBUG,
     filepath = 'logs/watch_lava.log',
 }
 local log = logging.get_logger('main')
@@ -15,10 +15,18 @@ local get_telemetry = ccl_telemetry.get_telemetry
 
 local actions = require 'cc-libs.turtle.actions'
 
+local ccl_kv = require 'cc-libs.kv'
+local KVClient = ccl_kv.KVClient
+
 local telem = get_telemetry()
 
 ---@type ccTweaked.peripherals.Inventory
 local chest
+
+---@type KVClient
+local client
+
+local BUCKET_COUNT_KEY = 'fuel_station_count'
 
 local function cauldron_has_lava()
     local exists, data = turtle.inspect()
@@ -64,6 +72,10 @@ local function count_buckets()
             count = count + 1
         end
     end
+    local success, err = client:set(BUCKET_COUNT_KEY, count)
+    if not success then
+        log:error('Failed to update kv store', err)
+    end
     return count
 end
 
@@ -79,6 +91,9 @@ local function chest_full()
 end
 
 local function main()
+    client = KVClient:new('kv_server')
+    log:info('Connected to kv store')
+
     local inv = peripheral.find('inventory')
     if inv == nil then
         telem:send_alert('no_chest', 'Could not find chest around turtle')
@@ -94,7 +109,10 @@ local function main()
         end
         if cauldron_has_lava() then
             take_lava()
-            telem:send_event('new_lava_bucket', 'Lava bucket was added', { count = count_buckets() })
+            -- Call to count_buckets() updates kv store before sending event
+            local count = count_buckets()
+            log:info('There are now', count, 'buckets of lava in the chest')
+            telem:send_event('new_lava_bucket', 'Lava bucket was added', { count = count })
         end
         sleep(1)
     end
