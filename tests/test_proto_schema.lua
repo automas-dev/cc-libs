@@ -13,9 +13,15 @@ function test.check_schema_types()
             d = { type = FieldType.STRING },
             e = { type = FieldType.ARRAY },
             f = { type = FieldType.OBJECT },
+            g = { type = FieldType.UNION, types = { { type = FieldType.STRING } } },
+            h = { type = FieldType.ANY },
         })
     end))
 end
+
+-- TODO test object, key and types fields with ARRAY in check
+-- TODO test types fields with OBJECT in check
+-- TODO test object, key and value fields with UNION in check
 
 function test.check_schema_invalid_type()
     expect_false(pcall(function()
@@ -124,6 +130,47 @@ function test.check_schema_object_field()
     )
 end
 
+function test.check_schema_union()
+    expect_true(pcall(function()
+        Schema:new({
+            a = { type = FieldType.UNION, types = { { type = FieldType.STRING } } },
+        })
+    end))
+end
+
+function test.check_schema_union_no_types()
+    expect_false(pcall(function()
+        Schema:new({
+            a = { type = FieldType.UNION, types = {} },
+        })
+    end))
+end
+
+function test.check_schema_union_missing_types()
+    expect_false(pcall(function()
+        Schema:new({
+            a = { type = FieldType.UNION },
+        })
+    end))
+end
+
+function test.check_schema_union_invalid_type()
+    expect_false(pcall(function()
+        Schema:new({
+            ---@diagnostic disable-next-line: assign-type-mismatch
+            a = { type = FieldType.UNION, types = { { type = 'invalid' } } },
+        })
+    end))
+end
+
+function test.check_schema_any()
+    expect_true(pcall(function()
+        Schema:new({
+            a = { type = FieldType.ANY },
+        })
+    end))
+end
+
 function test.check_schema_key_field()
     expect_false(
         pcall(function()
@@ -196,6 +243,48 @@ function test.validate()
         :validate({
             a = { foo = 1 },
         })
+    expect_true(valid, err)
+
+    valid, _, err = Schema:new({
+        a = { type = FieldType.UNION, types = { { type = FieldType.INTEGER }, { type = FieldType.STRING } } },
+    }):validate({
+        a = 1,
+    })
+    expect_true(valid, err)
+
+    valid, _, err = Schema:new({
+        a = { type = FieldType.UNION, types = { { type = FieldType.INTEGER }, { type = FieldType.STRING } } },
+    }):validate({
+        a = 'foo',
+    })
+    expect_true(valid, err)
+
+    valid, _, err = Schema:new({
+        a = { type = FieldType.ANY },
+    }):validate({
+        a = 'foo',
+    })
+    expect_true(valid, err)
+
+    valid, _, err = Schema:new({
+        a = { type = FieldType.ANY },
+    }):validate({
+        a = 1,
+    })
+    expect_true(valid, err)
+
+    valid, _, err = Schema:new({
+        a = { type = FieldType.ANY },
+    }):validate({
+        a = true,
+    })
+    expect_true(valid, err)
+
+    valid, _, err = Schema:new({
+        a = { type = FieldType.ANY },
+    }):validate({
+        a = {},
+    })
     expect_true(valid, err)
 end
 
@@ -321,6 +410,28 @@ function test.validate_empty_table_is_object()
         a = {},
     })
     expect_true(valid, err)
+end
+
+function test.validate_union_fails_not_type()
+    local valid, error_path, err = Schema:new({
+        a = { type = FieldType.UNION, types = { { type = FieldType.INTEGER }, { type = FieldType.BOOL } } },
+    }):validate({
+        a = 'foo',
+    })
+    expect_false(valid)
+    expect_eq('a', error_path)
+    expect_eq('No type matched from union types integer, bool', err)
+end
+
+function test.validate_nil_fails_any()
+    local valid, error_path, err = Schema:new({
+        a = { type = FieldType.ANY },
+    }):validate({
+        a = nil,
+    })
+    expect_false(valid)
+    expect_eq('a', error_path)
+    expect_eq('Missing required field', err)
 end
 
 function test.validate_type_fails()

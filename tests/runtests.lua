@@ -109,6 +109,8 @@ local function run_test_case(fn, case_name, test_name)
         end
     end
 
+    -- TODO check if no asserts or expect were called
+
     return #failed_checks == 0, failed_checks
 end
 

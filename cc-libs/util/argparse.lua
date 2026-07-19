@@ -20,6 +20,7 @@
 local ArgParse = {}
 
 -- TODO logging
+-- TODO handle negative numbers or strings starting with - or -- for positional arguments
 
 ---Create a new ArgParse instance
 ---@param name string the application name
