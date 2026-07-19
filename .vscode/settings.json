@@ -72,7 +72,6 @@
         "io": "disable",
         "os": "disable"
     },
-    ],
     "[lua]": {
         "editor.defaultFormatter": "JohnnyMorganz.stylua"
     },
