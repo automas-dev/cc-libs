@@ -8,16 +8,19 @@ local FieldType = {
     STRING = 'string',
     ARRAY = 'array',
     OBJECT = 'object',
+    UNION = 'union',
+    ANY = 'any',
 }
 
 ---@class SchemaField
 ---@field type FieldType
 ---@field optional boolean?
----TODO
+---TODO use this
 ---@field validate? fun(val: any): boolean
 ---@field value SchemaField? defines elements of array type or object (if `object` is nil)
 ---@field key SchemaField? defines keys of object type (if `object` is nil)
 ---@field object SchemaObject? defines structure of object type
+---@field types SchemaField[]? defines list of type options for union
 
 ---@alias SchemaObject { [string]: SchemaField }
 
@@ -114,6 +117,23 @@ function Schema:check_field(field, path)
             return false, path, 'key is defined for non object type ' .. field.type
         end
     end
+    if field.type == FieldType.UNION then
+        if field.types == nil then
+            return false, path, 'UNION type must have types field'
+        elseif #field.types == 0 then
+            return false, path, 'UNION type must have at least one type'
+        end
+        for _, union_type in ipairs(field.types) do
+            local valid, error_path, error = self:check_field(union_type, path .. '.<union>')
+            if not valid then
+                return valid, error_path, error
+            end
+        end
+    else
+        if field.types ~= nil then
+            return false, path, 'types are defined for non union type ' .. field.type
+        end
+    end
     return true
 end
 
@@ -159,42 +179,42 @@ end
 
 ---Validate a single value is of type
 ---@private
----@param field_type FieldType
+---@param field SchemaField
 ---@param value any
 ---@param path string
 ---@return boolean valid
 ---@return string? error_path
 ---@return string? error
-function Schema:validate_type(field_type, value, path)
-    if field_type == FieldType.BOOL then
+function Schema:validate_type(field, value, path)
+    if field.type == FieldType.BOOL then
         if type(value) ~= 'boolean' then
-            return false, path, 'Invalid type ' .. type(value) .. ' expected ' .. field_type
+            return false, path, 'Invalid type ' .. type(value) .. ' expected ' .. field.type
         end
-    elseif field_type == FieldType.INTEGER then
+    elseif field.type == FieldType.INTEGER then
         if type(value) ~= 'number' then
-            return false, path, 'Invalid type ' .. type(value) .. ' expected ' .. field_type
+            return false, path, 'Invalid type ' .. type(value) .. ' expected ' .. field.type
         elseif value % 1 ~= 0 then
-            return false, path, 'Invalid type float expected ' .. field_type
+            return false, path, 'Invalid type float expected ' .. field.type
         end
-    elseif field_type == FieldType.FLOAT then
+    elseif field.type == FieldType.FLOAT then
         if type(value) ~= 'number' then
-            return false, path, 'Invalid type ' .. type(value) .. ' expected ' .. field_type
+            return false, path, 'Invalid type ' .. type(value) .. ' expected ' .. field.type
         end
-    elseif field_type == FieldType.STRING then
+    elseif field.type == FieldType.STRING then
         if type(value) ~= 'string' then
-            return false, path, 'Invalid type ' .. type(value) .. ' expected ' .. field_type
+            return false, path, 'Invalid type ' .. type(value) .. ' expected ' .. field.type
         end
-    elseif field_type == FieldType.ARRAY then
+    elseif field.type == FieldType.ARRAY then
         if type(value) ~= 'table' then
-            return false, path, 'Invalid type ' .. type(value) .. ' expected ' .. field_type
+            return false, path, 'Invalid type ' .. type(value) .. ' expected ' .. field.type
         elseif table_size(value) > 0 and not table_is_array(value) then
-            return false, path, 'Invalid type object expected ' .. field_type
+            return false, path, 'Invalid type object expected ' .. field.type
         end
-    elseif field_type == FieldType.OBJECT then
+    elseif field.type == FieldType.OBJECT then
         if type(value) ~= 'table' then
-            return false, path, 'Invalid type ' .. type(value) .. ' expected ' .. field_type
+            return false, path, 'Invalid type ' .. type(value) .. ' expected ' .. field.type
         elseif table_size(value) > 0 and table_is_array(value) then
-            return false, path, 'Invalid type array expected ' .. field_type
+            return false, path, 'Invalid type array expected ' .. field.type
         end
     end
     return true
@@ -217,7 +237,7 @@ function Schema:validate_field(field, value, path, allow_extra)
     if not field.optional and value == nil then
         return false, path, 'Missing required field'
     end
-    local valid, error_path, error = self:validate_type(field.type, value, path)
+    local valid, error_path, error = self:validate_type(field, value, path)
     if not valid then
         return valid, error_path, error
     end
@@ -243,6 +263,16 @@ function Schema:validate_field(field, value, path, allow_extra)
                 end
             end
         end
+    elseif field.type == FieldType.UNION then
+        local types_no_match = {}
+        for _, union_type in ipairs(field.types) do
+            valid = self:validate_field(union_type, value, path, allow_extra)
+            if valid then
+                return true
+            end
+            table.insert(types_no_match, union_type.type)
+        end
+        return false, path, 'No type matched from union types ' .. table.concat(types_no_match, ', ')
     end
     return true
 end
