@@ -373,4 +373,5 @@ end
 
 return {
     KVServer = KVServer,
+    KVItemType = KVItemType,
 }
