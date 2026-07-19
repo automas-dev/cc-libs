@@ -14,7 +14,7 @@ local pretty = require 'cc-libs.util.pretty'
 ---@return debuginfo info name and debug
 local function traceback()
     local info = debug.getinfo(3, 'Slfn')
-    for _, check in ipairs({ 'traceback', 'trace', 'debug', 'info', 'warn', 'warning', 'error', 'fatal' }) do
+    for _, check in ipairs({ 'traceback', 'trace', 'debug', 'info', 'warn', 'warning', 'error' }) do
         if info.name == check then
             info = debug.getinfo(4, 'Slf')
             break
@@ -143,13 +143,6 @@ end
 ---@param ... any message
 function Logger:error(...)
     self:log(Level.ERROR, ...)
-end
-
----Write a log message with ERROR level and call error()
----@param ... any message
-function Logger:fatal(...)
-    self:log(Level.FATAL, ...)
-    error(table_to_string(...))
 end
 
 ---Call a function and log any errors that occur. The error is caught and not raised again.

@@ -197,15 +197,6 @@ function test.level_methods()
     expect_eq(Level.ERROR, l.log.args[2])
     expect_eq('f', l.log.args[3])
     l.log.reset()
-
-    local success, err = pcall(l.fatal, l, 'g')
-    assert_false(success)
-    assert_true(type(err) == 'string', 'Error was not a string, cannot check')
-    ---@diagnostic disable-next-line: need-check-nil
-    expect_true(err:find(': g$'))
-    assert_eq(1, l.log.call_count)
-    expect_eq(Level.FATAL, l.log.args[2])
-    expect_eq('g', l.log.args[3])
 end
 
 function test.catch_errors()

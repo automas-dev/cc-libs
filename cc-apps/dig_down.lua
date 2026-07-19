@@ -23,7 +23,7 @@ log:info('Starting fuel level', turtle.getFuelLevel())
 local fuel_need = n * 2
 log:debug('Fuel needed is', fuel_need)
 if turtle.getFuelLevel() < fuel_need then
-    log:fatal('Not enough fuel! Need', fuel_need)
+    error('Not enough fuel! Need ' .. tostring(fuel_need))
 end
 
 local tmc = ccl_motion.Motion:new()

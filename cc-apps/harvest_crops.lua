@@ -71,7 +71,7 @@ local function return_home()
     if pos.y > home.y then
         tmc:down(pos.y - home.y)
     elseif pos.y < home.y then
-        log:fatal('Why are you underground?')
+        error('Why are you underground?')
     end
 
     log:trace('Finished y axis motion')
@@ -152,7 +152,7 @@ local function main()
             tmc:backward()
         end
         if not tmc.location.has_heading then
-            log:fatal('Could not acquire heading to return home')
+            error('Could not acquire heading to return home')
         else
             log:info('Returning to home before starting harvest')
             return_home()
