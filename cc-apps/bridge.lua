@@ -28,11 +28,11 @@ local block_ceiling = args.block_ceiling
 local replace_floor = args.replace_floor
 
 if not actions.find_slot(block_floor, 1) then
-    log:fatal('Could not find block', block_floor, 'in inventory')
+    error('Could not find block ' .. block_floor .. ' in inventory')
 end
 
 if block_ceiling and not actions.find_slot(block_ceiling, 1) then
-    log:fatal('Could not find block', block_ceiling, 'in inventory')
+    error('Could not find block ' .. block_ceiling .. ' in inventory')
 end
 
 local tmc = Motion:new()

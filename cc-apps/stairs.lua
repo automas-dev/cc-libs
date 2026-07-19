@@ -26,12 +26,12 @@ log:info('Starting fuel level', turtle.getFuelLevel())
 local fuel_need = n * 4 * 2
 log:debug('Fuel needed is', fuel_need)
 if turtle.getFuelLevel() < fuel_need then
-    log:fatal('Not enough fuel! Need', fuel_need)
+    error('Not enough fuel! Need ' .. tostring(fuel_need))
 end
 
 turtle.select(1)
 if place_stairs and turtle.getItemCount(1) < n then
-    log:fatal('Not enough stairs in slot 1, need', n)
+    error('Not enough stairs in slot 1, need', n)
 end
 
 local tmc = ccl_motion.Motion:new()
@@ -42,7 +42,7 @@ local function main()
 
     for i = 1, n do
         if turtle.getFuelLevel() == 0 then
-            log:fatal('Ran out of fuel!')
+            error('Ran out of fuel!')
         end
 
         tmc:forward()

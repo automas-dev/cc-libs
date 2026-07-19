@@ -51,18 +51,18 @@ function M.select_slot(item_name)
     return item_slot
 end
 
----Check turtle has the needed fuel. Raises error through log:fatal if there is
+---Check turtle has the needed fuel. Raises error if there is
 ---not enough fuel.
 ---@param need number amount of fuel needed
 function M.assert_fuel(need)
     log:info('Starting fuel level', turtle.getFuelLevel())
     log:debug('Fuel needed is', need)
     if turtle.getFuelLevel() < need then
-        log:fatal('Not enough fuel! Need', need)
+        error('Not enough fuel! Need ' .. tostring(need))
     end
 end
 
----Check turtle has enough items. Raises error through log:fatal if there are
+---Check turtle has enough items. Raises error if there are
 ---not enough items.
 ---@param item_name string minecraft item id
 ---@param need number amount of fuel needed
@@ -84,7 +84,7 @@ function M.assert_items(item_name, need)
         end
     end
 
-    log:fatal('Inventory does not have enough', item_name, 'found', has)
+    error('Inventory does not have enough ' .. tostring(item_name) .. ' found ' .. tostring(has))
 end
 
 ---Check if all slots have at least 1 item

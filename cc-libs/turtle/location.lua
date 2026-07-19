@@ -1,6 +1,8 @@
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('location')
 
+local pretty = require 'cc-libs.util.pretty'
+
 local ccl_vec = require 'cc-libs.util.vec'
 local Vec3 = ccl_vec.Vec3
 
@@ -174,7 +176,7 @@ function Location:update(action)
             self.heading = 1
         end
     else
-        log:fatal('Unknown action', action)
+        error('Unknown action ' .. action)
     end
 
     -- Validate new position using gps
@@ -184,7 +186,12 @@ function Location:update(action)
         if x == nil then
             log:error('Could not debug location, gps not available')
         elseif pos ~= self.pos then
-            log:fatal('Location error, position', pos, 'does not match expected', self.pos)
+            error(
+                'Location error, position '
+                    .. pretty.format(pos)
+                    .. ' does not match expected '
+                    .. pretty.format(self.pos)
+            )
         end
     end
 

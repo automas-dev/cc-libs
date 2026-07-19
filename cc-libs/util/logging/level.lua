@@ -5,7 +5,6 @@ local Level = {
     INFO = 2,
     WARNING = 3,
     ERROR = 4,
-    FATAL = 5,
 }
 
 local M = {
@@ -27,8 +26,6 @@ function M.level_name(level)
         return 'warning'
     elseif level == Level.ERROR then
         return 'error'
-    elseif level == Level.FATAL then
-        return 'fatal'
     else
         return 'custom:' .. tostring(level)
     end
@@ -49,8 +46,6 @@ function M.level_from_name(name)
         return Level.WARNING
     elseif name == 'error' then
         return Level.ERROR
-    elseif name == 'fatal' then
-        return Level.FATAL
     end
 end
 

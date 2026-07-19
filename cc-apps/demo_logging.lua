@@ -34,3 +34,24 @@ log3:debug('Debug Level Message')
 log3:info('Info Level Message')
 log3:warning('Warning Level Message')
 log3:error('Error Level Message')
+
+local function foo()
+    print('foo')
+    error('here')
+end
+
+local success = log:catch_errors(foo)
+assert(not success)
+
+success = pcall(log.wrap_call, log, foo)
+assert(not success)
+
+local bar = log:wrap_fn(function()
+    print('bar')
+    error('there')
+end)
+success = pcall(bar)
+assert(not success)
+
+-- uncaught, because error is level 0, shell prints it in red instead of normal error format
+bar()

@@ -85,18 +85,18 @@ end
 local function assert_torch()
     local data = turtle.getItemDetail(1)
     if not data then
-        log:fatal('No torches in 1st slot')
-        return -- not reachable, here for linter
+        error('No torches in 1st slot')
+        -- return -- not reachable, here for linter
     end
     local total_shafts = shafts - skip
     local total_distance = total_shafts * 3 + total_shafts * length * 2
     local torch_need = math.ceil(total_distance / torch)
     log:debug('Torches needed is', torch_need)
     if data.count < torch_need then
-        log:fatal('Not enough torches, need', torch_need)
+        error('Not enough torches, need ' .. torch_need)
     end
     if data.name ~= 'minecraft:torch' then
-        log:fatal('Item in slot 1 is not torch')
+        error('Item in slot 1 is not torch')
     end
     turtle.select(1)
 end
@@ -109,7 +109,7 @@ local function assert_fuel()
     local fuel_need = math.ceil(1 + total_distance)
     log:debug('Fuel needed is', fuel_need)
     if turtle.getFuelLevel() < fuel_need then
-        log:fatal('Not enough fuel! Need', fuel_need)
+        error('Not enough fuel! Need ' .. tostring(fuel_need))
     end
 end
 
@@ -312,7 +312,7 @@ local function mine_tunnel()
     log:debug('Mining tunnel at z=', location.pos.z)
     -- local station = nav:get_poi('station')
     -- if station == nil then
-    --     log:fatal('Missing station poi')
+    --     error('Missing station poi')
     --     -- Unreachable, but here so type checker knows that
     --     return
     -- end

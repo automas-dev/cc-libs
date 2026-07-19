@@ -14,7 +14,7 @@ local pretty = require 'cc-libs.util.pretty'
 ---@return debuginfo info name and debug
 local function traceback()
     local info = debug.getinfo(3, 'Slfn')
-    for _, check in ipairs({ 'traceback', 'trace', 'debug', 'info', 'warn', 'warning', 'error', 'fatal' }) do
+    for _, check in ipairs({ 'traceback', 'trace', 'debug', 'info', 'warn', 'warning', 'error' }) do
         if info.name == check then
             info = debug.getinfo(4, 'Slf')
             break
@@ -145,13 +145,6 @@ function Logger:error(...)
     self:log(Level.ERROR, ...)
 end
 
----Write a log message with ERROR level and call error()
----@param ... any message
-function Logger:fatal(...)
-    self:log(Level.FATAL, ...)
-    error(table_to_string(...))
-end
-
 ---Call a function and log any errors that occur. The error is caught and not raised again.
 ---@generic T
 ---@generic R
@@ -160,7 +153,9 @@ end
 ---@return boolean status true if an error was caught
 ---@return R ... result of `fn`
 function Logger:catch_errors(fn, ...)
-    local res = table.pack(xpcall(fn, debug.traceback, ...))
+    -- TODO make this configurable
+    -- local res = table.pack(xpcall(fn, debug.traceback, ...))
+    local res = table.pack(pcall(fn, ...))
     local success = res[1]
 
     if not success then
@@ -182,7 +177,9 @@ end
 ---@param ... T to the function
 ---@return R ... result of `fn`
 function Logger:wrap_call(fn, ...)
-    local res = table.pack(xpcall(fn, debug.traceback, ...))
+    -- TODO make this configurable
+    -- local res = table.pack(xpcall(fn, debug.traceback, ...))
+    local res = table.pack(pcall(fn, ...))
     local success = res[1]
 
     if not success then

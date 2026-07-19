@@ -31,13 +31,13 @@ local function take_lava()
     -- Find an empty bucket
     if not actions.select_slot('minecraft:bucket') then
         telem:send_alert('out_of_buckets', 'Turtle has no more empty buckets')
-        log:fatal('No more buckets')
+        error('No more buckets')
     end
 
     -- Pickup lava with empty bucket
     if not turtle.place() then
         telem:send_alert('lava_missing', 'Turtle failed to pickup lava')
-        log:fatal('Failed to extract lava')
+        error('Failed to extract lava')
     end
 
     log:trace('Got lava bucket')
@@ -45,11 +45,11 @@ local function take_lava()
     -- Put lava bucket in chest bellow turtle
     if not actions.select_slot('minecraft:lava_bucket') then
         telem:send_alert('lava_missing', 'Turtle failed to find lava bucket in inventory')
-        log:fatal('Failed to select lava bucket')
+        error('Failed to select lava bucket')
     else
         if not turtle.dropDown() then
             telem:send_alert('cannot_store_lava', 'Failed to store lava bucket in an inventory bellow the turtle')
-            log:fatal('Failed to put lava bucket in inventory')
+            error('Failed to put lava bucket in inventory')
         end
         log:debug('Pushed lava bucket into chest bellow')
     end
@@ -82,7 +82,7 @@ local function main()
     local inv = peripheral.find('inventory')
     if inv == nil then
         telem:send_alert('no_chest', 'Could not find chest around turtle')
-        log:fatal('Could not find chest around turtle')
+        error('Could not find chest around turtle')
     end
     ---@cast inv ccTweaked.peripherals.Inventory
     chest = inv
@@ -90,7 +90,7 @@ local function main()
     while true do
         if chest_full() then
             telem:send_alert('chest_full', 'Chest has no space for lava buckets')
-            log:fatal('Chest is full')
+            error('Chest is full')
         end
         if cauldron_has_lava() then
             take_lava()

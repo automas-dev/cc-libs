@@ -20,7 +20,7 @@ local json = require 'cc-libs.util.json'
 local structure_path = 'structures/' .. args.name .. '.json'
 
 if not fs.exists(structure_path) then
-    log:fatal('Could not find a structure at', structure_path)
+    error('Could not find a structure at', structure_path)
 end
 
 log:info('Loading structure from', structure_path)
