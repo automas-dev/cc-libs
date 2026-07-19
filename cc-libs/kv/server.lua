@@ -18,7 +18,7 @@ local Schema = ccl_schema.Schema
 ---@field set_by_host string
 ---@field set_by_id number
 ---@field last_update string os.time of the creation or last update
----@field history KVStoreItem[]
+---@field history KVItem[]
 
 ---Create a new ProtocolServer for a map
 ---@param hostname string
@@ -32,7 +32,7 @@ local function KVServer(hostname, kv_store_dir)
 
     ---Read a value from the kv store directory
     ---@param key string
-    ---@return KVStoreItem? entry
+    ---@return KVItem? entry
     local function read_entry(key)
         log:debug('Read', key)
 
