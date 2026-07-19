@@ -5,11 +5,13 @@ local open_rednet = proto_util.open_rednet
 
 local proto_model = require 'cc-libs.net.proto.model'
 local Request = proto_model.Request
+local ResponseStatus = proto_model.ResponseStatus
 local validate_message = proto_model.validate_message
 
 ---@class RouteOptions
 ---@field request_model Schema?
----@field response_model Schema?
+---@field response_model Schema? model for ok response
+---@field error_response_model Schema? model for error response
 
 ---@class Route
 ---@field fn fun(Request): Response
@@ -91,9 +93,15 @@ function ProtocolServer:handle_request(request)
     local response = route.fn(request)
     self.logger:trace('Route function returned', response)
 
-    if route.options.response_model ~= nil then
-        self.logger:trace('Validating response with model', route.options.response_model)
+    if response.status == ResponseStatus.OK and route.options.response_model ~= nil then
+        self.logger:trace('Validating ok response with model', route.options.response_model)
         local valid, error_path, err = route.options.response_model:validate(response.message)
+        if not valid then
+            error('Response validation failed ' .. error_path .. ' ' .. err)
+        end
+    elseif response.status == ResponseStatus.ERROR and route.options.error_response_model ~= nil then
+        self.logger:trace('Validating error response with model', route.options.error_response_model)
+        local valid, error_path, err = route.options.error_response_model:validate(response.message)
         if not valid then
             error('Response validation failed ' .. error_path .. ' ' .. err)
         end
