@@ -11,7 +11,7 @@ local ProtocolClient = ccl_proto.ProtocolClient
 ---@field client ProtocolClient
 local MapClient = {}
 
----Create a new Server object
+---Create a new Client object
 ---@param hostname string
 ---@return MapClient
 function MapClient:new(hostname)

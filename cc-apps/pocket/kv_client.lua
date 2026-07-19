@@ -30,19 +30,17 @@ end
 
 local pretty = require 'cc-libs.util.pretty'
 
-local ccl_proto = require 'cc-libs.net.proto'
-local ProtocolClient = ccl_proto.ProtocolClient
+local ccl_kv = require 'cc-libs.kv'
+local KVClient = ccl_kv.KVClient
 
 local function main()
-    local client = ProtocolClient:new('kv_store', 'server', 5)
+    local client = KVClient:new('kv_server')
     if op == 'get' then
-        local success, status, resp = client:request('get', { key = key })
-        ---@cast resp table
+        local success, entry = client:get_entry(key)
         if success then
-            if not resp.found then
+            if entry == nil then
                 log:info('Key', key, 'is not set')
             else
-                local entry = resp.entry
                 if verbose then
                     pretty.pprint('Got value', entry.value)
                     pretty.pprint('Set by', entry.set_by_id, entry.set_by_host)
@@ -52,40 +50,31 @@ local function main()
                 end
             end
         else
-            log:error('Failed to get key', key, status, resp)
+            log:error('Failed to get key', key)
         end
     elseif op == 'history' then
-        local success, status, resp = client:request('get_history', { key = key })
-        ---@cast resp table
+        local success, entry, history = client:get_history(key)
         if success then
-            if not resp.found then
+            if entry == nil then
                 log:info('Key', key, 'is not set')
             else
-                local entry = resp.entry
-                local history = resp.history
+                ---@cast history KVItem[]
                 for _, v in ipairs(history) do
                     pretty.pprint(v.last_update, v.value)
                 end
                 pretty.pprint(entry.last_update, entry.value)
             end
         else
-            log:error('Failed to get key', key, status, resp)
+            log:error('Failed to get key', key)
         end
     elseif op == 'set' then
-        local success, status, resp = client:request('set', {
-            entry = {
-                key = key,
-                value = value,
-                set_by_host = os.getComputerLabel(),
-                set_by_id = os.getComputerID(),
-            },
-        })
+        local success = client:set(key, value)
         if success then
             if verbose then
                 pretty.pprint('Set value of', key, 'to', value)
             end
         else
-            log:error('Failed to assign key', key, status, resp)
+            log:error('Failed to assign key', key)
         end
     else
         error('Unknown op ' .. tostring(op))
