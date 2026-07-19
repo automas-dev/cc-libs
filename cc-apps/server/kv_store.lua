@@ -4,7 +4,7 @@ package.path = '../../?.lua;../../?/init.lua;' .. package.path
 -- Import and configure logging
 local logging = require 'cc-libs.util.logging'
 logging.basic_config {
-    level = logging.Level.INFO,
+    level = logging.Level.DEBUG,
     file_level = logging.Level.DEBUG,
     filepath = 'logs/kv_store.log',
 }
@@ -23,7 +23,7 @@ local server = ProtocolServer:new('kv_store', 'server')
 
 ---@class KVStoreItem
 ---@field key string
----@field value any
+---@field value string
 ---@field set_by_host string
 ---@field set_by_id number
 ---@field last_update string os.time of the creation or last update
@@ -33,6 +33,7 @@ local server = ProtocolServer:new('kv_store', 'server')
 local temp_kv_store = {}
 
 local function update_entry(key, value, set_by_id, set_by_host)
+    log:debug('Update', key, 'to value', value, 'from', set_by_id, set_by_host)
     local store = temp_kv_store
 
     local now = os.epoch('utc') / 1000
@@ -102,7 +103,8 @@ server:route(
     function(request)
         local body = request.message.body
         ---@cast body table
-        update_entry(body.key, body.value, body.set_by_id, body.set_by_host)
+        local entry = body.entry
+        update_entry(entry.key, entry.value, entry.set_by_id, entry.set_by_host)
         return request:ok_response({})
     end
 )
