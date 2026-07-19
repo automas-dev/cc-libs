@@ -12,20 +12,30 @@ local log = logging.get_logger('main')
 -- Argument parsing
 local argparse = require 'cc-libs.util.argparse'
 local parser = argparse.ArgParse:new('kv_client', 'Get or set a value from the kv server')
-parser:add_arg('op', { help = 'get, set or history' })
+parser:add_arg('op', { help = 'get, set, inc, dec or history' })
 parser:add_arg('key', { help = 'key of entry' })
 parser:add_arg('value', { help = 'value if operations is set', required = false })
 parser:add_option('v', 'verbose', 'Output more information')
 local args = parser:parse_args({ ... })
 
 local op = args.op
-assert(op == 'get' or op == 'set' or op == 'history', 'op must be get, set or history')
+assert(
+    op == 'get' or op == 'set' or op == 'inc' or op == 'dec' or op == 'history',
+    'op must be get, set, inc, dec or history'
+)
 local key = args.key
 local value = args.value
 local verbose = args.verbose or false
 
 if op == 'set' then
     assert(value ~= nil, 'value must be given for set')
+    local value_num = tonumber(value)
+    if value_num ~= nil then
+        value = value_num
+    end
+elseif op == 'inc' or op == 'dec' then
+    value = tonumber(value)
+    assert(type(value) == 'number', 'value must be a number')
 end
 
 local pretty = require 'cc-libs.util.pretty'
@@ -35,7 +45,34 @@ local KVClient = ccl_kv.KVClient
 
 local function main()
     local client = KVClient:new('kv_server')
-    if op == 'get' then
+    if op == 'set' then
+        local success = client:set(key, value)
+        if success then
+            if verbose then
+                pretty.pprint('Set value of', key, 'to', value)
+            end
+        else
+            log:error('Failed to assign key', key)
+        end
+    elseif op == 'inc' then
+        local success, err = client:increment(key, value)
+        if success then
+            if verbose then
+                pretty.pprint('Increment value of', key, 'by', value)
+            end
+        else
+            log:error(err)
+        end
+    elseif op == 'dec' then
+        local success, err = client:increment(key, -value)
+        if success then
+            if verbose then
+                pretty.pprint('Decremented value of', key, 'by', value)
+            end
+        else
+            log:error(err)
+        end
+    elseif op == 'get' then
         local success, entry = client:get_entry(key)
         if success then
             if entry == nil then
@@ -66,15 +103,6 @@ local function main()
             end
         else
             log:error('Failed to get key', key)
-        end
-    elseif op == 'set' then
-        local success = client:set(key, value)
-        if success then
-            if verbose then
-                pretty.pprint('Set value of', key, 'to', value)
-            end
-        else
-            log:error('Failed to assign key', key)
         end
     else
         error('Unknown op ' .. tostring(op))

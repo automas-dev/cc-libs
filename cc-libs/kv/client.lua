@@ -21,6 +21,63 @@ function KVClient:new(hostname, timeout)
     return o
 end
 
+---Assign the value for key
+---@param key string
+---@param value string | number
+---@param value_type? string optional type, default will use result of type()
+---@return boolean success
+---@return string? error
+function KVClient:set(key, value, value_type)
+    if value_type == nil then
+        value_type = type(value)
+    end
+    assert(
+        type(value) == 'string' or type(value) == 'number',
+        'value must be a string or number, got ' .. tostring(value_type)
+    )
+    local success, _, resp = self.client:request('set', {
+        entry = {
+            key = key,
+            value = value,
+            value_type = value_type,
+            set_by_host = os.getComputerLabel(),
+            set_by_id = os.getComputerID(),
+        },
+    })
+    ---@cast resp string?
+    return success, resp
+end
+
+---Assign the value for key
+---@param key string
+---@param value number
+---@param default? number
+---@return KVItem? entry updated entry, nil for error
+---@return string? error error if entry is nul
+function KVClient:increment(key, value, default)
+    assert(type(value) == 'number', 'increment value must ba a number')
+    if default ~= nil then
+        assert(type(default) == 'number', 'default value must be a number')
+    end
+    local success, _, resp = self.client:request('increment', {
+        entry = {
+            key = key,
+            value = value,
+            value_type = 'number',
+            value_default = default,
+            set_by_host = os.getComputerLabel(),
+            set_by_id = os.getComputerID(),
+        },
+    })
+    if success then
+        ---@cast resp table
+        return resp.entry
+    else
+        ---@cast resp string
+        return nil, resp
+    end
+end
+
 ---Get the value for key from the server
 ---@param key string
 ---@return boolean success
@@ -32,6 +89,8 @@ function KVClient:get(key)
         if resp.found then
             local entry = resp.entry
             return true, entry.value
+        else
+            return false
         end
     else
         -- TODO remove this, is it somewhere else?
@@ -51,6 +110,8 @@ function KVClient:get_entry(key)
         if resp.found then
             local entry = resp.entry
             return true, entry
+        else
+            return false
         end
     else
         -- TODO remove this, is it somewhere else?
@@ -72,25 +133,9 @@ function KVClient:get_history(key)
             local entry = resp.entry
             local history = resp.history
             return true, entry, history
+        else
+            return false
         end
-    else
-        -- TODO remove this, is it somewhere else?
-        log:warning('Got unsuccessful response from server', status, resp)
-    end
-    return false
-end
-
----Assign the value for key
----@param key string
----@param value string
----@return boolean success
-function KVClient:set(key, value)
-    local success, status, resp = self.client:request(
-        'set',
-        { entry = { key = key, value = value, set_by_host = os.getComputerLabel(), set_by_id = os.getComputerID() } }
-    )
-    if success then
-        return true
     else
         -- TODO remove this, is it somewhere else?
         log:warning('Got unsuccessful response from server', status, resp)
