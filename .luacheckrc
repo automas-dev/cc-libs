@@ -16,6 +16,7 @@ globals = {
     "peripheral",
     "pocket",
     "printError",
+    "read",
     "rednet",
     "redstone",
     "rs",

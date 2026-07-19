@@ -20,6 +20,7 @@
         "peripheral",
         "pocket",
         "printError",
+        "read",
         "rednet",
         "redstone",
         "rs",
@@ -72,7 +73,6 @@
         "io": "disable",
         "os": "disable"
     },
-    ],
     "[lua]": {
         "editor.defaultFormatter": "JohnnyMorganz.stylua"
     },
