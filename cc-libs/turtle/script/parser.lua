@@ -58,6 +58,7 @@ local function is_reserved(tok)
         or tok:sub(1, 1) == '$'
         or tok:sub(1, 1) == ':'
         or tok:sub(1, 1) == '?'
+        or tok:sub(1, 1) == '<'
 end
 
 ---Parse text into tokens
@@ -99,6 +100,17 @@ function TSParser:parse()
                 count = 1,
                 children = fn_actions,
             })
+        elseif tok == '<' then
+            local path = tokens[i + 1]
+            i = i + 1
+            local file = assert(io.open(path, 'r'))
+            local sub_lex = TSLexer:new(file:read())
+            file:close()
+            local sub_parse = TSParser:new(sub_lex)
+            local sub_ast = sub_parse:parse()
+            for _, sub_tok in ipairs(sub_ast) do
+                table.insert(prog, sub_tok)
+            end
         else
             if self:does_token_take_arg(tok) then
                 assert(i < #tokens, 'missing argument for ' .. tostring(tok))
