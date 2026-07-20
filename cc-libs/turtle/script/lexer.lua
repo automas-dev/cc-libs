@@ -192,6 +192,8 @@ function TSLexer:take_until_any(values)
     return text
 end
 
+---Return a list of all tokens
+---@return string[]
 function TSLexer:tokens()
     local tokens = {}
     while self:has_more() do
