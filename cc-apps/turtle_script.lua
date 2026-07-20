@@ -20,6 +20,7 @@ local ccl_ts = require 'cc-libs.turtle.script'
 local TSLexer = ccl_ts.TSLexer
 local TSParser = ccl_ts.TSParser
 local TSTokenType = ccl_ts.TSTokenType
+local TSContext = ccl_ts.TSContext
 
 local ccl_motion = require 'cc-libs.turtle.motion'
 local Motion = ccl_motion.Motion
@@ -75,13 +76,12 @@ end
 ---@param cmd string
 ---@return TSToken[] program
 local function parse_cmd(cmd)
-    local ts_lexer = TSLexer:new(cmd)
-    local ts_parser = TSParser:new(ts_lexer)
+    local ts_parser = TSParser:new()
     ts_parser:takes_arg('m')
     ts_parser:takes_arg('mark')
     ts_parser:takes_arg('g')
     ts_parser:takes_arg('goto')
-    local prog = ts_parser:parse()
+    local prog = ts_parser:parse(cmd)
     return prog
 end
 
