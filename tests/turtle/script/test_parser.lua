@@ -9,7 +9,9 @@ local test = {}
 function test.parser_new()
     local parser = TSParser:new(TSLexer:new('hello "world"'))
     local tokens = parser:parse()
-    expect_arr_eq({ 'hello', 'world' }, tokens)
+    assert_eq(2, #tokens)
+    expect_arr_eq({ name = 'hello' }, tokens[1])
+    expect_arr_eq({ name = 'world' }, tokens[1])
 end
 
 return test

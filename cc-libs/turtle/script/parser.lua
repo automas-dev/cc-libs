@@ -1,6 +1,9 @@
 local ccl_ts_lexer = require 'cc-libs.turtle.script.lexer'
 local TSLexer = ccl_ts_lexer.TSLexer
 
+---@class TSToken
+---@field name string
+
 ---@class TSParser
 ---@field lexer TSLexer
 local TSParser = {}
@@ -18,10 +21,13 @@ function TSParser:new(lexer)
 end
 
 ---Parse text into tokens
----@return any[] tokens
+---@return TSToken[] tokens
 function TSParser:parse()
-    local tokens = self.lexer:tokens()
     -- TODO stuff here
+    local tokens = self.lexer:tokens()
+    for i, token in ipairs(tokens) do
+        tokens[i] = { name = token }
+    end
     return tokens
 end
 
