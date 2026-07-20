@@ -6,6 +6,8 @@ local TSParser = ccl_ts_parser.TSParser
 
 local test = {}
 
+-- TODO parse errors
+
 function test.parser_new()
     local lexer = TSLexer:new('hello world')
     local parser = TSParser:new(lexer)
