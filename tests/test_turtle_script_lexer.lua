@@ -134,4 +134,10 @@ function test.lexer_take_until_any()
     expect_eq(3, lexer.i)
 end
 
+function test.lexer_tokens()
+    local lexer = TSLexer:new('hello "world"')
+    local tokens = lexer:tokens()
+    expect_arr_eq({ 'hello', 'world' }, tokens)
+end
+
 return test
