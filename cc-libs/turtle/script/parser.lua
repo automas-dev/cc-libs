@@ -1,10 +1,19 @@
 local ccl_ts_lexer = require 'cc-libs.turtle.script.lexer'
 local TSLexer = ccl_ts_lexer.TSLexer
 
+---@enum TSTokenType
+local TSTokenType = {
+    CALL = 'call',
+    DEF = 'def',
+    LOOP = 'loop',
+}
+
 ---@class TSToken
+---@field type TSTokenType
 ---@field name string
 ---@field count number number of times to call, default should be 1
 ---@field arg string? single string argument
+---@field children TSToken[]?
 
 ---@class TSParser
 ---@field lexer TSLexer
@@ -54,9 +63,6 @@ end
 ---Parse text into tokens
 ---@return TSToken[] tokens
 function TSParser:parse()
-    ---@type { [string]: TSToken[] }
-    local fn_def = {}
-
     ---@type { fn_name: string?, prog: TSToken[] }[]
     local nest = {}
 
@@ -87,22 +93,12 @@ function TSParser:parse()
             local fn_name = tmp.fn_name
             assert(fn_name ~= nil, 'loop not closed before function')
             prog = tmp.prog
-            fn_def[fn_name] = fn_actions
-        elseif tok:sub(1, 1) == ':' then
-            local fn_name = tok:sub(2)
-            local fn_actions = fn_def[fn_name]
-            assert(fn_actions ~= nil, 'unknown function ' .. tostring(fn_name))
-            local num = tonumber(tokens[i + 1])
-            if num ~= nil then
-                count = num
-                i = i + 1
-            end
-
-            for _ = 1, count do
-                for _, elem in ipairs(fn_actions) do
-                    table.insert(prog, elem)
-                end
-            end
+            table.insert(prog, {
+                type = TSTokenType.DEF,
+                name = fn_name,
+                count = 1,
+                children = fn_actions,
+            })
         else
             if self:does_token_take_arg(tok) then
                 assert(i < #tokens, 'missing argument for ' .. tostring(tok))
@@ -117,17 +113,16 @@ function TSParser:parse()
                 i = i + 1
             end
 
-            if tok == ']' then
+            if tok:sub(1, 1) == ':' then
+                local fn_name = tok:sub(2)
+                table.insert(prog, { type = TSTokenType.CALL, name = fn_name, count = count, arg = arg })
+            elseif tok == ']' then
                 assert(#nest > 0, 'Close loop but open does not exist')
-                local nest_actions = prog
+                local loop_actions = prog
                 prog = table.remove(nest)
-                for _ = 1, count do
-                    for _, elem in ipairs(nest_actions) do
-                        table.insert(prog, elem)
-                    end
-                end
+                table.insert(prog, { type = TSTokenType.LOOP, count = count, children = loop_actions })
             else
-                table.insert(prog, { name = tok, count = count, arg = arg })
+                table.insert(prog, { type = TSTokenType.CALL, name = tok, count = count, arg = arg })
             end
         end
         i = i + 1
@@ -144,4 +139,5 @@ end
 
 return {
     TSParser = TSParser,
+    TSTokenType = TSTokenType,
 }

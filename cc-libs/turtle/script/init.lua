@@ -4,4 +4,5 @@ local parser = require 'cc-libs.turtle.script.parser'
 return {
     TSLexer = lexer.TSLexer,
     TSParser = parser.TSParser,
+    TSTokenType = parser.TSTokenType,
 }

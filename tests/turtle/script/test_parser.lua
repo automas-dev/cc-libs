@@ -3,6 +3,7 @@ local TSLexer = ccl_ts_lexer.TSLexer
 
 local ccl_ts_parser = require 'cc-libs.turtle.script.parser'
 local TSParser = ccl_ts_parser.TSParser
+local TSTokenType = ccl_ts_parser.TSTokenType
 
 local test = {}
 
@@ -19,10 +20,12 @@ function test.parser_parse_simple()
     local tokens = parser:parse()
     assert_eq(2, #tokens)
 
+    expect_eq(TSTokenType.CALL, tokens[1].type)
     expect_eq('hello', tokens[1].name)
     expect_eq(1, tokens[1].count)
     expect_eq(nil, tokens[1].arg)
 
+    expect_eq(TSTokenType.CALL, tokens[2].type)
     expect_eq('world', tokens[2].name)
     expect_eq(1, tokens[2].count)
     expect_eq(nil, tokens[2].arg)
@@ -34,6 +37,7 @@ function test.parser_parse_takes_arg()
     local tokens = parser:parse()
     assert_eq(1, #tokens)
 
+    expect_eq(TSTokenType.CALL, tokens[1].type)
     expect_eq('hello', tokens[1].name)
     expect_eq(1, tokens[1].count)
     expect_eq('world', tokens[1].arg)
@@ -44,10 +48,12 @@ function test.parser_parse_count()
     local tokens = parser:parse()
     assert_eq(2, #tokens)
 
+    expect_eq(TSTokenType.CALL, tokens[1].type)
     expect_eq('hello', tokens[1].name)
     expect_eq(2, tokens[1].count)
     expect_eq(nil, tokens[1].arg)
 
+    expect_eq(TSTokenType.CALL, tokens[2].type)
     expect_eq('world', tokens[2].name)
     expect_eq(1, tokens[2].count)
     expect_eq(nil, tokens[2].arg)
@@ -59,6 +65,7 @@ function test.parser_parse_arg_and_count()
     local tokens = parser:parse()
     assert_eq(1, #tokens)
 
+    expect_eq(TSTokenType.CALL, tokens[1].type)
     expect_eq('hello', tokens[1].name)
     expect_eq(2, tokens[1].count)
     expect_eq('world', tokens[1].arg)
@@ -69,10 +76,21 @@ function test.parser_parse_single_loop()
     local tokens = parser:parse()
     assert_eq(2, #tokens)
 
-    expect_eq('hello', tokens[1].name)
+    expect_eq(TSTokenType.LOOP, tokens[1].type)
+    expect_eq(nil, tokens[1].name)
     expect_eq(1, tokens[1].count)
     expect_eq(nil, tokens[1].arg)
+    assert_ne(nil, tokens[1].children)
+    expect_eq(1, #tokens[1].children)
 
+    local child = tokens[1].children[1]
+
+    expect_eq(TSTokenType.CALL, child.type)
+    expect_eq('hello', child.name)
+    expect_eq(1, child.count)
+    expect_eq(nil, child.arg)
+
+    expect_eq(TSTokenType.CALL, tokens[2].type)
     expect_eq('world', tokens[2].name)
     expect_eq(1, tokens[2].count)
     expect_eq(nil, tokens[2].arg)
@@ -81,55 +99,75 @@ end
 function test.parser_parse_loop()
     local parser = TSParser:new(TSLexer:new('[ hello ] 2 world'))
     local tokens = parser:parse()
-    assert_eq(3, #tokens)
+    assert_eq(2, #tokens)
 
-    expect_eq('hello', tokens[1].name)
-    expect_eq(1, tokens[1].count)
+    expect_eq(TSTokenType.LOOP, tokens[1].type)
+    expect_eq(nil, tokens[1].name)
+    expect_eq(2, tokens[1].count)
     expect_eq(nil, tokens[1].arg)
+    assert_ne(nil, tokens[1].children)
+    expect_eq(1, #tokens[1].children)
 
-    expect_eq('hello', tokens[2].name)
+    local child = tokens[1].children[1]
+
+    expect_eq(TSTokenType.CALL, child.type)
+    expect_eq('hello', child.name)
+    expect_eq(1, child.count)
+    expect_eq(nil, child.arg)
+
+    expect_eq(TSTokenType.CALL, tokens[2].type)
+    expect_eq('world', tokens[2].name)
     expect_eq(1, tokens[2].count)
     expect_eq(nil, tokens[2].arg)
-
-    expect_eq('world', tokens[3].name)
-    expect_eq(1, tokens[3].count)
-    expect_eq(nil, tokens[3].arg)
 end
 
 function test.parser_parse_nested_loop()
     local parser = TSParser:new(TSLexer:new('[ [ hello ] 2 world ] 2'))
     local tokens = parser:parse()
-    assert_eq(6, #tokens)
+    assert_eq(1, #tokens)
 
-    expect_eq('hello', tokens[1].name)
-    expect_eq(1, tokens[1].count)
+    expect_eq(TSTokenType.LOOP, tokens[1].type)
+    expect_eq(nil, tokens[1].name)
+    expect_eq(2, tokens[1].count)
     expect_eq(nil, tokens[1].arg)
+    assert_ne(nil, tokens[1].children)
+    expect_eq(2, #tokens[1].children)
 
-    expect_eq('hello', tokens[2].name)
-    expect_eq(1, tokens[2].count)
-    expect_eq(nil, tokens[2].arg)
+    local child = tokens[1].children[1]
 
-    expect_eq('world', tokens[3].name)
-    expect_eq(1, tokens[3].count)
-    expect_eq(nil, tokens[3].arg)
+    expect_eq(TSTokenType.LOOP, child.type)
+    expect_eq(nil, child.name)
+    expect_eq(2, child.count)
+    expect_eq(nil, child.arg)
+    assert_ne(nil, child.children)
+    expect_eq(1, #child.children)
 
-    expect_eq('hello', tokens[4].name)
-    expect_eq(1, tokens[4].count)
-    expect_eq(nil, tokens[4].arg)
+    child = child.children[1]
 
-    expect_eq('hello', tokens[5].name)
-    expect_eq(1, tokens[5].count)
-    expect_eq(nil, tokens[5].arg)
+    expect_eq(TSTokenType.CALL, child.type)
+    expect_eq('hello', child.name)
+    expect_eq(1, child.count)
+    expect_eq(nil, child.arg)
 
-    expect_eq('world', tokens[6].name)
-    expect_eq(1, tokens[6].count)
-    expect_eq(nil, tokens[6].arg)
+    child = tokens[1].children[2]
+
+    expect_eq(TSTokenType.CALL, child.type)
+    expect_eq('world', child.name)
+    expect_eq(1, child.count)
+    expect_eq(nil, child.arg)
 end
 
 function test.parser_parse_function_def_only()
     local parser = TSParser:new(TSLexer:new('?f hello world ;'))
     local tokens = parser:parse()
-    assert_eq(0, #tokens)
+    assert_eq(1, #tokens)
+
+    expect_eq(TSTokenType.DEF, tokens[1].type)
+    expect_eq('f', tokens[1].name)
+    expect_eq(1, tokens[1].count)
+    expect_eq(nil, tokens[1].arg)
+    assert_ne(nil, tokens[1].children)
+    expect_eq(2, #tokens[1].children)
 end
 
 function test.parser_parse_function_def()
@@ -137,11 +175,29 @@ function test.parser_parse_function_def()
     local tokens = parser:parse()
     assert_eq(2, #tokens)
 
-    expect_eq('hello', tokens[1].name)
+    expect_eq(TSTokenType.DEF, tokens[1].type)
+    expect_eq('f', tokens[1].name)
     expect_eq(1, tokens[1].count)
     expect_eq(nil, tokens[1].arg)
+    assert_ne(nil, tokens[1].children)
+    expect_eq(2, #tokens[1].children)
 
-    expect_eq('world', tokens[2].name)
+    local child = tokens[1].children[1]
+
+    expect_eq(TSTokenType.CALL, child.type)
+    expect_eq('hello', child.name)
+    expect_eq(1, child.count)
+    expect_eq(nil, child.arg)
+
+    child = tokens[1].children[2]
+
+    expect_eq(TSTokenType.CALL, child.type)
+    expect_eq('world', child.name)
+    expect_eq(1, child.count)
+    expect_eq(nil, child.arg)
+
+    expect_eq(TSTokenType.CALL, tokens[2].type)
+    expect_eq('f', tokens[2].name)
     expect_eq(1, tokens[2].count)
     expect_eq(nil, tokens[2].arg)
 end
@@ -149,23 +205,33 @@ end
 function test.parser_parse_function_count()
     local parser = TSParser:new(TSLexer:new('?f hello world ; :f 2'))
     local tokens = parser:parse()
-    assert_eq(4, #tokens)
+    assert_eq(2, #tokens)
 
-    expect_eq('hello', tokens[1].name)
+    expect_eq(TSTokenType.DEF, tokens[1].type)
+    expect_eq('f', tokens[1].name)
     expect_eq(1, tokens[1].count)
     expect_eq(nil, tokens[1].arg)
+    assert_ne(nil, tokens[1].children)
+    expect_eq(2, #tokens[1].children)
 
-    expect_eq('world', tokens[2].name)
-    expect_eq(1, tokens[2].count)
+    local child = tokens[1].children[1]
+
+    expect_eq(TSTokenType.CALL, child.type)
+    expect_eq('hello', child.name)
+    expect_eq(1, child.count)
+    expect_eq(nil, child.arg)
+
+    child = tokens[1].children[2]
+
+    expect_eq(TSTokenType.CALL, child.type)
+    expect_eq('world', child.name)
+    expect_eq(1, child.count)
+    expect_eq(nil, child.arg)
+
+    expect_eq(TSTokenType.CALL, tokens[2].type)
+    expect_eq('f', tokens[2].name)
+    expect_eq(2, tokens[2].count)
     expect_eq(nil, tokens[2].arg)
-
-    expect_eq('hello', tokens[3].name)
-    expect_eq(1, tokens[3].count)
-    expect_eq(nil, tokens[3].arg)
-
-    expect_eq('world', tokens[4].name)
-    expect_eq(1, tokens[4].count)
-    expect_eq(nil, tokens[4].arg)
 end
 
 return test
