@@ -1,5 +1,5 @@
 local lexer = require 'cc-libs.turtle.script.lexer'
-local Lexer = lexer.Lexer
+local TSLexer = lexer.TSLexer
 
 ---@class TSContext
 ---@field motion Motion
