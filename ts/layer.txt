@@ -1,4 +1,4 @@
-?row f 2 ;
+?row f 3 ;
 ?rows row r f r row l f l ;
-?layer rows 1 row r f r row ;
-?area enable m start [ layer u r ] 2 layer g start ;
+?layer rows row r f r row ;
+?area enable m start [ layer u r ] 2 layer g start r 2 ;
