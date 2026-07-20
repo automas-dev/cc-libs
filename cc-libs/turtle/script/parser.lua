@@ -141,7 +141,7 @@ function TSParser:parse(text)
             elseif token == ']' then
                 assert(#nest > 0, 'Close loop but open does not exist')
                 local loop_actions = ast
-                ast = table.remove(nest)
+                ast = table.remove(nest).ast
                 table.insert(ast, { type = TSTokenType.LOOP, count = count, children = loop_actions })
             else
                 table.insert(ast, { type = TSTokenType.CALL, name = token, count = count, arg = arg })
