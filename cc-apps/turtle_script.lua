@@ -122,8 +122,10 @@ local function run_prog(prog, active_fn_stack)
                 log:debug('call fn', step.name)
                 table.insert(active_fn_stack, step.name)
                 local len_before = #active_fn_stack
-                if not run_prog(fn_def[step.name], active_fn_stack) then
-                    return false
+                for _ = 1, step.count do
+                    if not run_prog(fn_def[step.name], active_fn_stack) then
+                        return false
+                    end
                 end
                 assert(#active_fn_stack == len_before, 'Unbalanced function stack')
                 table.remove(active_fn_stack)
@@ -205,11 +207,14 @@ local function repl()
             log:info('Exiting')
             break
         elseif #cmd > 0 then
-            local prog = parse_cmd(cmd)
-            if prog ~= nil then
+            local success, prog = pcall(parse_cmd, cmd)
+            if not success then
+                log:error('Failed to parse program', prog)
+            elseif prog ~= nil then
                 table.insert(history, cmd)
                 log:trace('History now', history)
-                local success, err = pcall(run_prog, prog)
+                local err
+                success, err = pcall(run_prog, prog)
                 if not success then
                     log:error('Program failed', err)
                 end

@@ -198,13 +198,15 @@ function TSLexer:tokens()
     local tokens = {}
     while self:has_more() do
         self:take_ws()
-        local text
-        if self:match_at(self.i, '"') then
-            text = self:take_quoted_string()
-        else
-            text = self:take_until_ws()
+        if self:has_more() then
+            local text
+            if self:match_at(self.i, '"') then
+                text = self:take_quoted_string()
+            else
+                text = self:take_until_ws()
+            end
+            table.insert(tokens, text)
         end
-        table.insert(tokens, text)
     end
     return tokens
 end

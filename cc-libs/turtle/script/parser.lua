@@ -1,3 +1,6 @@
+local logging = require 'cc-libs.util.logging'
+local log = logging.get_logger('turtle.script.parser')
+
 local ccl_ts_lexer = require 'cc-libs.turtle.script.lexer'
 local TSLexer = ccl_ts_lexer.TSLexer
 
@@ -82,8 +85,14 @@ function TSParser:parse()
             table.insert(nest, { prog = prog })
             prog = {}
         elseif tok:sub(1, 1) == '?' then
-            assert(#tok > 1, 'missing function name')
-            local fn_name = tok:sub(2)
+            local fn_name
+            if #tok > 1 then
+                fn_name = tok:sub(2)
+            else
+                fn_name = tokens[i + 1]
+                i = i + 1
+            end
+            assert(fn_name ~= nil and #fn_name >= 1, 'missing function name')
             table.insert(nest, { fn_name = fn_name, prog = prog })
             prog = {}
         elseif tok == ';' then
@@ -100,14 +109,25 @@ function TSParser:parse()
                 count = 1,
                 children = fn_actions,
             })
-        elseif tok == '<' then
-            local path = tokens[i + 1]
-            i = i + 1
+        elseif tok:sub(1, 1) == '<' then
+            local path
+            if #tok > 1 then
+                path = tok:sub(2)
+            else
+                path = tokens[i + 1]
+                i = i + 1
+            end
+            assert(path ~= nil and #path >= 1, 'Missing path')
             local file = assert(io.open(path, 'r'))
-            local sub_lex = TSLexer:new(file:read())
+            log:debug('Loading script from', path)
+            local sub_lex = TSLexer:new(file:read('a'))
             file:close()
             local sub_parse = TSParser:new(sub_lex)
+            for _, a in ipairs(self.token_takes_arg) do
+                sub_parse:takes_arg(a)
+            end
             local sub_ast = sub_parse:parse()
+            log:debug('sub program is', sub_ast)
             for _, sub_tok in ipairs(sub_ast) do
                 table.insert(prog, sub_tok)
             end
