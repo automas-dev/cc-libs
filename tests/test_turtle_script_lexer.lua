@@ -11,6 +11,14 @@ function test.lexer_new()
     expect_eq(text, lexer.text)
     expect_eq(1, lexer.i)
     expect_eq(#text, lexer.len)
+    expect_true(lexer:has_more())
+end
+
+function test.lexer_has_more()
+    local text = 'hello'
+    local lexer = TSLexer:new(text)
+    expect_eq('hello', lexer:take_until(' '))
+    expect_false(lexer:has_more())
 end
 
 function test.lexer_sub()
@@ -72,6 +80,16 @@ function test.lexer_take_ws()
     lexer = TSLexer:new(' \t\r\nhello world')
     lexer:take_ws()
     expect_eq(5, lexer.i)
+end
+
+function test.lexer_take_until_ws()
+    local lexer = TSLexer:new('h world')
+    expect_eq('h', lexer:take_until_ws())
+    expect_eq(2, lexer.i)
+
+    lexer = TSLexer:new('hello world')
+    expect_eq('hello', lexer:take_until_ws())
+    expect_eq(6, lexer.i)
 end
 
 function test.lexer_take_number()

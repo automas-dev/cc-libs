@@ -17,6 +17,12 @@ function TSLexer:new(text)
     return o
 end
 
+---Returns true if there are more characters remaining
+---@return boolean
+function TSLexer:has_more()
+    return self.i <= self.len
+end
+
 ---Get text starting at i
 ---@private
 ---@param i number
@@ -99,6 +105,21 @@ function TSLexer:take_ws()
         i = i + 1
     end
     self.i = i
+end
+
+---Take characters until whitespace
+---@return string token
+function TSLexer:take_until_ws()
+    local i = self.i
+    while i <= self.len do
+        if self:match_any_at(i, { ' ', '\t', '\r', '\n' }) then
+            break
+        end
+        i = i + 1
+    end
+    local text = self.text:sub(self.i, i - 1)
+    self.i = i
+    return text
 end
 
 ---Take characters that are a decimal digit
