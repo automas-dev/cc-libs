@@ -24,11 +24,9 @@ local TSTokenType = {
 local TSParser = {}
 
 ---Create a new Parser object
----@param lexer TSLexer
 ---@return TSParser
-function TSParser:new(lexer)
+function TSParser:new()
     local o = {
-        lexer = lexer,
         token_takes_arg = {},
     }
     setmetatable(o, self)
@@ -65,99 +63,90 @@ local function is_reserved(tok)
 end
 
 ---Parse text into tokens
+---@param text string
 ---@return TSToken[] tokens
-function TSParser:parse()
-    ---@type { fn_name: string?, prog: TSToken[] }[]
+function TSParser:parse(text)
+    local lex = TSLexer:new(text)
+
+    ---@type { fn_name: string?, ast: TSToken[] }[]
     local nest = {}
 
     ---@type TSToken[]
-    local prog = {}
+    local ast = {}
 
-    local tokens = self.lexer:tokens()
-
-    local i = 1
-    while i <= #tokens do
-        local tok = tokens[i]
+    for token in lex:token_iter() do
         local count = 1
         local arg = nil
 
-        if tok == '[' then
-            table.insert(nest, { prog = prog })
-            prog = {}
-        elseif tok:sub(1, 1) == '?' then
+        if token == '[' then
+            table.insert(nest, { ast = ast })
+            ast = {}
+        elseif token:sub(1, 1) == '?' then
             local fn_name
-            if #tok > 1 then
-                fn_name = tok:sub(2)
+            if #token > 1 then
+                fn_name = token:sub(2)
             else
-                fn_name = tokens[i + 1]
-                i = i + 1
+                fn_name = lex:take_token()
             end
             assert(fn_name ~= nil and #fn_name >= 1, 'missing function name')
-            table.insert(nest, { fn_name = fn_name, prog = prog })
-            prog = {}
-        elseif tok == ';' then
+            table.insert(nest, { fn_name = fn_name, ast = ast })
+            ast = {}
+        elseif token == ';' then
             assert(#nest > 0, 'Close function but function start not exist')
-            local fn_actions = prog
-            ---@type { fn_name: string?, prog: TSToken[] }
+            local fn_actions = ast
+            ---@type { fn_name: string?, ast: TSToken[] }
             local tmp = table.remove(nest)
             local fn_name = tmp.fn_name
             assert(fn_name ~= nil, 'loop not closed before function')
-            prog = tmp.prog
-            table.insert(prog, {
+            ast = tmp.ast
+            table.insert(ast, {
                 type = TSTokenType.DEF,
                 name = fn_name,
                 count = 1,
                 children = fn_actions,
             })
-        elseif tok:sub(1, 1) == '<' then
+        elseif token:sub(1, 1) == '<' then
             local path
-            if #tok > 1 then
-                path = tok:sub(2)
+            if #token > 1 then
+                path = token:sub(2)
             else
-                path = tokens[i + 1]
-                i = i + 1
+                path = lex:take_token()
             end
             assert(path ~= nil and #path >= 1, 'Missing path')
             local file = assert(io.open(path, 'r'))
             log:debug('Loading script from', path)
-            local sub_lex = TSLexer:new(file:read('a'))
+            local script_text = file:read('a')
             file:close()
-            local sub_parse = TSParser:new(sub_lex)
-            for _, a in ipairs(self.token_takes_arg) do
-                sub_parse:takes_arg(a)
-            end
-            local sub_ast = sub_parse:parse()
+            local sub_ast = self:parse(script_text)
             log:debug('sub program is', sub_ast)
             for _, sub_tok in ipairs(sub_ast) do
-                table.insert(prog, sub_tok)
+                table.insert(ast, sub_tok)
             end
         else
-            if self:does_token_take_arg(tok) then
-                assert(i < #tokens, 'missing argument for ' .. tostring(tok))
-                arg = tokens[i + 1]
+            if self:does_token_take_arg(token) then
+                arg = lex:take_token()
+                assert(arg ~= nil, 'missing argument for ' .. tostring(token))
                 assert(not is_reserved(arg), 'Tried to use reserved token for arg ' .. tostring(arg))
-                i = i + 1
             end
 
-            local num = tonumber(tokens[i + 1])
+            local num = tonumber(lex:peek_token())
             if num ~= nil then
                 count = num
-                i = i + 1
+                lex:take_token()
             end
 
-            if tok:sub(1, 1) == ':' then
-                local fn_name = tok:sub(2)
-                table.insert(prog, { type = TSTokenType.CALL, name = fn_name, count = count, arg = arg })
-            elseif tok == ']' then
+            if token:sub(1, 1) == ':' then
+                local fn_name = token:sub(2)
+                table.insert(ast, { type = TSTokenType.CALL, name = fn_name, count = count, arg = arg })
+            elseif token == ']' then
                 assert(#nest > 0, 'Close loop but open does not exist')
-                local loop_actions = prog
-                prog = table.remove(nest)
-                table.insert(prog, { type = TSTokenType.LOOP, count = count, children = loop_actions })
+                local loop_actions = ast
+                ast = table.remove(nest)
+                table.insert(ast, { type = TSTokenType.LOOP, count = count, children = loop_actions })
             else
-                table.insert(prog, { type = TSTokenType.CALL, name = tok, count = count, arg = arg })
+                table.insert(ast, { type = TSTokenType.CALL, name = token, count = count, arg = arg })
             end
         end
-        i = i + 1
     end
     if #nest > 0 then
         if nest[#nest].fn_name ~= nil then
@@ -166,7 +155,7 @@ function TSParser:parse()
             error('Unclosed loop [')
         end
     end
-    return prog
+    return ast
 end
 
 return {
