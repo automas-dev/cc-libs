@@ -42,11 +42,22 @@ function TSParser:does_token_take_arg(name)
     return false
 end
 
+local function is_reserved(tok)
+    return tok == '['
+        or tok == ']'
+        or tok == ';'
+        or tok:sub(1, 1) == '$'
+        or tok:sub(1, 1) == ':'
+        or tok:sub(1, 1) == '?'
+end
+
 ---Parse text into tokens
 ---@return TSToken[] tokens
 function TSParser:parse()
-    -- TODO stuff here
-    ---@type TSToken[][]
+    ---@type { [string]: TSToken[] }
+    local fn_def = {}
+
+    ---@type { fn_name: string?, prog: TSToken[] }[]
     local nest = {}
 
     ---@type TSToken[]
@@ -61,12 +72,42 @@ function TSParser:parse()
         local arg = nil
 
         if tok == '[' then
-            table.insert(nest, prog)
+            table.insert(nest, { prog = prog })
             prog = {}
+        elseif tok:sub(1, 1) == '?' then
+            assert(#tok > 1, 'missing function name')
+            local fn_name = tok:sub(2)
+            table.insert(nest, { fn_name = fn_name, prog = prog })
+            prog = {}
+        elseif tok == ';' then
+            assert(#nest > 0, 'Close function but function start not exist')
+            local fn_actions = prog
+            ---@type { fn_name: string?, prog: TSToken[] }
+            local tmp = table.remove(nest)
+            local fn_name = tmp.fn_name
+            assert(fn_name ~= nil, 'loop not closed before function')
+            prog = tmp.prog
+            fn_def[fn_name] = fn_actions
+        elseif tok:sub(1, 1) == ':' then
+            local fn_name = tok:sub(2)
+            local fn_actions = fn_def[fn_name]
+            assert(fn_actions ~= nil, 'unknown function ' .. tostring(fn_name))
+            local num = tonumber(tokens[i + 1])
+            if num ~= nil then
+                count = num
+                i = i + 1
+            end
+
+            for _ = 1, count do
+                for _, elem in ipairs(fn_actions) do
+                    table.insert(prog, elem)
+                end
+            end
         else
             if self:does_token_take_arg(tok) then
                 assert(i < #tokens, 'missing argument for ' .. tostring(tok))
                 arg = tokens[i + 1]
+                assert(not is_reserved(arg), 'Tried to use reserved token for arg ' .. tostring(arg))
                 i = i + 1
             end
 
@@ -91,7 +132,13 @@ function TSParser:parse()
         end
         i = i + 1
     end
-    assert(#nest == 0, 'Unclosed loop [')
+    if #nest > 0 then
+        if nest[#nest].fn_name ~= nil then
+            error('Unclosed function ' .. tostring(nest[#nest].fn_name))
+        else
+            error('Unclosed loop [')
+        end
+    end
     return prog
 end
 

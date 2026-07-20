@@ -124,4 +124,46 @@ function test.parser_parse_nested_loop()
     expect_eq(nil, tokens[6].arg)
 end
 
+function test.parser_parse_function_def_only()
+    local parser = TSParser:new(TSLexer:new('?f hello world ;'))
+    local tokens = parser:parse()
+    assert_eq(0, #tokens)
+end
+
+function test.parser_parse_function_def()
+    local parser = TSParser:new(TSLexer:new('?f hello world ; :f'))
+    local tokens = parser:parse()
+    assert_eq(2, #tokens)
+
+    expect_eq('hello', tokens[1].name)
+    expect_eq(1, tokens[1].count)
+    expect_eq(nil, tokens[1].arg)
+
+    expect_eq('world', tokens[2].name)
+    expect_eq(1, tokens[2].count)
+    expect_eq(nil, tokens[2].arg)
+end
+
+function test.parser_parse_function_count()
+    local parser = TSParser:new(TSLexer:new('?f hello world ; :f 2'))
+    local tokens = parser:parse()
+    assert_eq(4, #tokens)
+
+    expect_eq('hello', tokens[1].name)
+    expect_eq(1, tokens[1].count)
+    expect_eq(nil, tokens[1].arg)
+
+    expect_eq('world', tokens[2].name)
+    expect_eq(1, tokens[2].count)
+    expect_eq(nil, tokens[2].arg)
+
+    expect_eq('hello', tokens[3].name)
+    expect_eq(1, tokens[3].count)
+    expect_eq(nil, tokens[3].arg)
+
+    expect_eq('world', tokens[4].name)
+    expect_eq(1, tokens[4].count)
+    expect_eq(nil, tokens[4].arg)
+end
+
 return test
