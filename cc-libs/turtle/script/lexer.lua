@@ -2,6 +2,7 @@
 ---@field text string
 ---@field i number
 ---@field len number
+---@field private next_token string?
 local TSLexer = {}
 
 ---Create a new Lexer object
@@ -192,21 +193,45 @@ function TSLexer:take_until_any(values)
     return text
 end
 
+---Get the next token
+---@return string?
+function TSLexer:peek_token()
+    if self.next_token == nil then
+        self:take_ws()
+        if self:has_more() then
+            if self:match_at(self.i, '"') then
+                self.next_token = self:take_quoted_string()
+            else
+                self.next_token = self:take_until_ws()
+            end
+        end
+    end
+    return self.next_token
+end
+
+---Get the next token
+---@return string?
+function TSLexer:take_token()
+    self:peek_token()
+    local token = self.next_token
+    self.next_token = nil
+    return token
+end
+
+---Return a list of all tokens
+---@return fun(): string?
+function TSLexer:token_iter()
+    return function()
+        return self:take_token()
+    end
+end
+
 ---Return a list of all tokens
 ---@return string[]
 function TSLexer:tokens()
     local tokens = {}
-    while self:has_more() do
-        self:take_ws()
-        if self:has_more() then
-            local text
-            if self:match_at(self.i, '"') then
-                text = self:take_quoted_string()
-            else
-                text = self:take_until_ws()
-            end
-            table.insert(tokens, text)
-        end
+    for tok in self:token_iter() do
+        table.insert(tokens, tok)
     end
     return tokens
 end
