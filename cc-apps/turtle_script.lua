@@ -14,6 +14,7 @@ local argparse = require 'cc-libs.util.argparse'
 local parser =
     argparse.ArgParse:new('turtle_script', 'Control a turtle with short command string and update the map server')
 parser:add_arg('cmd', { help = 'command string, leave empty for repl', required = false, is_multi = true })
+parser:add_option('f', 'file', 'script file to read and run', true)
 local args = parser:parse_args({ ... })
 
 local ccl_ts = require 'cc-libs.turtle.script'
@@ -109,7 +110,16 @@ end)
 -- end)
 
 local function main()
-    local success, err = context:exec(table.concat(args.cmd, ' '))
+    local text
+    if args.file ~= nil then
+        log:info('Loading script from', args.file)
+        local file = assert(io.open(args.file, 'r'))
+        text = file:read('a')
+        file:close()
+    else
+        text = table.concat(args.cmd, ' ')
+    end
+    local success, err = context:exec(text)
     if not success then
         log:error('Program failed', err)
     end
@@ -136,7 +146,7 @@ local function repl()
     end
 end
 
-if args.cmd ~= nil then
+if args.cmd ~= nil or args.file ~= nil then
     telem:run_parallel_with('main', log:wrap_fn(main))
 else
     telem:run_parallel_with('repl', log:wrap_fn(repl))
