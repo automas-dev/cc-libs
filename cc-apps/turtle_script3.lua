@@ -149,9 +149,10 @@ local function main()
 end
 
 local function repl()
+    local history = {}
     while true do
         write('repl> ')
-        local cmd = read()
+        local cmd = read(nil, history)
         if cmd == 'h' or cmd == 'help' then
             print_help()
         elseif cmd == 'q' or cmd == 'quit' then
@@ -160,6 +161,8 @@ local function repl()
         elseif #cmd > 0 then
             local prog = parse_cmd(cmd)
             if prog ~= nil then
+                table.insert(history, cmd)
+                log:info('History now', history)
                 local success, err = pcall(run_prog, prog)
                 if not success then
                     log:error('Program failed', err)
