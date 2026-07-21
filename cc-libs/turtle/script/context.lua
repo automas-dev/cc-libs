@@ -98,6 +98,7 @@ function TSContext:eval(node)
                     end
                 end
                 self.vars[var_name] = i
+                log:info('Setting var', var_name, 'to', i)
                 success = true
             else
                 if type(count) == 'string' and count:sub(1, 1) == '$' then
@@ -173,6 +174,7 @@ function TSContext:eval(node)
                     i = i + 1
                 end
                 self.vars[var_name] = i
+                log:info('Setting var', var_name, 'to', i)
                 success = true
             else
                 if type(node.count) == 'string' and count:sub(1, 1) == '$' then
@@ -253,6 +255,7 @@ function TSContext:eval(node)
                 end
             end
             self.vars[var_name] = i
+            log:info('Setting var', var_name, 'to', i)
             success = true
         else
             if type(node.count) == 'string' and count:sub(1, 1) == '$' then
