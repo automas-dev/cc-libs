@@ -77,7 +77,7 @@ function TSParser:parse(text)
     local ast = {}
 
     for token in lex:token_iter() do
-        ---@type number|'?'
+        ---@type number|'?'|'#'
         local count = 1
         local arg = nil
 
@@ -136,9 +136,9 @@ function TSParser:parse(text)
             if num ~= nil then
                 count = num
                 lex:take_token()
-            elseif lex:peek_token() == '?' then
-                count = '?'
-                lex:take_token()
+            elseif lex:peek_token() == '?' or lex:peek_token() == '!' then
+                ---@diagnostic disable-next-line: cast-local-type
+                count = lex:take_token()
             end
 
             if token == ']' then

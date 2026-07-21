@@ -73,7 +73,7 @@ function TSContext:eval(node)
             log:trace('call stack before is', self.call_stack)
 
             local success, err
-            if node.count == '?' then
+            if node.count == '!' then
                 while fn(self.motion, 1, node.arg) do
                 end
             else
@@ -106,7 +106,7 @@ function TSContext:eval(node)
             local success = false
             local err = nil
 
-            if count == '?' then
+            if count == '!' then
                 -- Loop function count times
                 success = true
                 while success do
@@ -150,7 +150,7 @@ function TSContext:eval(node)
         assert(node.children ~= nil)
         log:debug('Evaluating loop')
         local count = node.count
-        if count == '?' then
+        if count == '!' then
             local success = true
             -- Loop count times
             while success do
