@@ -65,7 +65,7 @@ function Motion:_telem_event_move(action, attempts)
         self.telemetry:send_event('turtle_move', msg, {
             action = action,
             attempts = attempts,
-            max_attempts = self.max_tries,
+            max_attempts = self.can_dig and self.max_tries or 1,
             subsystem = log.subsystem,
         })
     end
@@ -85,7 +85,7 @@ function Motion:_telem_alert_fail(action, attempts)
         self.telemetry:send_alert('motion_fail', msg, {
             action = action,
             attempts = attempts,
-            max_attempts = self.max_tries,
+            max_attempts = self.can_dig and self.max_tries or 1,
             subsystem = log.subsystem,
         })
     end
@@ -127,7 +127,7 @@ function Motion:_attempt_move(action, action_fn, dig_fn)
     local tries = 0
     for i = 1, self.max_tries do
         tries = i
-        log:trace('Action', action, 'attempt', tries, 'of', self.max_tries)
+        log:trace('Action', action, 'attempt', tries, 'of', self.can_dig and self.max_tries or 1)
         if action_fn() then
             log:trace('Action', action, 'was successful')
             success = true
@@ -142,6 +142,7 @@ function Motion:_attempt_move(action, action_fn, dig_fn)
             dig_fn()
         else
             log:trace('Dig function is disabled')
+            break
         end
     end
     log:trace('Attempt to move took', tries, 'tries and was', (success and 'success' or 'fail'))
