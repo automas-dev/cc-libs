@@ -1,0 +1,7 @@
+: probe f #a b $a ;
+: show u l 2 f $a b $a d l ;
+: find [ probe show f l ] #c l f $c r ;
+: dig enable l 2 f $a b $a disable l ;
+: mirror [ probe dig f l ] #c l f $c r ;
+
+: follow [ probe r f l ] #c l 2 f $c r u f $a b $a d ;

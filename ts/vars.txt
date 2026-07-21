@@ -1,0 +1,1 @@
+: vars f #wid r f #len r f $wid r f $len r [ u [ f $wid r f $len r ] 2 ] 3 ;
