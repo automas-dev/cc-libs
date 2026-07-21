@@ -8,7 +8,7 @@ local TSLexer = ccl_ts_lexer.TSLexer
 local TSTokenType = {
     CALL = 'call',
     DEF = 'def',
-    LOOP = 'loop',
+    BLOCK = 'block',
 }
 
 ---@class TSToken
@@ -145,7 +145,7 @@ function TSParser:parse(text)
                 assert(#nest > 0, 'Close loop but open does not exist')
                 local loop_actions = ast
                 ast = table.remove(nest).ast
-                table.insert(ast, { type = TSTokenType.LOOP, count = count, children = loop_actions })
+                table.insert(ast, { type = TSTokenType.BLOCK, count = count, children = loop_actions })
             else
                 table.insert(ast, { type = TSTokenType.CALL, name = token, count = count, arg = arg })
             end

@@ -146,9 +146,9 @@ function TSContext:eval(node)
         end
         return false, 'function not defined ' .. tostring(fn_name)
     -- Execute multiple nodes count times
-    elseif node.type == TSTokenType.LOOP then
+    elseif node.type == TSTokenType.BLOCK then
         assert(node.children ~= nil)
-        log:debug('Evaluating loop')
+        log:debug('Evaluating block')
         local count = node.count
         if count == '!' then
             local success = true
