@@ -72,7 +72,14 @@ function TSContext:eval(node)
             local stack_count = #self.call_stack
             log:trace('call stack before is', self.call_stack)
 
-            local success, err = fn(self.motion, node.count, node.arg)
+            local success, err
+            if node.count == '?' then
+                while fn(self.motion, 1, node.arg) do
+                end
+            else
+                ---@diagnostic disable-next-line: param-type-mismatch
+                success, err = fn(self.motion, node.count, node.arg)
+            end
 
             log:trace('call stack after is', self.call_stack)
             assert(#self.call_stack == stack_count, 'Unbalanced call')
@@ -94,15 +101,35 @@ function TSContext:eval(node)
             log:trace('call stack before is', self.call_stack)
             local stack_count = #self.call_stack
 
+            local count = node.count
+
             local success = false
             local err = nil
-            -- Loop function count times
-            for _, child in ipairs(def) do
-                log:trace('Loop', _, 'for function', fn_name)
-                success, err = self:eval(child)
-                -- Stop if any call fails
-                if not success then
-                    break
+
+            if count == '?' then
+                -- Loop function count times
+                success = true
+                while success do
+                    for _, child in ipairs(def) do
+                        log:trace('Loop', _, 'for function', fn_name)
+                        success, err = self:eval(child)
+                        -- Stop if any call fails
+                        if not success then
+                            break
+                        end
+                    end
+                end
+            else
+                -- Loop function count times
+                for _ = 1, count do
+                    for _, child in ipairs(def) do
+                        log:trace('Loop', _, 'for function', fn_name)
+                        success, err = self:eval(child)
+                        -- Stop if any call fails
+                        if not success then
+                            break
+                        end
+                    end
                 end
             end
             log:trace('call stack after is', self.call_stack)

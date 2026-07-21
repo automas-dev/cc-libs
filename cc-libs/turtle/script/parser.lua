@@ -14,7 +14,7 @@ local TSTokenType = {
 ---@class TSToken
 ---@field type TSTokenType
 ---@field name string
----@field count number number of times to call, default should be 1
+---@field count number|'?' number of times to call, default should be 1
 ---@field arg string? single string argument
 ---@field children TSToken[]?
 
@@ -75,6 +75,7 @@ function TSParser:parse(text)
     local ast = {}
 
     for token in lex:token_iter() do
+        ---@type number|'?'
         local count = 1
         local arg = nil
 
@@ -132,6 +133,9 @@ function TSParser:parse(text)
             local num = tonumber(lex:peek_token())
             if num ~= nil then
                 count = num
+                lex:take_token()
+            elseif lex:peek_token() == '?' then
+                count = '?'
                 lex:take_token()
             end
 
