@@ -74,8 +74,13 @@ function TSContext:eval(node)
 
             local success, err
             if node.count == '!' then
-                while fn(self.motion, 1, node.arg) do
+                success = true
+                while success do
+                    success = fn(self.motion, 1, node.arg)
                 end
+            elseif node.count == '?' then
+                fn(self.motion, 1, node.arg)
+                success = true
             else
                 ---@diagnostic disable-next-line: param-type-mismatch
                 success, err = fn(self.motion, node.count, node.arg)
@@ -119,6 +124,16 @@ function TSContext:eval(node)
                         end
                     end
                 end
+            elseif count == '?' then
+                for _, child in ipairs(def) do
+                    log:trace('Loop', _, 'for function', fn_name)
+                    success, err = self:eval(child)
+                    -- Stop if any call fails
+                    if not success then
+                        break
+                    end
+                end
+                success = true
             else
                 -- Loop function count times
                 for _ = 1, count do
@@ -154,7 +169,7 @@ function TSContext:eval(node)
             local success = true
             -- Loop count times
             while success do
-                -- Run each node in loop
+                -- Run each node in block
                 for _, child in ipairs(node.children) do
                     success = self:eval(child)
                     -- Return error if a call fails
@@ -163,10 +178,19 @@ function TSContext:eval(node)
                     end
                 end
             end
+        elseif count == '?' then
+            -- Run each node in block
+            for _, child in ipairs(node.children) do
+                local success, err = self:eval(child)
+                -- Return error if a call fails
+                if not success then
+                    break
+                end
+            end
         else
             -- Loop count times
             for _ = 1, node.count do
-                -- Run each node in loop
+                -- Run each node in block
                 for _, child in ipairs(node.children) do
                     local success, err = self:eval(child)
                     -- Return error if a call fails
