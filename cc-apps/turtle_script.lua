@@ -131,7 +131,15 @@ context:register('dec', true, function(_, count, arg)
     end
     val = val - count
     context.vars[arg] = val
-    log:debug('Increment', arg, 'to', val)
+    log:debug('Decrement', arg, 'to', val)
+    return true
+end)
+context:register('set', true, function(_, count, arg)
+    if arg == nil or #arg == 0 then
+        return false, 'empty var name'
+    end
+    context.vars[arg] = count
+    log:debug('Set', arg, 'to', count)
     return true
 end)
 
