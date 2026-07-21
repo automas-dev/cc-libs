@@ -108,6 +108,32 @@ end)
 --     end
 --     return true
 -- end)
+context:register('inc', true, function(_, count, arg)
+    if arg == nil or #arg == 0 then
+        return false, 'empty var name'
+    end
+    local val = context.vars[arg]
+    if val == nil then
+        return false, 'missing variable ' .. tostring(arg)
+    end
+    val = val + count
+    context.vars[arg] = val
+    log:debug('Increment', arg, 'to', val)
+    return true
+end)
+context:register('dec', true, function(_, count, arg)
+    if arg == nil or #arg == 0 then
+        return false, 'empty var name'
+    end
+    local val = context.vars[arg]
+    if val == nil then
+        return false, 'missing variable ' .. tostring(arg)
+    end
+    val = val - count
+    context.vars[arg] = val
+    log:debug('Increment', arg, 'to', val)
+    return true
+end)
 
 local function main()
     local text
