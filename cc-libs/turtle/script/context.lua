@@ -14,6 +14,7 @@ local TSTokenType = lexer.TSTokenType
 ---@field native { [string]: TSFunction }
 ---@field defs { [string]: TSToken[] }
 ---@field call_stack string[]
+---@field vars { [string] : number }
 local TSContext = {}
 
 ---Create a new TSContext object
@@ -22,6 +23,7 @@ local TSContext = {}
 ---@return TSContext
 function TSContext:new(motion, nav)
     local parser = TSParser:new()
+    motion.log_fails = false
     local o = {
         motion = motion,
         nav = nav,
@@ -29,6 +31,7 @@ function TSContext:new(motion, nav)
         native = {},
         defs = {},
         call_stack = {},
+        vars = {},
     }
     setmetatable(o, self)
     self.__index = self
@@ -72,18 +75,41 @@ function TSContext:eval(node)
             local stack_count = #self.call_stack
             log:trace('call stack before is', self.call_stack)
 
+            local count = node.count
+
             local success, err
-            if node.count == '!' then
+            if count == '!' then
                 success = true
                 while success do
                     success = fn(self.motion, 1, node.arg)
                 end
-            elseif node.count == '?' then
+            elseif count == '?' then
                 fn(self.motion, 1, node.arg)
                 success = true
+            elseif type(count) == 'string' and count:sub(1, 1) == '#' then
+                assert(#count > 1, 'empty var name')
+                local var_name = count:sub(2)
+                success = true
+                local i = 0
+                while success do
+                    success = fn(self.motion, 1, node.arg)
+                    if success then
+                        i = i + 1
+                    end
+                end
+                self.vars[var_name] = i
+                success = true
             else
+                if type(count) == 'string' and count:sub(1, 1) == '$' then
+                    assert(#count > 1, 'empty var name')
+                    local var_name = count:sub(2)
+                    count = self.vars[var_name]
+                    if count == nil then
+                        return false, 'unknown variable ' .. tostring(var_name)
+                    end
+                end
                 ---@diagnostic disable-next-line: param-type-mismatch
-                success, err = fn(self.motion, node.count, node.arg)
+                success, err = fn(self.motion, count, node.arg)
             end
 
             log:trace('call stack after is', self.call_stack)
@@ -134,7 +160,28 @@ function TSContext:eval(node)
                     end
                 end
                 success = true
+            elseif type(node.count) == 'string' and count:sub(1, 1) == '#' then
+                local var_name = count:sub(2)
+                local i = 0
+                for _, child in ipairs(def) do
+                    log:trace('Loop', _, 'for function', fn_name)
+                    success, err = self:eval(child)
+                    -- Stop if any call fails
+                    if not success then
+                        break
+                    end
+                    i = i + 1
+                end
+                self.vars[var_name] = i
+                success = true
             else
+                if type(node.count) == 'string' and count:sub(1, 1) == '$' then
+                    local var_name = count:sub(2)
+                    count = self.vars[var_name]
+                    if count == nil then
+                        return false, 'unknown variable ' .. tostring(var_name)
+                    end
+                end
                 -- Loop function count times
                 for _ = 1, count do
                     for _, child in ipairs(def) do
@@ -187,7 +234,34 @@ function TSContext:eval(node)
                     break
                 end
             end
+            success = true
+        elseif type(node.count) == 'string' and count:sub(1, 1) == '#' then
+            local var_name = count:sub(2)
+            local i = 0
+            success = true
+            while success do
+                -- Run each node in block
+                for _, child in ipairs(node.children) do
+                    success = self:eval(child)
+                    -- Return error if a call fails
+                    if not success then
+                        break
+                    end
+                end
+                if success then
+                    i = i + 1
+                end
+            end
+            self.vars[var_name] = i
+            success = true
         else
+            if type(node.count) == 'string' and count:sub(1, 1) == '$' then
+                local var_name = count:sub(2)
+                count = self.vars[var_name]
+                if count == nil then
+                    return false, 'unknown variable ' .. tostring(var_name)
+                end
+            end
             -- Loop count times
             for _ = 1, node.count do
                 -- Run each node in block

@@ -9,6 +9,7 @@ local TSTokenType = {
     CALL = 'call',
     DEF = 'def',
     BLOCK = 'block',
+    ASSIGN = 'assign',
 }
 
 ---@class TSToken
@@ -77,7 +78,7 @@ function TSParser:parse(text)
     local ast = {}
 
     for token in lex:token_iter() do
-        ---@type number|'?'|'#'
+        ---@type number|string
         local count = 1
         local arg = nil
 
@@ -132,11 +133,12 @@ function TSParser:parse(text)
                 assert(not is_reserved(arg), 'Tried to use reserved token for arg ' .. tostring(arg))
             end
 
-            local num = tonumber(lex:peek_token())
+            local peek = lex:peek_token() or ''
+            local num = tonumber(peek)
             if num ~= nil then
                 count = num
                 lex:take_token()
-            elseif lex:peek_token() == '?' or lex:peek_token() == '!' then
+            elseif peek == '?' or peek == '!' or peek:sub(1, 1) == '$' or peek:sub(1, 1) == '#' then
                 ---@diagnostic disable-next-line: cast-local-type
                 count = lex:take_token()
             end
