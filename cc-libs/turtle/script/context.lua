@@ -149,14 +149,30 @@ function TSContext:eval(node)
     elseif node.type == TSTokenType.LOOP then
         assert(node.children ~= nil)
         log:debug('Evaluating loop')
-        -- Loop count times
-        for _ = 1, node.count do
-            -- Run each node in loop
-            for _, child in ipairs(node.children) do
-                local success, err = self:eval(child)
-                -- Return error if a call fails
-                if not success then
-                    return false, err
+        local count = node.count
+        if count == '?' then
+            local success = true
+            -- Loop count times
+            while success do
+                -- Run each node in loop
+                for _, child in ipairs(node.children) do
+                    success = self:eval(child)
+                    -- Return error if a call fails
+                    if not success then
+                        break
+                    end
+                end
+            end
+        else
+            -- Loop count times
+            for _ = 1, node.count do
+                -- Run each node in loop
+                for _, child in ipairs(node.children) do
+                    local success, err = self:eval(child)
+                    -- Return error if a call fails
+                    if not success then
+                        return false, err
+                    end
                 end
             end
         end

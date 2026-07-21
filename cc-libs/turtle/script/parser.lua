@@ -56,9 +56,11 @@ local function is_reserved(tok)
     return tok == '['
         or tok == ']'
         or tok == ';'
+        or tok:sub(1, 1) == '#'
         or tok:sub(1, 1) == '$'
         or tok:sub(1, 1) == ':'
         or tok:sub(1, 1) == '?'
+        or tok:sub(1, 1) == '!'
         or tok:sub(1, 1) == '<'
 end
 
@@ -82,7 +84,7 @@ function TSParser:parse(text)
         if token == '[' then
             table.insert(nest, { ast = ast })
             ast = {}
-        elseif token:sub(1, 1) == '?' then
+        elseif token:sub(1, 1) == ':' then
             local fn_name
             if #token > 1 then
                 fn_name = token:sub(2)
@@ -139,10 +141,7 @@ function TSParser:parse(text)
                 lex:take_token()
             end
 
-            if token:sub(1, 1) == ':' then
-                local fn_name = token:sub(2)
-                table.insert(ast, { type = TSTokenType.CALL, name = fn_name, count = count, arg = arg })
-            elseif token == ']' then
+            if token == ']' then
                 assert(#nest > 0, 'Close loop but open does not exist')
                 local loop_actions = ast
                 ast = table.remove(nest).ast

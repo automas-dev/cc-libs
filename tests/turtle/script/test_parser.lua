@@ -157,7 +157,7 @@ end
 
 function test.parser_parse_function_def_only()
     local parser = TSParser:new()
-    local tokens = parser:parse('?f hello world ;')
+    local tokens = parser:parse(':f hello world ;')
     assert_eq(1, #tokens)
 
     expect_eq(TSTokenType.DEF, tokens[1].type)
@@ -170,7 +170,7 @@ end
 
 function test.parser_parse_function_def()
     local parser = TSParser:new()
-    local tokens = parser:parse('?f hello world ; :f')
+    local tokens = parser:parse(':f hello world ; f')
     assert_eq(2, #tokens)
 
     expect_eq(TSTokenType.DEF, tokens[1].type)
@@ -202,7 +202,7 @@ end
 
 function test.parser_parse_function_count()
     local parser = TSParser:new()
-    local tokens = parser:parse('?f hello world ; :f 2')
+    local tokens = parser:parse(':f hello world ; f 2')
     assert_eq(2, #tokens)
 
     expect_eq(TSTokenType.DEF, tokens[1].type)
