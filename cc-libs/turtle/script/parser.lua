@@ -111,35 +111,6 @@ function TSParser:parse_load_script(lex)
     return { type = TSTokenType.BLOCK, count = 1, children = sub_ast }
 end
 
----@param lex TSLexer
----@return TSToken token
-function TSParser:parse_call(lex)
-    local token = lex:take_token()
-    assert(token ~= nil)
-    assert(not is_reserved(lex, token))
-
-    local count = 1
-    local arg = nil
-
-    if self:does_token_take_arg(token) then
-        arg = lex:take_token()
-        assert(arg ~= nil, 'missing argument for ' .. tostring(token))
-        assert(not is_reserved(lex, arg), 'Tried to use reserved token for arg ' .. tostring(arg))
-    end
-
-    local peek = lex:peek_token() or ''
-    local num = tonumber(peek)
-    if num ~= nil then
-        count = num
-        lex:take_token()
-    elseif peek == '?' or peek == '!' or peek:sub(1, 1) == '$' or peek:sub(1, 1) == '#' then
-        ---@diagnostic disable-next-line: cast-local-type
-        count = lex:take_token()
-    end
-
-    return { type = TSTokenType.CALL, name = token, count = count, arg = arg }
-end
-
 ---Parse text into tokens
 ---@param lex TSLexer
 ---@return TSToken token
@@ -185,8 +156,11 @@ function TSParser:parse_token(lex)
     if num ~= nil then
         parsed_token.count = num
         lex:take_token()
-    elseif peek == '?' or peek == '!' or peek:sub(1, 1) == '$' or peek:sub(1, 1) == '#' then
-        ---@diagnostic disable-next-line: cast-local-type
+    elseif peek == '?' or peek == '!' then
+        parsed_token.count = peek
+        lex:take_token()
+    elseif peek:sub(1, 1) == '$' or peek:sub(1, 1) == '#' then
+        assert(#peek > 1, 'missing var name')
         parsed_token.count = peek
         lex:take_token()
     end

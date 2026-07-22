@@ -242,4 +242,26 @@ function test.parser_parse_function_count()
     expect_eq(nil, tokens[2].arg)
 end
 
+function test.parser_parse_var_count()
+    local parser = TSParser:new()
+    local tokens = parser:parse('hello #a')
+    assert_eq(1, #tokens, pretty.format(tokens))
+
+    expect_eq(TSTokenType.CALL, tokens[1].type)
+    expect_eq('hello', tokens[1].name)
+    expect_eq('#a', tokens[1].count)
+    expect_eq(nil, tokens[1].arg)
+end
+
+function test.parser_parse_var_pass()
+    local parser = TSParser:new()
+    local tokens = parser:parse('hello $a')
+    assert_eq(1, #tokens, pretty.format(tokens))
+
+    expect_eq(TSTokenType.CALL, tokens[1].type)
+    expect_eq('hello', tokens[1].name)
+    expect_eq('$a', tokens[1].count)
+    expect_eq(nil, tokens[1].arg)
+end
+
 return test

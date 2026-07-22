@@ -16,7 +16,7 @@ function TSLexer:new(text)
         i = 1,
         len = #text,
         whitespace = { ' ', '\t', '\r', '\n' },
-        symbols = { '[', ']', ':', ';', '#', '$', '!', '?', '<' },
+        symbols = { '[', ']', ':', ';', '!', '?', '<' },
         digits = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' },
     }
     setmetatable(o, self)
