@@ -81,7 +81,7 @@ function TSContext:eval(node)
             if count == '!' then
                 success = true
                 while success do
-                    success = fn(self.motion, 1, node.arg)
+                    success, err = fn(self.motion, 1, node.arg)
                 end
             elseif count == '?' then
                 fn(self.motion, 1, node.arg)
@@ -120,7 +120,11 @@ function TSContext:eval(node)
             log:debug('Result of call', fn_name, 'is', success, err)
             -- Handle nil as success
             if success == false then
-                return false, 'native function failed ' .. tostring(fn_name)
+                local msg = 'native function failed ' .. tostring(fn_name)
+                if err then
+                    msg = msg .. ' : ' .. tostring(err)
+                end
+                return false, msg
             end
             return true
         end
