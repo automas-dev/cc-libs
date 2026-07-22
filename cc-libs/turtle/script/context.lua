@@ -5,7 +5,7 @@ local lexer = require 'cc-libs.turtle.script.parser'
 local TSParser = lexer.TSParser
 local TSTokenType = lexer.TSTokenType
 
----@alias TSFunction fun(motion: Motion, count: number, arg: string?): boolean, string?
+---@alias TSFunction fun(motion: Motion, count: number, arg: string?): boolean?, string?
 
 ---@class TSContext
 ---@field motion Motion
@@ -36,6 +36,73 @@ function TSContext:new(motion, nav)
     setmetatable(o, self)
     self.__index = self
     return o
+end
+
+function TSContext:register_math()
+    self:register('clear', true, function(_, _, arg)
+        -- Should not be possible because of the parser, here for testing
+        assert(arg ~= nil and #arg >= 1)
+        self.vars[arg] = 0
+        return true
+    end)
+    self:register('inc', true, function(_, count, arg)
+        -- Should not be possible because of the parser, here for testing
+        assert(arg ~= nil and #arg >= 1)
+        self.vars[arg] = (self.vars[arg] or 0) + count
+        return true
+    end)
+    self:register('dec', true, function(_, count, arg)
+        -- Should not be possible because of the parser, here for testing
+        assert(arg ~= nil and #arg >= 1)
+        self.vars[arg] = (self.vars[arg] or 0) - count
+        return true
+    end)
+    self:register('mul', true, function(_, count, arg)
+        -- Should not be possible because of the parser, here for testing
+        assert(arg ~= nil and #arg >= 1)
+        self.vars[arg] = (self.vars[arg] or 0) * count
+        return true
+    end)
+    self:register('div', true, function(_, count, arg)
+        -- Should not be possible because of the parser, here for testing
+        assert(arg ~= nil and #arg >= 1)
+        self.vars[arg] = (self.vars[arg] or 0) / count
+        return true
+    end)
+    -- Math functions with a single argument and single return
+    for _, math_name in ipairs({
+        'abs',
+        'asin',
+        'atan',
+        'ceil',
+        'cos',
+        'cosh',
+        'deg',
+        'exp',
+        'floor',
+        'rad',
+        'sin',
+        'sinh',
+        'sqrt',
+        'tan',
+        'tanh',
+    }) do
+        self:register(math_name, true, function(_, _, arg)
+            -- Should not be possible because of the parser, here for testing
+            assert(arg ~= nil and #arg >= 1)
+            self.vars[arg] = math[math_name](self.vars[arg] or 0)
+            return true
+        end)
+    end
+    -- Math functions with two arguments and single return
+    for _, math_name in ipairs({ 'atan2', 'max', 'min', 'pow' }) do
+        self:register(math_name, true, function(_, count, arg)
+            -- Should not be possible because of the parser, here for testing
+            assert(arg ~= nil and #arg >= 1)
+            self.vars[arg] = math[math_name](self.vars[arg] or 0, count)
+            return true
+        end)
+    end
 end
 
 ---Register a function for name
