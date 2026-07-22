@@ -69,6 +69,7 @@ end
 
 local context = TSContext:new(tmc, nav)
 
+context:register_math()
 context:register('f', false, tmc.forward)
 context:register('b', false, tmc.backward)
 context:register('l', false, tmc.left)
@@ -78,11 +79,13 @@ context:register('d', false, tmc.down)
 context:register('enable', false, tmc.enable_dig)
 context:register('disable', false, tmc.disable_dig)
 context:register('m', true, function(_, _, poi_name)
-    assert(poi_name ~= nil, 'missing arg')
+    -- Should not be possible because of the parser, here for testing
+    assert(poi_name ~= nil and #poi_name >= 1)
     return pcall(nav.mark_poi, nav, poi_name)
 end)
 context:register('g', true, function(_, _, poi_name)
-    assert(poi_name ~= nil, 'missing arg')
+    -- Should not be possible because of the parser, here for testing
+    assert(poi_name ~= nil and #poi_name >= 1)
     if nav:get_poi(poi_name) == nil then
         log:warning('poi', poi_name, 'is missing')
         if nav.map:get_waypoint(poi_name) == nil then
@@ -108,39 +111,14 @@ end)
 --     end
 --     return true
 -- end)
-context:register('inc', true, function(_, count, arg)
-    if arg == nil or #arg == 0 then
-        return false, 'empty var name'
-    end
-    local val = context.vars[arg]
-    if val == nil then
-        return false, 'missing variable ' .. tostring(arg)
-    end
-    val = val + count
-    context.vars[arg] = val
-    log:debug('Increment', arg, 'to', val)
-    return true
+context:register('detect', false, function(_, _, _)
+    return turtle.detect()
 end)
-context:register('dec', true, function(_, count, arg)
-    if arg == nil or #arg == 0 then
-        return false, 'empty var name'
-    end
-    local val = context.vars[arg]
-    if val == nil then
-        return false, 'missing variable ' .. tostring(arg)
-    end
-    val = val - count
-    context.vars[arg] = val
-    log:debug('Decrement', arg, 'to', val)
-    return true
+context:register('detect_up', false, function(_, _, _)
+    return turtle.detectUp()
 end)
-context:register('set', true, function(_, count, arg)
-    if arg == nil or #arg == 0 then
-        return false, 'empty var name'
-    end
-    context.vars[arg] = count
-    log:debug('Set', arg, 'to', count)
-    return true
+context:register('detect_down', false, function(_, _, _)
+    return turtle.detectUp()
 end)
 
 local function main()
