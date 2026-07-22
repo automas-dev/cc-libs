@@ -38,6 +38,28 @@ function TSContext:new(motion, nav)
     return o
 end
 
+function TSContext:register_std()
+    self:register_print()
+    self:register_logic()
+    self:register_math()
+end
+
+function TSContext:register_print()
+    self:register('print', true, function(_, _, arg)
+        -- Should not be possible because of the parser, here for testing
+        assert(arg ~= nil and #arg >= 1)
+        print(self.vars[arg])
+    end)
+end
+
+function TSContext:register_logic()
+    self:register('test', true, function(_, _, arg)
+        -- Should not be possible because of the parser, here for testing
+        assert(arg ~= nil and #arg >= 1)
+        return self.vars[arg] and self.vars[arg] ~= 0
+    end)
+end
+
 function TSContext:register_math()
     self:register('clear', true, function(_, _, arg)
         -- Should not be possible because of the parser, here for testing

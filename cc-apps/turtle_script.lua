@@ -69,7 +69,7 @@ end
 
 local context = TSContext:new(tmc, nav)
 
-context:register_math()
+context:register_std()
 context:register_turtle()
 -- context:register('face', true, function(_, _, dir)
 --     if dir ~= 'front' and dir ~= 'back' and dir ~= 'left' and dir ~= 'right' then
