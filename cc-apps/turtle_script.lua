@@ -70,56 +70,13 @@ end
 local context = TSContext:new(tmc, nav)
 
 context:register_math()
-context:register('f', false, tmc.forward)
-context:register('b', false, tmc.backward)
-context:register('l', false, tmc.left)
-context:register('r', false, tmc.right)
-context:register('u', false, tmc.up)
-context:register('d', false, tmc.down)
-context:register('enable', false, tmc.enable_dig)
-context:register('disable', false, tmc.disable_dig)
-context:register('m', true, function(_, _, poi_name)
-    -- Should not be possible because of the parser, here for testing
-    assert(poi_name ~= nil and #poi_name >= 1)
-    return pcall(nav.mark_poi, nav, poi_name)
-end)
-context:register('g', true, function(_, _, poi_name)
-    -- Should not be possible because of the parser, here for testing
-    assert(poi_name ~= nil and #poi_name >= 1)
-    if nav:get_poi(poi_name) == nil then
-        log:warning('poi', poi_name, 'is missing')
-        if nav.map:get_waypoint(poi_name) == nil then
-            error('Missing poi ' .. tostring(poi_name))
-        end
-        nav:poi_from_waypoint(poi_name)
-        log:info('Got poi from waypoint', poi_name)
-    end
-    local success, path = pcall(nav.find_path, nav, poi_name)
-    if not success then
-        log:error('Failed to find path to poi', poi_name)
-        return false
-    elseif #path < 2 then
-        log:error('Path is empty to poi', poi_name)
-        return false
-    end
-    nav:follow_path(path)
-    return true
-end)
+context:register_turtle()
 -- context:register('face', true, function(_, _, dir)
 --     if dir ~= 'front' and dir ~= 'back' and dir ~= 'left' and dir ~= 'right' then
 --         return false
 --     end
 --     return true
 -- end)
-context:register('detect', false, function(_, _, _)
-    return turtle.detect()
-end)
-context:register('detect_up', false, function(_, _, _)
-    return turtle.detectUp()
-end)
-context:register('detect_down', false, function(_, _, _)
-    return turtle.detectUp()
-end)
 
 local function main()
     local text

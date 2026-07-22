@@ -105,6 +105,48 @@ function TSContext:register_math()
     end
 end
 
+function TSContext:register_turtle()
+    self:register_math()
+    self:register('f', false, self.motion.forward)
+    self:register('b', false, self.motion.backward)
+    self:register('l', false, self.motion.left)
+    self:register('r', false, self.motion.right)
+    self:register('u', false, self.motion.up)
+    self:register('d', false, self.motion.down)
+    self:register('enable', false, self.motion.enable_dig)
+    self:register('disable', false, self.motion.disable_dig)
+    self:register('detect', false, turtle.detect)
+    self:register('detect_up', false, turtle.detectUp)
+    self:register('detect_down', false, turtle.detectUp)
+    self:register('m', true, function(_, _, poi_name)
+        -- Should not be possible because of the parser, here for testing
+        assert(poi_name ~= nil and #poi_name >= 1)
+        return pcall(self.nav.mark_poi, self.nav, poi_name)
+    end)
+    self:register('g', true, function(_, _, poi_name)
+        -- Should not be possible because of the parser, here for testing
+        assert(poi_name ~= nil and #poi_name >= 1)
+        if self.nav:get_poi(poi_name) == nil then
+            log:warning('poi', poi_name, 'is missing')
+            if self.nav.map:get_waypoint(poi_name) == nil then
+                error('Missing poi ' .. tostring(poi_name))
+            end
+            self.nav:poi_from_waypoint(poi_name)
+            log:info('Got poi from waypoint', poi_name)
+        end
+        local success, path = pcall(self.nav.find_path, self.nav, poi_name)
+        if not success then
+            log:error('Failed to find path to poi', poi_name)
+            return false
+        elseif #path < 2 then
+            log:error('Path is empty to poi', poi_name)
+            return false
+        end
+        self.nav:follow_path(path)
+        return true
+    end)
+end
+
 ---Register a function for name
 ---@param name string
 ---@param fn TSFunction
