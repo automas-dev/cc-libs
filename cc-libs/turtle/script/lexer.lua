@@ -265,6 +265,10 @@ function TSLexer:peek_token()
     if self.next_token == nil then
         self:take_ws()
         if self:has_more() then
+            if self:match_at(self.i, '--') then
+                self:take_until_any({ '\r', '\n' })
+                self:take_ws()
+            end
             if self:match_any_at(self.i, self.symbols) then
                 self.next_token = self:take_symbol()
             elseif self:match_at(self.i, '"') then
