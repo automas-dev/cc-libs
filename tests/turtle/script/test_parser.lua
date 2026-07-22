@@ -1,4 +1,5 @@
 local ccl_ts_lexer = require 'cc-libs.turtle.script.lexer'
+local pretty = require 'cc-libs.util.pretty'
 
 local ccl_ts_parser = require 'cc-libs.turtle.script.parser'
 local TSParser = ccl_ts_parser.TSParser
@@ -72,21 +73,30 @@ end
 function test.parser_parse_single_loop()
     local parser = TSParser:new()
     local tokens = parser:parse('[ hello ] world')
-    assert_eq(2, #tokens)
+    assert_eq(2, #tokens, pretty.format(tokens))
 
-    expect_eq(TSTokenType.BLOCK, tokens[1].type)
-    expect_eq(nil, tokens[1].name)
+    expect_eq(TSTokenType.CALL, tokens[1].type)
+    expect_eq('hello', tokens[1].name)
     expect_eq(1, tokens[1].count)
     expect_eq(nil, tokens[1].arg)
-    assert_ne(nil, tokens[1].children)
-    expect_eq(1, #tokens[1].children)
+    expect_eq(nil, tokens[1].children)
 
-    local child = tokens[1].children[1]
+    expect_eq(TSTokenType.CALL, tokens[2].type)
+    expect_eq('world', tokens[2].name)
+    expect_eq(1, tokens[2].count)
+    expect_eq(nil, tokens[2].arg)
+end
 
-    expect_eq(TSTokenType.CALL, child.type)
-    expect_eq('hello', child.name)
-    expect_eq(1, child.count)
-    expect_eq(nil, child.arg)
+function test.parser_parse_single_loop_one()
+    local parser = TSParser:new()
+    local tokens = parser:parse('[ hello ] 1 world')
+    assert_eq(2, #tokens, pretty.format(tokens))
+
+    expect_eq(TSTokenType.CALL, tokens[1].type)
+    expect_eq('hello', tokens[1].name)
+    expect_eq(1, tokens[1].count)
+    expect_eq(nil, tokens[1].arg)
+    expect_eq(nil, tokens[1].children)
 
     expect_eq(TSTokenType.CALL, tokens[2].type)
     expect_eq('world', tokens[2].name)
@@ -97,7 +107,7 @@ end
 function test.parser_parse_loop()
     local parser = TSParser:new()
     local tokens = parser:parse('[ hello ] 2 world')
-    assert_eq(2, #tokens)
+    assert_eq(2, #tokens, pretty.format(tokens))
 
     expect_eq(TSTokenType.BLOCK, tokens[1].type)
     expect_eq(nil, tokens[1].name)
@@ -171,7 +181,7 @@ end
 function test.parser_parse_function_def()
     local parser = TSParser:new()
     local tokens = parser:parse(':f hello world ; f')
-    assert_eq(2, #tokens)
+    assert_eq(2, #tokens, pretty.format(tokens))
 
     expect_eq(TSTokenType.DEF, tokens[1].type)
     expect_eq('f', tokens[1].name)

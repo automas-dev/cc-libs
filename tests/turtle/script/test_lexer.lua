@@ -53,6 +53,26 @@ function test.lexer_match_any_at()
     expect_false(lexer:match_any_at(1, { '1' }))
 end
 
+function test.lexer_peek_char()
+    local lexer = TSLexer:new('ab')
+    expect_eq('a', lexer:peek_char())
+    expect_eq(1, lexer.i)
+    lexer.i = 2
+    expect_eq('b', lexer:peek_char())
+    expect_eq(2, lexer.i)
+    expect_eq('b', lexer:peek_char())
+end
+
+function test.lexer_take_char()
+    local lexer = TSLexer:new('ab')
+    expect_eq('a', lexer:take_char())
+    expect_eq(2, lexer.i)
+    expect_eq('b', lexer:take_char())
+    expect_eq(3, lexer.i)
+    expect_eq('', lexer:take_char())
+    expect_eq(3, lexer.i)
+end
+
 function test.lexer_take_until()
     local lexer = TSLexer:new('hello world')
     local a = lexer:take_until(' ')
@@ -90,6 +110,33 @@ function test.lexer_take_until_ws()
     lexer = TSLexer:new('hello world')
     expect_eq('hello', lexer:take_until_ws())
     expect_eq(6, lexer.i)
+end
+
+function test.lexer_take_until_symbol_or_ws()
+    local lexer = TSLexer:new('hi world')
+    expect_eq('hi', lexer:take_until_symbol_or_ws())
+    expect_eq(3, lexer.i)
+
+    lexer = TSLexer:new('he[llo')
+    expect_eq('he', lexer:take_until_symbol_or_ws())
+    expect_eq(3, lexer.i)
+    expect_eq('', lexer:take_until_symbol_or_ws())
+    expect_eq(3, lexer.i)
+    lexer.i = 4
+    expect_eq('llo', lexer:take_until_symbol_or_ws())
+    expect_eq(7, lexer.i)
+end
+
+function test.lexer_take_symbol()
+    local lexer = TSLexer:new('h world')
+    expect_eq('', lexer:take_symbol())
+    expect_eq(1, lexer.i)
+
+    lexer = TSLexer:new('[]')
+    expect_eq('[', lexer:take_symbol())
+    expect_eq(2, lexer.i)
+    expect_eq(']', lexer:take_symbol())
+    expect_eq(3, lexer.i)
 end
 
 function test.lexer_take_number()
@@ -139,5 +186,7 @@ function test.lexer_tokens()
     local tokens = lexer:tokens()
     expect_arr_eq({ 'hello', 'world' }, tokens)
 end
+
+-- function test.lexer_symbol_token
 
 return test
