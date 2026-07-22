@@ -168,14 +168,19 @@ function TSContext:eval(node)
             elseif type(node.count) == 'string' and count:sub(1, 1) == '#' then
                 local var_name = count:sub(2)
                 local i = 0
-                for _, child in ipairs(def) do
-                    log:trace('Loop', _, 'for function', fn_name)
-                    success, err = self:eval(child)
-                    -- Stop if any call fails
-                    if not success then
-                        break
+                success = true
+                while success do
+                    for _, child in ipairs(def) do
+                        log:trace('Loop', _, 'for function', fn_name)
+                        success = self:eval(child)
+                        -- Stop if any call fails
+                        if not success then
+                            break
+                        end
                     end
-                    i = i + 1
+                    if success then
+                        i = i + 1
+                    end
                 end
                 self.vars[var_name] = i
                 log:info('Setting var', var_name, 'to', i)
