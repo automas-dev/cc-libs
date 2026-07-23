@@ -1,0 +1,20 @@
+clear input
+-- uncomment for true, comment out for false
+inc input
+
+-- tmp
+clear tmp
+inc tmp
+
+-- Value to print for yes
+clear yes
+inc yes 2
+
+-- Value to print for false
+clear no
+inc no 3
+
+-- If, clears be for true so else block doesn't run
+[ test input print yes clear b ] ?
+-- Else
+[ test b print no ] ?

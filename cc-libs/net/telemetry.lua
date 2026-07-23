@@ -318,7 +318,7 @@ function TelemetryRunner:run()
             local thread = self.threads[i]
             if coroutine.status(thread.co) == 'dead' then
                 if thread.can_kill then
-                    log:info('Thread', thread.name, 'exited so all other threads will be terminated')
+                    log:debug('Thread', thread.name, 'exited so all other threads will be terminated')
                     self:terminate_all()
                     self.running = false
                     return true
@@ -332,7 +332,7 @@ function TelemetryRunner:run()
         end
 
         if #self.threads == 0 then
-            log:info('All threads are dead, exiting')
+            log:debug('All threads are dead, exiting')
             self.running = false
             return true
         end

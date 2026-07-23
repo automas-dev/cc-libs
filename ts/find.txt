@@ -1,0 +1,10 @@
+: probe
+f #a
+r f
+b l b $a ;
+
+: col [ probe r f l ] #c l b $a ;
+: find col l f $c r ;
+: show u f $a b $a d ;
+
+: all find show ;

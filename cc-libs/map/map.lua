@@ -69,17 +69,30 @@ end
 ---@class Map
 ---@field graph { [PointId]: Point }
 ---@field waypoints { [string]: PointId }
+---@field remote MapClient?
 local Map = {}
 
 --- Create a new empty map
+---@param remote? MapClient
 ---@return Map
-function Map:new()
+function Map:new(remote)
     local o = {
         graph = {},
         waypoints = {},
+        remote = remote,
     }
     setmetatable(o, self)
     self.__index = self
+    if remote ~= nil then
+        log:trace('Getting map from remote')
+        local remote_map = remote:get_map()
+        if remote_map ~= nil then
+            log:debug('Got map from remote')
+            Map.from_table(o, remote_map)
+        else
+            log:warning('Failed to fetch map from remote')
+        end
+    end
     return o
 end
 
@@ -140,6 +153,8 @@ function Map:copy()
     local new = Map:new()
     new.graph = table_copy(self.graph)
     new.waypoints = table_copy(self.waypoints)
+    -- Assigning here instead of passing to to new() so it doesn't try to read remote
+    new.remote = self.remote
     return new
 end
 
@@ -149,6 +164,14 @@ end
 function Map:add_waypoint(name, pos)
     local point = self:pos(pos)
     self.waypoints[name] = point.id
+    if self.remote ~= nil then
+        local remote_point = self.remote:add_waypoint(name, point)
+        if remote_point == nil then
+            log:warning('Failed to send waypoint', name, 'to remote')
+        else
+            log:trace('Sent waypoint', name, 'to remote')
+        end
+    end
 end
 
 ---Get a named waypoint
@@ -165,6 +188,7 @@ end
 ---Remove a waypoint by name
 ---@param name string
 function Map:remove_waypoint(name)
+    -- TODO check remote first
     self.waypoints[name] = nil
 end
 
@@ -172,6 +196,16 @@ end
 ---@param point Point
 function Map:add_point(point)
     self.graph[point.id] = point
+    -- TODO test this link
+    self:link_adjacent(point)
+    if self.remote ~= nil then
+        local remote_point, action = self.remote:add_node(point)
+        if remote_point == nil then
+            log:warning('Failed to send node', point.id, 'to remote')
+        else
+            log:trace('Sent node', point.id, 'to remote, response was', action)
+        end
+    end
 end
 
 ---Get a point from it's id
@@ -221,9 +255,7 @@ function Map:point(x, y, z)
             z = z,
             links = {},
         }
-        self.graph[point.id] = point
-        -- TODO test this link
-        self:link_adjacent(point)
+        self:add_point(point)
         log:trace('Created point', point)
     else
         log:trace('Got existing point', point)
@@ -247,7 +279,7 @@ function Map:link(p1, p2)
     p2 = self:pos(p2)
     local weight = point_weight(p1, p2)
 
-    log:debug('p1 =', p1.id, 'p2 =', p2.id, 'weight =', weight)
+    log:trace('p1 =', p1.id, 'p2 =', p2.id, 'weight =', weight)
 
     assert(inline(p1, p2), 'p1 is not inline with p2')
 
@@ -326,7 +358,8 @@ function Map:find_path(p1, p2)
 
     local path = astar(p1.id, p2.id, neighbors, f, h, true)
     if path == nil then
-        log:error('Failed to find path from', p1, 'to', p2)
+        -- Using debug instead of error since we are returning nil to indicate error
+        log:debug('Failed to find path from', p1, 'to', p2)
         return nil
     end
     log:debug('Path completed with', #path, 'points')

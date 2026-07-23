@@ -228,49 +228,50 @@ local n_test_run = 0
 local n_test_pass = 0
 local all_test_results = {}
 
-for file in io.popen([[ls -ap | grep -v /]]):lines() do
-    -- Is this a lua test file
-    if file:find('^' .. test_file_prefix) and file:find('.lua$') then
-        local module = file:sub(1, #file - 4)
-        local cases = {}
+for test_file in io.popen([[find . -name 'test_*.lua']]):lines() do
+    if test_file:find('^./') then
+        test_file = test_file:sub(3)
+    end
+    -- local module = test_file:sub(1, -5):gsub('/', '.')
+    local module = test_file:sub(1, -5)
+    local cases = {}
 
-        -- Store state of globals and packages before loading test file
-        local old_g = save_g()
-        local old_packages = save_packages()
+    -- Store state of globals and packages before loading test file
+    local old_g = save_g()
+    local old_packages = save_packages()
 
-        local success, test = xpcall(require, debug.traceback, module)
+    local success, test = xpcall(require, debug.traceback, module)
+    if success then
+        success, cases = run_test_module(test, module)
         if success then
-            success, cases = run_test_module(test, module)
-            if success then
-                n_test_pass = n_test_pass + 1
-            end
-
-            -- Only print case details if there was a fail or verbose is enabled
-            if not success or verbose then
-                print_test_trace(module, cases)
-            end
-        else
-            if disable_color then
-                print('Failed to load test file ' .. file)
-            else
-                -- Yellow
-                print('\27[33mFailed to load test file ' .. file .. '\27[0m')
-            end
-            print(test)
+            n_test_pass = n_test_pass + 1
         end
 
-        n_test_run = n_test_run + 1
-        table.insert(all_test_results, {
-            name = module,
-            cases = cases,
-            status = success and 'pass' or 'fail',
-        })
-
-        -- Restore state of globals and packages after running all cases to
-        -- prevent side effects.
-        reset_packages(old_packages)
-        reset_g(old_g)
+        -- Only print case details if there was a fail or verbose is enabled
+        if not success or verbose then
+            print_test_trace(module, cases)
+        end
+    else
+        if disable_color then
+            print('Failed to load test file ' .. test_file)
+        else
+            -- Yellow
+            print('\27[33mFailed to load test file ' .. test_file .. '\27[0m')
+        end
+        print(test)
     end
+
+    n_test_run = n_test_run + 1
+    table.insert(all_test_results, {
+        name = module,
+        cases = cases,
+        status = success and 'pass' or 'fail',
+    })
+
+    -- Restore state of globals and packages after running all cases to
+    -- prevent side effects.
+    reset_packages(old_packages)
+    reset_g(old_g)
 end
 
 -- Dump test results to a report json file
