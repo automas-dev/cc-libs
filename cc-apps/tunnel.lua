@@ -49,7 +49,6 @@ local lineup_start = telem:span('lineup_start', function()
 end)
 
 ---Mine and move forward, then mine up and down if blocks exist
----@return boolean success
 local mine_step = telem:span('mine_step', function()
     if turtle.detect() then
         turtle.dig()
