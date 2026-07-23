@@ -228,6 +228,16 @@ end
 ---Remove a point using it's id
 ---@param pid PointId
 function Map:remove_point(pid)
+    log:info('Try removing point', pid)
+    local point = self:get_point(pid)
+    if point then
+        log:info('Removing point', pid)
+        for link in pairs(point.links) do
+            log:info('Removing link', link)
+            self:get_point(link).links[pid] = nil
+        end
+    end
+    -- TODO update remote
     self.graph[pid] = nil
 end
 
@@ -237,7 +247,7 @@ end
 ---@param z number
 function Map:remove_pos(x, y, z)
     local pid = point_id(x, y, z)
-    self.graph[pid] = nil
+    self:remove_point(pid)
 end
 
 ---Get or create a point by it's components

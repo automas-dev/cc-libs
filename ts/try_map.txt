@@ -1,0 +1,8 @@
+: try_map
+    [u!]?
+    m start
+    d
+    [ [ detect_up ? detect_down ? f ] ! ] ?
+    [d!]?
+    g start
+;

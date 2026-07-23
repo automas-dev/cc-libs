@@ -138,8 +138,30 @@ function TSContext:register_turtle()
     self:register('enable', false, self.motion.enable_dig)
     self:register('disable', false, self.motion.disable_dig)
     self:register('detect', false, turtle.detect)
-    self:register('detect_up', false, turtle.detectUp)
-    self:register('detect_down', false, turtle.detectUp)
+    self:register('detect_up', false, function()
+        local exists = turtle.detectUp()
+        local pos = self.motion.location.pos
+        if not exists then
+            -- Add that space to the map
+            self.nav.map:point(pos.x, pos.y + 1, pos.z)
+        else
+            self.nav.map:remove_pos(pos.x, pos.y + 1, pos.z)
+        end
+        return exists
+    end)
+    self:register('detect_down', false, function()
+        local exists = turtle.detectUp()
+        local pos = self.motion.location.pos
+        if not exists then
+            print('exists')
+            -- Add that space to the map
+            self.nav.map:point(pos.x, pos.y - 1, pos.z)
+        else
+            print('remove')
+            self.nav.map:remove_pos(pos.x, pos.y - 1, pos.z)
+        end
+        return exists
+    end)
     self:register('m', true, function(_, _, poi_name)
         -- Should not be possible because of the parser, here for testing
         assert(poi_name ~= nil and #poi_name >= 1)
