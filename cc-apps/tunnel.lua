@@ -42,15 +42,10 @@ telem:set_location(location)
 tmc:attach_telemetry(telem)
 
 local lineup_start = telem:span('lineup_start', function()
-    if not tmc:up() then
-        return false
-    end
+    tmc:up()
     tmc:right()
-    if not tmc:forward() then
-        return false
-    end
+    tmc:forward()
     tmc:left()
-    return true
 end)
 
 ---Mine and move forward, then mine up and down if blocks exist
@@ -59,9 +54,7 @@ local mine_step = telem:span('mine_step', function()
     if turtle.detect() then
         turtle.dig()
     end
-    if not tmc:forward() then
-        return false
-    end
+    tmc:forward()
     if turtle.detectUp() then
         turtle.digUp()
     end
@@ -70,33 +63,25 @@ local mine_step = telem:span('mine_step', function()
         turtle.digDown()
     end
     map:link(map:pos(location.pos), map:point(location.pos.x, location.pos.y - 1, location.pos.z))
-    return true
 end)
 
 ---Mine forward n block mining up and down along the path
 ---@param n number
----@return boolean success
 local mine_line = telem:span('mine_layer', function(n)
     for _ = 1, n do
-        if not mine_step() then
-            return false
-        end
+        mine_step()
     end
-    return true
 end)
 
 ---Mine forward n block mining up and down along the path
 ---@param direction 'left'|'right'
----@return boolean success
 local turn_to_next = telem:span('turn_to_next', function(direction)
     if direction == 'left' then
         tmc:left()
     elseif direction == 'right' then
         tmc:right()
     end
-    if not tmc:forward() then
-        return false
-    end
+    tmc:forward()
     turtle.digUp()
     turtle.digDown()
     if direction == 'left' then
@@ -104,20 +89,18 @@ local turn_to_next = telem:span('turn_to_next', function(direction)
     elseif direction == 'right' then
         tmc:right()
     end
-    return true
 end)
 
 local return_to_start = telem:span('return_to_start', function()
     local path = nav:find_path('start')
     log:trace('Path is', path)
     nav:follow_path(path)
-    return true
 end)
 
 -- Main function
 local function main()
     if location.has_fix and not location.has_heading then
-        if not tmc:forward() or not tmc:backward() then
+        if not tmc:try_forward() or not tmc:try_backward() then
             error('Motion to acquire heading failed')
         end
     end
@@ -144,13 +127,9 @@ local function main()
         end
     end
 
-    if not return_to_start() then
-        log:error('Failed to return to station')
-        return false
-    end
+    return_to_start()
 
     tmc:face(start_heading)
-    return true
 end
 
 -- Call main and log an error if raised

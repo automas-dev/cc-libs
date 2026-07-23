@@ -40,7 +40,7 @@ local function main()
     local total = 0
 
     while true do
-        if not tmc:forward() then
+        if not tmc:try_forward() then
             break
         end
         total = total + 1

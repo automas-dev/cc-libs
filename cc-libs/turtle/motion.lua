@@ -1,14 +1,13 @@
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('motion')
 
-local json = require 'cc-libs.util.json'
+local ccl_pretty = require 'cc-libs.util.pretty'
+local format = ccl_pretty.format
 
 local ccl_location = require 'cc-libs.turtle.location'
 local Action = ccl_location.Action
 local Location = ccl_location.Location
 local CompassName = ccl_location.CompassName
--- TODO is this needed for types?
-local Compass = ccl_location.Compass
 
 ---@class Motion
 ---@field max_tries integer max attempts to move before failing
@@ -116,15 +115,16 @@ function Motion:_telem_alert_no_fuel(action)
     end
 end
 
----Attempt an action up to self.max_tries times
+---Attempt an action up to self.max_tries times. If `dig_fn` is nil, only one
+---attempt will be made. Raises an error if the action fails all attempts.
 ---@private
 ---@param action string human readable name for action
 ---@param action_fn function normally turtle.forward or .back or .up or .down
 ---@param dig_fn? function called if an attempt fails up to max attempts
----@return boolean success was the move a success
 function Motion:_attempt_move(action, action_fn, dig_fn)
     local success = false
     local tries = 0
+    -- Retry action up to max tries until successful
     for i = 1, self.max_tries do
         tries = i
         log:trace('Action', action, 'attempt', tries, 'of', self.can_dig and self.max_tries or 1)
@@ -148,82 +148,102 @@ function Motion:_attempt_move(action, action_fn, dig_fn)
     log:trace('Attempt to move took', tries, 'tries and was', (success and 'success' or 'fail'))
     if not success then
         self:_telem_alert_fail(action, tries)
+        error('Failed action ' .. tostring(action) .. ' after ' .. tostring(tries) .. ' tries')
     else
         self:_telem_event_move(action, tries)
     end
-    return success
 end
 
 ---Move the turtle forward by n blocks
+---Raises an error if a move fails.
 ---@param n? integer number of blocks to move (default: 1)
----@return boolean
 function Motion:forward(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
     log:debug('move forward', n, 'blocks')
     for _ = 1, n do
-        if not self:_attempt_move('forward', turtle.forward, (self.can_dig and turtle.dig or nil)) then
-            return false
-        end
-
+        self:_attempt_move('forward', turtle.forward, (self.can_dig and turtle.dig or nil))
         -- Update location after move
         self.location:update(Action.FORWARD)
     end
-    return true
+end
+
+---Move the turtle forward by n blocks.
+---Returns false if motion fails.
+---@param n? integer number of blocks to move (default: 1)
+---@return boolean success
+---@return string? error
+function Motion:try_forward(n)
+    return pcall(self.forward, self, n)
 end
 
 ---Move the turtle backward by n blocks
+---Raises an error if a move fails.
 ---@param n? integer number of blocks to move (default: 1)
----@return boolean
 function Motion:backward(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
     log:debug('move backward', n, 'blocks')
     for _ = 1, n do
-        if not self:_attempt_move('back', turtle.back) then
-            return false
-        end
-
+        self:_attempt_move('back', turtle.back)
         -- Update location after move
         self.location:update(Action.BACKWARD)
     end
-    return true
+end
+
+---Move the turtle backward by n blocks.
+---Returns false if motion fails.
+---@param n? integer number of blocks to move (default: 1)
+---@return boolean success
+---@return string? error
+function Motion:try_backward(n)
+    return pcall(self.backward, self, n)
 end
 
 ---Move the turtle up by n blocks
+---Raises an error if a move fails.
 ---@param n? integer number of blocks to move (default: 1)
----@return boolean
 function Motion:up(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
     log:debug('move up', n, 'blocks')
     for _ = 1, n do
-        if not self:_attempt_move('up', turtle.up, (self.can_dig and turtle.digUp or nil)) then
-            return false
-        end
-
+        self:_attempt_move('up', turtle.up, (self.can_dig and turtle.digUp or nil))
         -- Update location after move
         self.location:update(Action.UP)
     end
-    return true
+end
+
+---Move the turtle up by n blocks.
+---Returns false if motion fails.
+---@param n? integer number of blocks to move (default: 1)
+---@return boolean success
+---@return string? error
+function Motion:try_up(n)
+    return pcall(self.up, self, n)
 end
 
 ---Move the turtle down by n blocks
+---Raises an error if a move fails.
 ---@param n? integer number of blocks to move (default: 1)
----@return boolean
 function Motion:down(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
     log:debug('move down', n, 'blocks')
     for _ = 1, n do
-        if not self:_attempt_move('down', turtle.down, (self.can_dig and turtle.digDown or nil)) then
-            return false
-        end
-
+        self:_attempt_move('down', turtle.down, (self.can_dig and turtle.digDown or nil))
         -- Update location after move
         self.location:update(Action.DOWN)
     end
-    return true
+end
+
+---Move the turtle down by n blocks
+---Returns false if motion fails.
+---@param n? integer number of blocks to move (default: 1)
+---@return boolean success
+---@return string? error
+function Motion:try_down(n)
+    return pcall(self.down, self, n)
 end
 
 ---Turn to the left n times

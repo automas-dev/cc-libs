@@ -63,7 +63,7 @@ local function main()
     local total = 0
     for _ = 1, n do
         -- Can't move down, maybe we hit bedrock
-        if not tmc:down() then
+        if not tmc:try_down() then
             break
         end
         place_all_sides()

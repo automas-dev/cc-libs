@@ -72,43 +72,32 @@ local dig_vert = telem:span('dig_up', function(side)
 end)
 
 ---Move to starting of first layer
----@return boolean
 local lineup_start = telem:span('lineup_start', function()
     log:info('Heading to start')
     if turtle.detect() then
         turtle.dig()
     end
-    if not tmc:forward() then
-        return false
-    end
+    tmc:forward()
     if height >= 3 then
         if direction == 'up' then
             dig_vert('up')
-            if not tmc:up() then
-                return false
-            end
+            tmc:up()
         else
             dig_vert('down')
-            if not tmc:down() then
-                return false
-            end
+            tmc:down()
         end
     end
     if height >= 2 then
         dig_vert(direction)
     end
-    return true
 end)
 
 ---Mine and move forward, then mine up and down if blocks exist
 ---@param dig_up boolean
 ---@param dig_down boolean
----@return boolean success
 local mine_step = telem:span('mine_step', function(dig_up, dig_down)
     log:debug('Mining forward 1 step dig_up =', dig_up, 'dig_down =', dig_down)
-    if not tmc:forward() then
-        return false
-    end
+    tmc:forward()
     if dig_up then
         dig_vert('up')
     end
@@ -124,22 +113,17 @@ end)
 ---@param n number
 ---@param dig_up boolean
 ---@param dig_down boolean
----@return boolean success
 local mine_line = telem:span('mine_layer', function(n, dig_up, dig_down)
     log:debug('Mining line n =', n, 'dig_up =', dig_up, 'dig_down =', dig_down)
     for _ = 1, n do
-        if not mine_step(dig_up, dig_down) then
-            return false
-        end
+        mine_step(dig_up, dig_down)
     end
-    return true
 end)
 
 ---Mine forward n block mining up and down along the path
 ---@param turn_direction 'left'|'right'
 ---@param dig_up boolean
 ---@param dig_down boolean
----@return boolean success
 local turn_to_next = telem:span('turn_to_next', function(turn_direction, dig_up, dig_down)
     log:debug('Turning', direction, 'to next line')
     if turn_direction == 'left' then
@@ -147,9 +131,7 @@ local turn_to_next = telem:span('turn_to_next', function(turn_direction, dig_up,
     elseif turn_direction == 'right' then
         tmc:right()
     end
-    if not tmc:forward() then
-        return false
-    end
+    tmc:forward()
     if dig_up then
         dig_vert('up')
     end
@@ -161,60 +143,44 @@ local turn_to_next = telem:span('turn_to_next', function(turn_direction, dig_up,
     elseif turn_direction == 'right' then
         tmc:right()
     end
-    return true
 end)
 
 ---Mine a layer up to 3 blocks
 ---@param dig_up boolean
 ---@param dig_down boolean
----@return boolean
 local mine_layer = telem:span('mine_layer', function(dig_up, dig_down)
     for z = 1, length do
-        if not mine_line(width - 1, dig_up, dig_down) then
-            return false
-        end
+        mine_line(width - 1, dig_up, dig_down)
         if z < length then
-            if not turn_to_next(z % 2 == 1 and 'right' or 'left', dig_up, dig_down) then
-                return false
-            end
+            turn_to_next(z % 2 == 1 and 'right' or 'left', dig_up, dig_down)
         end
     end
-    return true
 end)
 
 ---Navigate to the start
----@return boolean
 local return_to_start = telem:span('return_to_start', function()
     local path = nav:find_path('start')
     log:trace('Path is', path)
     nav:follow_path(path)
-    return true
 end)
 
 ---Execute the mission
----@return boolean
 local mission = telem:span('mission', function()
     -- Mine 3 layers at a time
     while height >= 3 do
         log:info('Mining layer of height 3')
-        if not mine_layer(true, true) then
-            return false
-        end
+        mine_layer(true, true)
         tmc:right()
         height = height - 3
 
         if height >= 1 then
             if direction == 'up' then
-                if not tmc:up(height >= 3 and 3 or 2) then
-                    return false
-                end
+                tmc:up(height >= 3 and 3 or 2)
                 if height >= 2 then
                     dig_vert('up')
                 end
             else
-                if not tmc:down(height >= 3 and 3 or 2) then
-                    return false
-                end
+                tmc:down(height >= 3 and 3 or 2)
                 if height >= 2 then
                     dig_vert('down')
                 end
@@ -225,33 +191,27 @@ local mission = telem:span('mission', function()
     -- Handle 1 or 2 remaining layers
     if height == 1 then
         log:info('Mining layer of height 1')
-        return mine_layer(false, false)
+        mine_layer(false, false)
     elseif height == 2 then
         log:info('Mining layer of height 2')
-        return mine_layer(direction == 'up', direction == 'down')
+        mine_layer(direction == 'up', direction == 'down')
     end
-
-    return true
 end)
 
 local function main()
     local start_heading = nil
     nav:mark_poi('start')
 
-    if lineup_start() then
+    if pcall(lineup_start) then
         start_heading = location.heading
         mission()
     end
 
-    if not return_to_start() then
-        log:error('Failed to return to station')
-        return false
-    end
+    return_to_start()
 
     if start_heading ~= nil then
         tmc:face(start_heading)
     end
-    return true
 end
 
 telem:run_parallel_with('main', log:wrap_fn(main))

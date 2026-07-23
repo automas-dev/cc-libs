@@ -73,11 +73,6 @@ tmc:attach_telemetry(telem)
 ---@type LocalFrame
 local local_frame
 
-tmc.motion_fail_cb = function(move_action, reason)
-    log:info('Stopping execution for motion error', move_action, reason)
-    error('Motion error ' .. move_action .. ' ' .. reason)
-end
-
 local function debug_location()
     -- log:debug('Location is x=', location.pos.x, 'z=', location.pos.z, 'heading=', location:heading_name())
 end
