@@ -107,6 +107,18 @@ function Nav:follow_path(path)
         f:close()
     end
 
+    if not self.motion.location.has_heading then
+        local i = 1
+        while turtle.detect() and i <= 4 do
+            self.motion:left()
+            i = i + 1
+        end
+        if i <= 4 then
+            self.motion:forward()
+            self.motion:backward()
+        end
+    end
+
     local actions = {}
 
     local last_direction = nil
