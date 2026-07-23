@@ -1,0 +1,22 @@
+-- Probably standard to have _<fn_name>_<var> to namespace function vars
+: det
+    clear _det_res
+    -- If detect increment _det_res to later use with test
+    [ detect inc _det_res ] ?
+    -- print _det_res
+;
+
+-- Invert det result
+: not_det det dec _det_res ;
+
+-- Move forward in column until stop, turn right and detect, do_x if no block
+: do_y f #_tmp_y inc _y $_tmp_y r [ not_det test _det_res do_x ] ? ;
+
+-- Forward one and increment _x, then do_y
+: do_x [ f inc _x l do_y ] ? ;
+
+-- Use _x and _y to return to start
+: return r f $_y r f $_x r ;
+
+-- Clear _x and _y, run the program, return and print the results
+: prog clear _x clear _y do_y return print _x print _y ;
