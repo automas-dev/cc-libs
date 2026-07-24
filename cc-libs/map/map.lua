@@ -126,6 +126,16 @@ function Map:validate_links()
     end
 end
 
+---Validate all waypoints exist in the graph
+---@private
+function Map:validate_waypoints()
+    for name, pid in pairs(self.waypoints) do
+        if not self.graph[pid] then
+            log:warning('Waypoint', name, 'at', pid, 'does not exist in graph')
+        end
+    end
+end
+
 ---Load the map from a table
 ---@param t { graph: table?, waypoints: table?} map data
 function Map:from_table(t)
@@ -137,6 +147,7 @@ function Map:from_table(t)
     if t.waypoints ~= nil then
         self.waypoints = t.waypoints
     end
+    self:validate_waypoints()
 end
 
 ---Load the map from a file
