@@ -96,6 +96,36 @@ function Map:new(remote)
     return o
 end
 
+---Validate no links are missing between adjacent nodes
+---@private
+function Map:validate_links()
+    for pid, point in pairs(self.graph) do
+        for _, i in pairs({ -1, 1 }) do
+            local other = self:get_pos(point.x + i, point.y, point.z)
+            if other then
+                if not point.links[other.id] or not other.links[pid] then
+                    log:warning('Adjacent points', pid, other.id, 'are not linked')
+                    self:link(point, other)
+                end
+            end
+            other = self:get_pos(point.x, point.y + i, point.z)
+            if other then
+                if not point.links[other.id] or not other.links[pid] then
+                    log:warning('Adjacent points', pid, other.id, 'are not linked')
+                    self:link(point, other)
+                end
+            end
+            other = self:get_pos(point.x, point.y, point.z + i)
+            if other then
+                if not point.links[other.id] or not other.links[pid] then
+                    log:warning('Adjacent points', pid, other.id, 'are not linked')
+                    self:link(point, other)
+                end
+            end
+        end
+    end
+end
+
 ---Load the map from a table
 ---@param t { graph: table?, waypoints: table?} map data
 function Map:from_table(t)
@@ -103,6 +133,7 @@ function Map:from_table(t)
     if t.graph ~= nil then
         self.graph = t.graph
     end
+    self:validate_links()
     if t.waypoints ~= nil then
         self.waypoints = t.waypoints
     end
