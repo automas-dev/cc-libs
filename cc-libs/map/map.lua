@@ -40,19 +40,19 @@ end
 ---@param p2 Point
 ---@param weight number
 local function link_points(p1, p2, weight)
-    if p1.links[p2.id] == nil then
+    if not p1.links[p2.id] then
         log:trace('Creating link from', p1.id, 'to', p2.id)
         p1.links[p2.id] = weight
     end
-    if p2.links[p1.id] == nil then
+    if not p2.links[p1.id] then
         log:trace('Creating link from', p2.id, 'to', p1.id)
         p2.links[p1.id] = weight
     end
 end
 
 ---Get weight from distance between p1 and p2
----@param p1 Point
----@param p2 Point
+---@param p1 Point|Vec3
+---@param p2 Point|Vec3
 ---@return number weight
 local function point_weight(p1, p2)
     local length2 = (p2.x - p1.x) ^ 2 + (p2.y - p1.y) ^ 2 + (p2.z - p1.z) ^ 2
@@ -86,7 +86,7 @@ function Map:new(remote)
     if remote ~= nil then
         log:trace('Getting map from remote')
         local remote_map = remote:get_map()
-        if remote_map ~= nil then
+        if remote_map then
             log:debug('Got map from remote')
             Map.from_table(o, remote_map)
         else
@@ -140,11 +140,11 @@ end
 ---@param t { graph: table?, waypoints: table?} map data
 function Map:from_table(t)
     -- Use default or {} to handle empty graph or waypoints
-    if t.graph ~= nil then
+    if t.graph then
         self.graph = t.graph
     end
     self:validate_links()
-    if t.waypoints ~= nil then
+    if t.waypoints then
         self.waypoints = t.waypoints
     end
     self:validate_waypoints()
@@ -193,8 +193,10 @@ end
 ---@return Map copy
 function Map:copy()
     local new = Map:new()
-    new.graph = table_copy(self.graph)
-    new.waypoints = table_copy(self.waypoints)
+    new:from_table({
+        graph = table_copy(self.graph),
+        waypoints = table_copy(self.waypoints),
+    })
     -- Assigning here instead of passing to to new() so it doesn't try to read remote
     new.remote = self.remote
     return new
@@ -206,9 +208,9 @@ end
 function Map:add_waypoint(name, pos)
     local point = self:pos(pos)
     self.waypoints[name] = point.id
-    if self.remote ~= nil then
+    if self.remote then
         local remote_point = self.remote:add_waypoint(name, point)
-        if remote_point == nil then
+        if not remote_point then
             log:warning('Failed to send waypoint', name, 'to remote')
         else
             log:trace('Sent waypoint', name, 'to remote')
@@ -221,7 +223,16 @@ end
 ---@return Point? point
 function Map:get_waypoint(name)
     local pid = self.waypoints[name]
-    if pid == nil then
+    if not pid then
+        if self.remote then
+            local remote_point = self.remote:get_waypoint(name)
+            if remote_point then
+                log:trace('Got waypoint', name, 'from remote')
+                pid = remote_point.id
+                self.waypoints[name] = pid
+                return self:get_point(pid)
+            end
+        end
         return nil
     end
     return self:get_point(pid)
@@ -232,6 +243,9 @@ end
 function Map:remove_waypoint(name)
     -- TODO check remote first
     self.waypoints[name] = nil
+    if self.remote then
+        self.remote:remove_waypoint(name)
+    end
 end
 
 ---Add a point to the map
@@ -240,9 +254,9 @@ function Map:add_point(point)
     self.graph[point.id] = point
     -- TODO test this link
     self:link_adjacent(point)
-    if self.remote ~= nil then
+    if self.remote then
         local remote_point, action = self.remote:add_node(point)
-        if remote_point == nil then
+        if not remote_point then
             log:warning('Failed to send node', point.id, 'to remote')
         else
             log:trace('Sent node', point.id, 'to remote, response was', action)
@@ -263,21 +277,20 @@ end
 ---@param z number
 ---@return Point?
 function Map:get_pos(x, y, z)
-    local pid = point_id(x, y, z)
-    return self.graph[pid]
+    return self:get_point(point_id(x, y, z))
 end
 
 ---Remove a point using it's id
 ---@param pid PointId
 function Map:remove_point(pid)
-    log:info('Try removing point', pid)
     local point = self:get_point(pid)
     if point then
-        log:info('Removing point', pid)
         for link in pairs(point.links) do
-            log:info('Removing link', link)
             self:get_point(link).links[pid] = nil
         end
+    end
+    if self.remote then
+        self.remote:remove_node(pid)
     end
     -- TODO update remote
     self.graph[pid] = nil
@@ -299,7 +312,7 @@ end
 ---@return Point
 function Map:point(x, y, z)
     local point = self:get_pos(x, y, z)
-    if point == nil then
+    if not point then
         point = {
             id = point_id(x, y, z),
             x = x,

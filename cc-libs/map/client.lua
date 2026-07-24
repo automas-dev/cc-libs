@@ -55,6 +55,22 @@ function MapClient:add_node(pos)
     end
 end
 
+---Remove a node from the map, returns the node and if it existed
+---@param pid string
+---@return Point? node the node or nil if it does not exist
+function MapClient:remove_node(pid)
+    local success, status, resp = self.client:request('remove_node', {
+        pid = pid,
+    })
+    if success then
+        ---@cast resp table
+        return resp.node
+    else
+        -- TODO remove this, is it somewhere else?
+        log:warning('Got unsuccessful response from server', status, resp)
+    end
+end
+
 ---Add a waypoint to the map, returns waypoint and if it was created or already exists
 ---@param name string
 ---@param pos Vec3|Point
@@ -79,6 +95,22 @@ end
 ---@return Point? waypoint the waypoint or nil for error
 function MapClient:get_waypoint(name)
     local success, status, resp = self.client:request('get_waypoint', {
+        name = name,
+    })
+    if success then
+        ---@cast resp table
+        return resp.waypoint
+    else
+        -- TODO remove this, is it somewhere else?
+        log:warning('Got unsuccessful response from server', status, resp)
+    end
+end
+
+---Remove a waypoint
+---@param name string
+---@return Point? waypoint the waypoint or nil if it does not exist
+function MapClient:remove_waypoint(name)
+    local success, status, resp = self.client:request('remove_waypoint', {
         name = name,
     })
     if success then

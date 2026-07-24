@@ -111,14 +111,41 @@ local function MapServer(hostname, map_path)
             local pos = body.pos
 
             local point = map:get_pos(pos.x, pos.y, pos.z)
-            local exists = point ~= nil
-            if not exists then
+            if not point then
                 point = map:pos(pos)
                 map:dump(map_path)
                 log:info('Added node', point.id)
             end
 
-            return request:ok_response({ node = point, action = exists and 'exists' or 'added' })
+            return request:ok_response({ node = point, action = point and 'exists' or 'added' })
+        end
+    )
+
+    server:route(
+        'remove_node',
+        {
+            request_model = Schema:new({
+                pid = { type = FieldType.STRING },
+            }),
+            response_model = Schema:new({
+                node = OptionalPointField,
+            }),
+        },
+        ---@param request Request
+        function(request)
+            local body = request.message.body
+            ---@cast body table
+
+            local pid = body.pid
+
+            local point = map:get_point(pid)
+            if point then
+                map:remove_point(pid)
+                map:dump(map_path)
+                log:info('Remove node', pid)
+            end
+
+            return request:ok_response({ node = point })
         end
     )
 
@@ -172,7 +199,35 @@ local function MapServer(hostname, map_path)
             local name = body.name
 
             local point = map:get_waypoint(name)
-            if point == nil then
+            if not point then
+                return request:ok_response({ found = false })
+            end
+
+            return request:ok_response({ found = true, waypoint = point, name = name })
+        end
+    )
+
+    server:route(
+        'remove_waypoint',
+        {
+            request_model = Schema:new({
+                name = { type = FieldType.STRING },
+            }),
+            response_model = Schema:new({
+                found = { type = FieldType.BOOL },
+                waypoint = OptionalPointField,
+                name = { type = FieldType.STRING, optional = true },
+            }),
+        },
+        ---@param request Request
+        function(request)
+            local body = request.message.body
+            ---@cast body table
+
+            local name = body.name
+
+            local point = map:get_waypoint(name)
+            if not point then
                 return request:ok_response({ found = false })
             end
 
