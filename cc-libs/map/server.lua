@@ -121,7 +121,6 @@ local function MapServer(hostname, map_path)
 
             if not point then
                 point = map:pos(pos)
-                log:info('Added node', point.id)
                 updated = true
             end
 
@@ -134,7 +133,7 @@ local function MapServer(hostname, map_path)
             end
 
             if updated then
-                log:trace('Point', point.id, 'was updated so the map will be dumped')
+                log:info('Added node', point.id)
                 map:dump(map_path)
             end
 
@@ -193,8 +192,8 @@ local function MapServer(hostname, map_path)
             local exists = map:get_waypoint(name) ~= nil
             local point = map:pos(pos)
             map:add_waypoint(name, point)
-            map:dump(map_path)
             log:info('Added waypoint', name)
+            map:dump(map_path)
 
             return request:ok_response({ waypoint = point, action = exists and 'replaced' or 'added' })
         end
