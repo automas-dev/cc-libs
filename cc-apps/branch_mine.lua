@@ -499,7 +499,7 @@ local function main()
         end
 
         -- Mine to start of previous shaft
-        if i - skip > 1 then
+        if i + skip > 1 then
             tmc:face(Compass.SOUTH, heading_offset)
             if not dig_forward(2) then
                 return false
