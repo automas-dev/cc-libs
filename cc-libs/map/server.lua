@@ -97,6 +97,12 @@ local function MapServer(hostname, map_path)
         {
             request_model = Schema:new({
                 pos = PositionField,
+                links = {
+                    type = FieldType.OBJECT,
+                    optional = true,
+                    key = { type = FieldType.STRING },
+                    value = { type = FieldType.FLOAT },
+                },
             }),
             response_model = Schema:new({
                 action = { type = FieldType.STRING },
@@ -111,10 +117,25 @@ local function MapServer(hostname, map_path)
             local pos = body.pos
 
             local point = map:get_pos(pos.x, pos.y, pos.z)
+            local updated = false
+
             if not point then
                 point = map:pos(pos)
-                map:dump(map_path)
                 log:info('Added node', point.id)
+                updated = true
+            end
+
+            local links = body.links
+            if links then
+                for k, v in pairs(links) do
+                    point.links[k] = v
+                    updated = true
+                end
+            end
+
+            if updated then
+                log:trace('Point', point.id, 'was updated so the map will be dumped')
+                map:dump(map_path)
             end
 
             return request:ok_response({ node = point, action = point and 'exists' or 'added' })

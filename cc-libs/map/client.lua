@@ -39,12 +39,15 @@ function MapClient:get_map()
 end
 
 ---Add a node to the map, returns the node and if it was created or already exists
----@param pos Vec3|Point
+---Links can only be appended so any existing links will not be removed if not specified.
+---@param pos Vec3|Point location of the node
+---@param links? { [string]: number } optional links for the node
 ---@return Point? node the node or nil for error
 ---@return string? action if the node was added or already exists
-function MapClient:add_node(pos)
+function MapClient:add_node(pos, links)
     local success, status, resp = self.client:request('add_node', {
         pos = pos,
+        links = links,
     })
     if success then
         ---@cast resp table
