@@ -39,20 +39,23 @@ end
 ---@param p1 Point
 ---@param p2 Point
 ---@param weight number
-local function link_points(p1, p2, weight)
-    if p1.links[p2.id] == nil then
+---@param one_way? boolean don't create a link from p2 to p1
+local function link_points(p1, p2, weight, one_way)
+    if not p1.links[p2.id] then
         log:trace('Creating link from', p1.id, 'to', p2.id)
         p1.links[p2.id] = weight
     end
-    if p2.links[p1.id] == nil then
-        log:trace('Creating link from', p2.id, 'to', p1.id)
-        p2.links[p1.id] = weight
+    if not one_way then
+        if not p2.links[p1.id] then
+            log:trace('Creating link from', p2.id, 'to', p1.id)
+            p2.links[p1.id] = weight
+        end
     end
 end
 
 ---Get weight from distance between p1 and p2
----@param p1 Point
----@param p2 Point
+---@param p1 Point|Vec3
+---@param p2 Point|Vec3
 ---@return number weight
 local function point_weight(p1, p2)
     local length2 = (p2.x - p1.x) ^ 2 + (p2.y - p1.y) ^ 2 + (p2.z - p1.z) ^ 2
@@ -69,6 +72,7 @@ end
 ---@class Map
 ---@field graph { [PointId]: Point }
 ---@field waypoints { [string]: PointId }
+---@field update_mask { PointId: boolean }
 ---@field remote MapClient?
 local Map = {}
 
@@ -79,6 +83,7 @@ function Map:new(remote)
     local o = {
         graph = {},
         waypoints = {},
+        update_mask = {},
         remote = remote,
     }
     setmetatable(o, self)
@@ -86,7 +91,7 @@ function Map:new(remote)
     if remote ~= nil then
         log:trace('Getting map from remote')
         local remote_map = remote:get_map()
-        if remote_map ~= nil then
+        if remote_map then
             log:debug('Got map from remote')
             Map.from_table(o, remote_map)
         else
@@ -96,15 +101,67 @@ function Map:new(remote)
     return o
 end
 
+---Validate no links are missing between adjacent nodes
+---@private
+function Map:validate_links()
+    for pid, point in pairs(self.graph) do
+        local links_copy = table_copy(point.links)
+        for link_pid, _ in pairs(links_copy) do
+            if not self:get_point(link_pid) then
+                log:warning('Point', pid, 'is linked to missing point', link_pid)
+                point[link_pid] = nil
+            end
+        end
+        for _, i in pairs({ -1, 1 }) do
+            local other = self:get_pos(point.x + i, point.y, point.z)
+            if other then
+                if not point.links[other.id] or not other.links[pid] then
+                    log:warning('Adjacent points', pid, other.id, 'are not linked')
+                    self:link(point, other)
+                end
+            end
+            other = self:get_pos(point.x, point.y + i, point.z)
+            if other then
+                if not point.links[other.id] or not other.links[pid] then
+                    log:warning('Adjacent points', pid, other.id, 'are not linked')
+                    self:link(point, other)
+                end
+            end
+            other = self:get_pos(point.x, point.y, point.z + i)
+            if other then
+                if not point.links[other.id] or not other.links[pid] then
+                    log:warning('Adjacent points', pid, other.id, 'are not linked')
+                    self:link(point, other)
+                end
+            end
+        end
+    end
+end
+
+---Validate all waypoints exist in the graph
+---@private
+function Map:validate_waypoints()
+    for name, pid in pairs(self.waypoints) do
+        if not self.graph[pid] then
+            log:warning('Waypoint', name, 'at', pid, 'does not exist in graph')
+        end
+    end
+end
+
 ---Load the map from a table
----@param t { graph: table?, waypoints: table?} map data
+---@param t { graph: table?, waypoints: table?, update_mask: table? } map data
 function Map:from_table(t)
     -- Use default or {} to handle empty graph or waypoints
-    if t.graph ~= nil then
+    if t.graph then
         self.graph = t.graph
     end
-    if t.waypoints ~= nil then
+    self:validate_links()
+    if t.waypoints then
         self.waypoints = t.waypoints
+    end
+    self:validate_waypoints()
+    if t.update_mask then
+        self.update_mask = t.update_mask
     end
 end
 
@@ -151,8 +208,11 @@ end
 ---@return Map copy
 function Map:copy()
     local new = Map:new()
-    new.graph = table_copy(self.graph)
-    new.waypoints = table_copy(self.waypoints)
+    new:from_table({
+        graph = table_copy(self.graph),
+        waypoints = table_copy(self.waypoints),
+        update_mask = table_copy(self.update_mask),
+    })
     -- Assigning here instead of passing to to new() so it doesn't try to read remote
     new.remote = self.remote
     return new
@@ -164,9 +224,9 @@ end
 function Map:add_waypoint(name, pos)
     local point = self:pos(pos)
     self.waypoints[name] = point.id
-    if self.remote ~= nil then
+    if self.remote then
         local remote_point = self.remote:add_waypoint(name, point)
-        if remote_point == nil then
+        if not remote_point then
             log:warning('Failed to send waypoint', name, 'to remote')
         else
             log:trace('Sent waypoint', name, 'to remote')
@@ -179,7 +239,16 @@ end
 ---@return Point? point
 function Map:get_waypoint(name)
     local pid = self.waypoints[name]
-    if pid == nil then
+    if not pid then
+        if self.remote then
+            local remote_point = self.remote:get_waypoint(name)
+            if remote_point then
+                log:trace('Got waypoint', name, 'from remote')
+                pid = remote_point.id
+                self.waypoints[name] = pid
+                return self:get_point(pid)
+            end
+        end
         return nil
     end
     return self:get_point(pid)
@@ -190,6 +259,23 @@ end
 function Map:remove_waypoint(name)
     -- TODO check remote first
     self.waypoints[name] = nil
+    if self.remote then
+        self.remote:remove_waypoint(name)
+    end
+end
+
+---Send a point to the map server for updates
+---@private
+---@param point Point
+function Map:update_remote_point(point)
+    if self.remote and not self.update_mask[point.id] then
+        local remote_point, action = self.remote:add_node(point)
+        if not remote_point then
+            log:warning('Failed to send node', point.id, 'to remote')
+        else
+            log:trace('Sent node', point.id, 'to remote, response was', action)
+        end
+    end
 end
 
 ---Add a point to the map
@@ -198,14 +284,7 @@ function Map:add_point(point)
     self.graph[point.id] = point
     -- TODO test this link
     self:link_adjacent(point)
-    if self.remote ~= nil then
-        local remote_point, action = self.remote:add_node(point)
-        if remote_point == nil then
-            log:warning('Failed to send node', point.id, 'to remote')
-        else
-            log:trace('Sent node', point.id, 'to remote, response was', action)
-        end
-    end
+    self:update_remote_point(point)
 end
 
 ---Get a point from it's id
@@ -221,13 +300,25 @@ end
 ---@param z number
 ---@return Point?
 function Map:get_pos(x, y, z)
-    local pid = point_id(x, y, z)
-    return self.graph[pid]
+    return self:get_point(point_id(x, y, z))
 end
 
 ---Remove a point using it's id
 ---@param pid PointId
 function Map:remove_point(pid)
+    local point = self:get_point(pid)
+    if point then
+        for link in pairs(point.links) do
+            local p = self:get_point(link)
+            if p then
+                p.links[pid] = nil
+            end
+        end
+    end
+    if self.remote and not self.update_mask[pid] then
+        self.remote:remove_node(pid)
+    end
+    -- TODO update remote
     self.graph[pid] = nil
 end
 
@@ -237,7 +328,41 @@ end
 ---@param z number
 function Map:remove_pos(x, y, z)
     local pid = point_id(x, y, z)
-    self.graph[pid] = nil
+    self:remove_point(pid)
+end
+
+---Add a mask for point which prevents sending updates to remote
+---@param pid string
+function Map:mask_point(pid)
+    self.update_mask[pid] = true
+    if self.remote then
+        self.remote:mask(pid)
+    end
+end
+
+---Add a mask for point which prevents sending updates to remote
+---@param x number
+---@param y number
+---@param z number
+function Map:mask_pos(x, y, z)
+    self:mask_point(point_id(x, y, z))
+end
+
+---Remove mask for point to allow sending updates to remote
+---@param pid string
+function Map:unmask_point(pid)
+    self.update_mask[pid] = nil
+    if self.remote then
+        self.remote:unmask(pid)
+    end
+end
+
+---Remove mask for point to allow sending updates to remote
+---@param x number
+---@param y number
+---@param z number
+function Map:unmask_pos(x, y, z)
+    self:unmask_point(point_id(x, y, z))
 end
 
 ---Get or create a point by it's components
@@ -246,8 +371,10 @@ end
 ---@param z number
 ---@return Point
 function Map:point(x, y, z)
-    local point = self:get_pos(x, y, z)
-    if point == nil then
+    local pid = point_id(x, y, z)
+    local point = self:get_point(pid)
+    log:trace('Got point', point, 'for', pid)
+    if not point then
         point = {
             id = point_id(x, y, z),
             x = x,
@@ -270,23 +397,53 @@ function Map:pos(pos)
     return self:point(pos.x, pos.y, pos.z)
 end
 
----Link two points to the graph. The two points must be inline.
+---Create a bidirectional link between two points. The two points must be inline.
 ---@param p1 Vec3|Point the first point
 ---@param p2 Vec3|Point the second point
-function Map:link(p1, p2)
+---@param weight? number weight of the link
+function Map:link(p1, p2, weight)
     -- Get by x, y, z instead of id to support vec and auto-add missing points
     p1 = self:pos(p1)
     p2 = self:pos(p2)
-    local weight = point_weight(p1, p2)
+    if weight == nil then
+        weight = point_weight(p1, p2)
+    end
 
     log:trace('p1 =', p1.id, 'p2 =', p2.id, 'weight =', weight)
 
     assert(inline(p1, p2), 'p1 is not inline with p2')
 
-    link_points(p1, p2, weight)
+    local n_p1 = table_size(p1.links)
+    local n_p2 = table_size(p2.links)
 
-    self:link_adjacent(p1)
-    self:link_adjacent(p2)
+    link_points(p1, p2, weight)
+    if table_size(p1.links) > n_p1 then
+        self:update_remote_point(p1)
+    end
+    if table_size(p2.links) > n_p2 then
+        self:update_remote_point(p2)
+    end
+end
+
+---Create a directional link between two points. The two points must be inline.
+---@param p1 Vec3|Point the first point
+---@param p2 Vec3|Point the second point
+---@param weight? number weight of the link
+function Map:dir_link(p1, p2, weight)
+    -- Get by x, y, z instead of id to support vec and auto-add missing points
+    p1 = self:pos(p1)
+    p2 = self:pos(p2)
+    if weight == nil then
+        weight = point_weight(p1, p2)
+    end
+
+    log:trace('p1 =', p1.id, 'p2 =', p2.id, 'weight =', weight)
+
+    assert(inline(p1, p2), 'p1 is not inline with p2')
+
+    link_points(p1, p2, weight, true)
+    self:update_remote_point(p1)
+    self:update_remote_point(p2)
 end
 
 ---Link adjacent points if they exist
@@ -294,37 +451,55 @@ end
 function Map:link_adjacent(point)
     local p
 
+    local update = false
+
     -- +x
     p = self:get_pos(point.x + 1, point.y, point.z)
-    if p ~= nil then
+    if p ~= nil and (not point.links[p.id] or not p.links[point.id]) then
         link_points(point, p, 1)
+        self:update_remote_point(p)
+        update = true
     end
     -- -x
     p = self:get_pos(point.x - 1, point.y, point.z)
-    if p ~= nil then
+    if p ~= nil and (not point.links[p.id] or not p.links[point.id]) then
         link_points(point, p, 1)
+        self:update_remote_point(p)
+        update = true
     end
 
     -- +y
     p = self:get_pos(point.x, point.y + 1, point.z)
-    if p ~= nil then
+    if p ~= nil and (not point.links[p.id] or not p.links[point.id]) then
         link_points(point, p, 1)
+        self:update_remote_point(p)
+        update = true
     end
     -- -y
     p = self:get_pos(point.x, point.y - 1, point.z)
-    if p ~= nil then
+    if p ~= nil and (not point.links[p.id] or not p.links[point.id]) then
         link_points(point, p, 1)
+        self:update_remote_point(p)
+        update = true
     end
 
     -- +z
     p = self:get_pos(point.x, point.y, point.z + 1)
-    if p ~= nil then
+    if p ~= nil and (not point.links[p.id] or not p.links[point.id]) then
         link_points(point, p, 1)
+        self:update_remote_point(p)
+        update = true
     end
     -- -z
     p = self:get_pos(point.x, point.y, point.z - 1)
-    if p ~= nil then
+    if p ~= nil and (not point.links[p.id] or not p.links[point.id]) then
         link_points(point, p, 1)
+        self:update_remote_point(p)
+        update = true
+    end
+
+    if update then
+        self:update_remote_point(point)
     end
 end
 

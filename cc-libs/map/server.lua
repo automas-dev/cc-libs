@@ -97,6 +97,12 @@ local function MapServer(hostname, map_path)
         {
             request_model = Schema:new({
                 pos = PositionField,
+                links = {
+                    type = FieldType.OBJECT,
+                    optional = true,
+                    key = { type = FieldType.STRING },
+                    value = { type = FieldType.FLOAT },
+                },
             }),
             response_model = Schema:new({
                 action = { type = FieldType.STRING },
@@ -111,14 +117,55 @@ local function MapServer(hostname, map_path)
             local pos = body.pos
 
             local point = map:get_pos(pos.x, pos.y, pos.z)
-            local exists = point ~= nil
-            if not exists then
+            local updated = false
+
+            if not point then
                 point = map:pos(pos)
-                map:dump(map_path)
-                log:info('Added node', point.id)
+                updated = true
             end
 
-            return request:ok_response({ node = point, action = exists and 'exists' or 'added' })
+            local links = body.links
+            if links then
+                for k, v in pairs(links) do
+                    point.links[k] = v
+                    updated = true
+                end
+            end
+
+            if updated then
+                log:info('Added node', point.id)
+                map:dump(map_path)
+            end
+
+            return request:ok_response({ node = point, action = point and 'exists' or 'added' })
+        end
+    )
+
+    server:route(
+        'remove_node',
+        {
+            request_model = Schema:new({
+                pid = { type = FieldType.STRING },
+            }),
+            response_model = Schema:new({
+                node = OptionalPointField,
+            }),
+        },
+        ---@param request Request
+        function(request)
+            local body = request.message.body
+            ---@cast body table
+
+            local pid = body.pid
+
+            local point = map:get_point(pid)
+            if point then
+                map:remove_point(pid)
+                log:info('Remove node', pid)
+                map:dump(map_path)
+            end
+
+            return request:ok_response({ node = point })
         end
     )
 
@@ -145,8 +192,8 @@ local function MapServer(hostname, map_path)
             local exists = map:get_waypoint(name) ~= nil
             local point = map:pos(pos)
             map:add_waypoint(name, point)
-            map:dump(map_path)
             log:info('Added waypoint', name)
+            map:dump(map_path)
 
             return request:ok_response({ waypoint = point, action = exists and 'replaced' or 'added' })
         end
@@ -172,7 +219,35 @@ local function MapServer(hostname, map_path)
             local name = body.name
 
             local point = map:get_waypoint(name)
-            if point == nil then
+            if not point then
+                return request:ok_response({ found = false })
+            end
+
+            return request:ok_response({ found = true, waypoint = point, name = name })
+        end
+    )
+
+    server:route(
+        'remove_waypoint',
+        {
+            request_model = Schema:new({
+                name = { type = FieldType.STRING },
+            }),
+            response_model = Schema:new({
+                found = { type = FieldType.BOOL },
+                waypoint = OptionalPointField,
+                name = { type = FieldType.STRING, optional = true },
+            }),
+        },
+        ---@param request Request
+        function(request)
+            local body = request.message.body
+            ---@cast body table
+
+            local name = body.name
+
+            local point = map:get_waypoint(name)
+            if not point then
                 return request:ok_response({ found = false })
             end
 
@@ -208,6 +283,50 @@ local function MapServer(hostname, map_path)
             end
 
             return request:ok_response({ waypoints = waypoints })
+        end
+    )
+
+    server:route(
+        'mask',
+        {
+            request_model = Schema:new({
+                pid = { type = FieldType.STRING },
+            }),
+        },
+        ---@param request Request
+        function(request)
+            local body = request.message.body
+            ---@cast body table
+
+            local pid = body.pid
+
+            map:mask_point(pid)
+            log:info('Mask node', pid)
+            map:dump(map_path)
+
+            return request:ok_response()
+        end
+    )
+
+    server:route(
+        'unmask',
+        {
+            request_model = Schema:new({
+                pid = { type = FieldType.STRING },
+            }),
+        },
+        ---@param request Request
+        function(request)
+            local body = request.message.body
+            ---@cast body table
+
+            local pid = body.pid
+
+            map:unmask_point(pid)
+            log:info('Unmask node', pid)
+            map:dump(map_path)
+
+            return request:ok_response()
         end
     )
 
