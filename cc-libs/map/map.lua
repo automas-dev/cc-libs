@@ -105,6 +105,13 @@ end
 ---@private
 function Map:validate_links()
     for pid, point in pairs(self.graph) do
+        local links_copy = table_copy(point.links)
+        for link_pid, _ in pairs(links_copy) do
+            if not self:get_point(link_pid) then
+                log:warning('Point', pid, 'is linked to missing point', link_pid)
+                point[link_pid] = nil
+            end
+        end
         for _, i in pairs({ -1, 1 }) do
             local other = self:get_pos(point.x + i, point.y, point.z)
             if other then
@@ -302,7 +309,10 @@ function Map:remove_point(pid)
     local point = self:get_point(pid)
     if point then
         for link in pairs(point.links) do
-            self:get_point(link).links[pid] = nil
+            local p = self:get_point(link)
+            if p then
+                p.links[pid] = nil
+            end
         end
     end
     if self.remote and not self.update_mask[pid] then
