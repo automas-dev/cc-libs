@@ -150,7 +150,7 @@ function TSContext:register_turtle()
         return exists
     end)
     self:register('detect_down', false, function()
-        local exists = turtle.detectUp()
+        local exists = turtle.detectDown()
         local pos = self.motion.location.pos
         if not exists then
             print('exists')
