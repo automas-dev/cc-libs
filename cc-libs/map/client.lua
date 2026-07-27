@@ -39,35 +39,16 @@ function MapClient:get_map()
 end
 
 ---Add a node to the map, returns the node and if it was created or already exists
----Links can only be appended so any existing links will not be removed if not specified.
----@param pos Vec3|Point location of the node
+---@param pos Vec3|Point
 ---@return Point? node the node or nil for error
 ---@return string? action if the node was added or already exists
 function MapClient:add_node(pos)
     local success, status, resp = self.client:request('add_node', {
         pos = pos,
-        -- If type is point, links will be included
-        links = pos.links,
     })
     if success then
         ---@cast resp table
         return resp.node, resp.action
-    else
-        -- TODO remove this, is it somewhere else?
-        log:warning('Got unsuccessful response from server', status, resp)
-    end
-end
-
----Remove a node from the map, returns the node and if it existed
----@param pid string
----@return Point? node the node or nil if it does not exist
-function MapClient:remove_node(pid)
-    local success, status, resp = self.client:request('remove_node', {
-        pid = pid,
-    })
-    if success then
-        ---@cast resp table
-        return resp.node
     else
         -- TODO remove this, is it somewhere else?
         log:warning('Got unsuccessful response from server', status, resp)
@@ -109,22 +90,6 @@ function MapClient:get_waypoint(name)
     end
 end
 
----Remove a waypoint
----@param name string
----@return Point? waypoint the waypoint or nil if it does not exist
-function MapClient:remove_waypoint(name)
-    local success, status, resp = self.client:request('remove_waypoint', {
-        name = name,
-    })
-    if success then
-        ---@cast resp table
-        return resp.waypoint
-    else
-        -- TODO remove this, is it somewhere else?
-        log:warning('Got unsuccessful response from server', status, resp)
-    end
-end
-
 ---Get a waypoint
 ---@return {name: string, waypoint: Point}[]? waypoints list of all waypoints
 function MapClient:list_waypoints()
@@ -136,36 +101,6 @@ function MapClient:list_waypoints()
         -- TODO remove this, is it somewhere else?
         log:warning('Got unsuccessful response from server', status, resp)
     end
-end
-
----@param pid string
----@return boolean success the node was masked
-function MapClient:mask(pid)
-    local success, status, resp = self.client:request('mask', {
-        pid = pid,
-    })
-    if success then
-        return true
-    else
-        -- TODO remove this, is it somewhere else?
-        log:warning('Got unsuccessful response from server', status, resp)
-    end
-    return false
-end
-
----@param pid string
----@return boolean success the node was unmasked
-function MapClient:unmask(pid)
-    local success, status, resp = self.client:request('unmask', {
-        pid = pid,
-    })
-    if success then
-        return true
-    else
-        -- TODO remove this, is it somewhere else?
-        log:warning('Got unsuccessful response from server', status, resp)
-    end
-    return false
 end
 
 return {
