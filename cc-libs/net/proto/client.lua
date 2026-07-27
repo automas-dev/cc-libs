@@ -22,20 +22,12 @@ local ProtocolClient = {}
 ---@param protocol string
 ---@param server_hostname string server hostname
 ---@param timeout? number
----@param connection_timeout? number timeout while attempting to lookup protocol, defaults to 30, use 0 to return immediately
 ---@return ProtocolClient
-function ProtocolClient:new(protocol, server_hostname, timeout, connection_timeout)
-    if connection_timeout == nil then
-        connection_timeout = 30
-    end
+function ProtocolClient:new(protocol, server_hostname, timeout)
     local log = logging.get_logger(table.concat({ 'proto_client', protocol, server_hostname }, '.'))
     open_rednet()
     log:trace('Lookup protocol', protocol, 'on host', server_hostname)
-    local connect_end = os.clock() + connection_timeout
-    local server_id
-    repeat
-        server_id = rednet.lookup(protocol, server_hostname)
-    until server_id ~= nil or os.clock() > connect_end
+    local server_id = rednet.lookup(protocol, server_hostname)
     if server_id == nil then
         error('No server found for protocol ' .. protocol .. ' hostname ' .. server_hostname)
     end
