@@ -162,8 +162,8 @@ local function MapServer(hostname, map_path)
             local point = map:get_point(pid)
             if point then
                 map:remove_point(pid)
-                map:dump(map_path)
                 log:info('Remove node', pid)
+                map:dump(map_path)
             end
 
             return request:ok_response({ node = point })
