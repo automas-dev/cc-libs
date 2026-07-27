@@ -1,9 +1,6 @@
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('motion')
 
-local ccl_pretty = require 'cc-libs.util.pretty'
-local format = ccl_pretty.format
-
 local ccl_location = require 'cc-libs.turtle.location'
 local Action = ccl_location.Action
 local Location = ccl_location.Location
