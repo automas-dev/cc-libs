@@ -235,17 +235,23 @@ local function dig_forward(n)
             turtle.digUp()
         end
 
+        -- Add point above
+        map:pos(location.pos + Vec3:new(0, 1, 0))
+
+        local down_is_torch = false
         local has_block, data = turtle.inspectDown()
         if has_block then
             if data.name ~= 'minecraft:torch' then
                 turtle.digDown()
+            else
+                down_is_torch = true
             end
         end
 
-        -- Add point above
-        map:pos(location.pos + Vec3:new(0, 1, 0))
-        -- Add point below
-        map:pos(location.pos - Vec3:new(0, 1, 0))
+        if not down_is_torch then
+            -- Add point below
+            map:pos(location.pos - Vec3:new(0, 1, 0))
+        end
     end
 
     return true
