@@ -130,6 +130,19 @@ local function return_to_station()
     log:debug('Finished returning to station')
 end
 
+local function collect_torches()
+    log:info('Collecting more torches')
+    turtle.select(1)
+    tmc:face(Compass.WEST, heading_offset)
+    local success, err = turtle.suck(turtle.getItemSpace())
+    log:debug('When sucking torches, got return', tostring(success))
+    if not success and not action.find_torch() then
+        log:error('Out of torches and could not pull torches from inventory:', err)
+        return false
+    end
+    tmc:face(Compass.NORTH, heading_offset)
+end
+
 local function dump()
     local state = {
         heading = location.heading,
@@ -152,16 +165,8 @@ local function dump()
             turtle.drop()
         end
     end
-    turtle.select(1)
 
-    log:info('Collecting more torches')
-    tmc:face(Compass.WEST, heading_offset)
-    local success, err = turtle.suck(turtle.getItemSpace())
-    log:debug('When sucking torches, got return', tostring(success))
-    if not success and not action.find_torch() then
-        log:error('Out of torches and could not pull torches from inventory:', err)
-        return false
-    end
+    collect_torches()
 
     -- Resume
 
@@ -407,6 +412,8 @@ local function main()
     tmc:face(Compass.NORTH, heading_offset)
 
     local_frame = LocalFrame:new(location.pos, station.heading)
+
+    collect_torches()
 
     -- Move out of station into start of first shaft
     if not dig_forward() then
