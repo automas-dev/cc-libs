@@ -347,6 +347,10 @@ end
 -- Mine through wall to last shaft for dump
 
 local function main()
+    -- TODO is this needed?
+    local file = assert(io.open('.active', 'w'))
+    file:write(json.encode(args))
+
     local map_client = MapClient:new('server')
     local remote_map = map_client:get_map()
     if remote_map ~= nil then
@@ -513,6 +517,10 @@ local function main()
                 return false
             end
         end
+
+        file = assert(io.open('.active', 'w'))
+        args.skip = skip + i
+        file:write(json.encode(args))
     end
 
     -- Return
@@ -536,9 +544,6 @@ local function main()
 
     log:info('Done!')
 end
-
-local file = assert(io.open('.active', 'w'))
-file:write(json.encode(args))
 
 -- log:catch_errors(main)
 telem:run_parallel_with('main', log:wrap_fn(main))
