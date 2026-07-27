@@ -72,6 +72,7 @@ end
 ---@class Map
 ---@field graph { [PointId]: Point }
 ---@field waypoints { [string]: PointId }
+---@field update_mask { PointId: boolean }
 ---@field remote MapClient?
 local Map = {}
 
@@ -82,6 +83,7 @@ function Map:new(remote)
     local o = {
         graph = {},
         waypoints = {},
+        update_mask = {},
         remote = remote,
     }
     setmetatable(o, self)
@@ -140,7 +142,7 @@ function Map:validate_waypoints()
 end
 
 ---Load the map from a table
----@param t { graph: table?, waypoints: table?} map data
+---@param t { graph: table?, waypoints: table?, update_mask: table? } map data
 function Map:from_table(t)
     -- Use default or {} to handle empty graph or waypoints
     if t.graph then
@@ -151,6 +153,9 @@ function Map:from_table(t)
         self.waypoints = t.waypoints
     end
     self:validate_waypoints()
+    if t.update_mask then
+        self.update_mask = t.update_mask
+    end
 end
 
 ---Load the map from a file
@@ -199,6 +204,7 @@ function Map:copy()
     new:from_table({
         graph = table_copy(self.graph),
         waypoints = table_copy(self.waypoints),
+        update_mask = table_copy(self.update_mask),
     })
     -- Assigning here instead of passing to to new() so it doesn't try to read remote
     new.remote = self.remote
@@ -257,7 +263,7 @@ function Map:add_point(point)
     self.graph[point.id] = point
     -- TODO test this link
     self:link_adjacent(point)
-    if self.remote then
+    if self.remote and not self.update_mask[point.id] then
         local remote_point, action = self.remote:add_node(point)
         if not remote_point then
             log:warning('Failed to send node', point.id, 'to remote')
@@ -292,7 +298,7 @@ function Map:remove_point(pid)
             self:get_point(link).links[pid] = nil
         end
     end
-    if self.remote then
+    if self.remote and not self.update_mask[pid] then
         self.remote:remove_node(pid)
     end
     -- TODO update remote
@@ -308,14 +314,49 @@ function Map:remove_pos(x, y, z)
     self:remove_point(pid)
 end
 
+---Add a mask for point which prevents sending updates to remote
+---@param pid string
+function Map:mask_point(pid)
+    self.update_mask[pid] = true
+    if self.remote then
+        self.remote:mask(pid)
+    end
+end
+
+---Add a mask for point which prevents sending updates to remote
+---@param x number
+---@param y number
+---@param z number
+function Map:mask_pos(x, y, z)
+    self:mask_point(point_id(x, y, z))
+end
+
+---Remove mask for point to allow sending updates to remote
+---@param pid string
+function Map:unmask_point(pid)
+    self.update_mask[pid] = nil
+    if self.remote then
+        self.remote:unmask(pid)
+    end
+end
+
+---Remove mask for point to allow sending updates to remote
+---@param x number
+---@param y number
+---@param z number
+function Map:unmask_pos(x, y, z)
+    self:unmask_point(point_id(x, y, z))
+end
+
 ---Get or create a point by it's components
 ---@param x number
 ---@param y number
 ---@param z number
 ---@return Point
 function Map:point(x, y, z)
-    local point = self:get_pos(x, y, z)
-    log:trace('Got point', point, 'for', { x = x, y = y, z = z })
+    local pid = point_id(x, y, z)
+    local point = self:get_point(pid)
+    log:trace('Got point', point, 'for', pid)
     if not point then
         point = {
             id = point_id(x, y, z),

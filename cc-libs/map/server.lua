@@ -286,6 +286,50 @@ local function MapServer(hostname, map_path)
         end
     )
 
+    server:route(
+        'mask',
+        {
+            request_model = Schema:new({
+                pid = { type = FieldType.STRING },
+            }),
+        },
+        ---@param request Request
+        function(request)
+            local body = request.message.body
+            ---@cast body table
+
+            local pid = body.pid
+
+            map:mask_point(pid)
+            log:info('Mask node', pid)
+            map:dump(map_path)
+
+            return request:ok_response()
+        end
+    )
+
+    server:route(
+        'unmask',
+        {
+            request_model = Schema:new({
+                pid = { type = FieldType.STRING },
+            }),
+        },
+        ---@param request Request
+        function(request)
+            local body = request.message.body
+            ---@cast body table
+
+            local pid = body.pid
+
+            map:unmask_point(pid)
+            log:info('Unmask node', pid)
+            map:dump(map_path)
+
+            return request:ok_response()
+        end
+    )
+
     return server
 end
 

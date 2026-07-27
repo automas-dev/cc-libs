@@ -138,6 +138,36 @@ function MapClient:list_waypoints()
     end
 end
 
+---@param pid string
+---@return boolean success the node was masked
+function MapClient:mask(pid)
+    local success, status, resp = self.client:request('mask', {
+        pid = pid,
+    })
+    if success then
+        return true
+    else
+        -- TODO remove this, is it somewhere else?
+        log:warning('Got unsuccessful response from server', status, resp)
+    end
+    return false
+end
+
+---@param pid string
+---@return boolean success the node was unmasked
+function MapClient:unmask(pid)
+    local success, status, resp = self.client:request('unmask', {
+        pid = pid,
+    })
+    if success then
+        return true
+    else
+        -- TODO remove this, is it somewhere else?
+        log:warning('Got unsuccessful response from server', status, resp)
+    end
+    return false
+end
+
 return {
     MapClient = MapClient,
 }
