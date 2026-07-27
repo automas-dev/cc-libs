@@ -77,7 +77,7 @@ local function main()
 
     log:info('Placing final ladder')
 
-    if tmc:backward() and actions.select_slot('minecraft:ladder') then
+    if tmc:try_backward() and actions.select_slot('minecraft:ladder') then
         turtle.place()
     else
         log:warning('Failed to find ladder')
