@@ -53,11 +53,6 @@ local skip = tonumber(args.skip)
 
 log:info('Starting with parameters shafts=', shafts, 'length=', length, 'torc=', torch, 'skip=', skip)
 
----@type MapClient
-local map_client
----Map has been received from the server, updates should be sent to the server
-local map_loaded = false
-
 local heading_offset = 0
 
 local map = Map:new()
@@ -121,27 +116,6 @@ end
 
 local function inventory_full()
     return turtle.getItemCount(16) > 0
-end
-
----Wrapper for Map:pos to add a point which also updates the remote map if connected
----@param pos Vec3|Point
-local function add_map_point(pos)
-    local exists = map:get_pos(pos.x, pos.y, pos.z)
-    if exists == nil then
-        map:pos(pos)
-        if map_loaded then
-            map_client:add_node(pos)
-        end
-    end
-end
-
----Wrapper for Map:pos to add a point which also updates the remote map if connected
----@param pos Vec3|Point
-local function add_map_waypoint(name, pos)
-    map:add_waypoint(name, pos)
-    if map_loaded then
-        map_client:add_waypoint(name, pos)
-    end
 end
 
 local function return_to_station()
@@ -263,12 +237,10 @@ local function dig_forward(n)
             end
         end
 
-        -- here
-        add_map_point(location.pos)
-        -- above
-        add_map_point(location.pos + Vec3:new(0, 1, 0))
-        -- below
-        add_map_point(location.pos - Vec3:new(0, 1, 0))
+        -- Add point above
+        map:pos(location.pos + Vec3:new(0, 1, 0))
+        -- Add point below
+        map:pos(location.pos - Vec3:new(0, 1, 0))
     end
 
     return true
@@ -370,15 +342,15 @@ end
 -- Mine through wall to last shaft for dump
 
 local function main()
-    map_client = MapClient:new('server')
+    local map_client = MapClient:new('server')
     local remote_map = map_client:get_map()
     if remote_map ~= nil then
         log:info('Loading map from server')
         map:from_table(remote_map)
-        map_loaded = true
+        -- Set map.remote to update map server with branches
+        map.remote = map_client
     else
         log:warning('Failed to fetch map from server')
-        map_loaded = false
     end
 
     local station = load_station()
@@ -407,7 +379,7 @@ local function main()
         end
     else
         tmc:up()
-        add_map_waypoint('station', location.pos)
+        map:add_waypoint('station', location.pos)
         nav:poi_from_waypoint('station')
     end
 
@@ -431,14 +403,15 @@ local function main()
         end
     end
 
+    heading_offset = station.heading - 1
+    tmc:face(Compass.NORTH, heading_offset)
+
     local_frame = LocalFrame:new(location.pos, station.heading)
 
     -- Move out of station into start of first shaft
     if not dig_forward() then
         return false
     end
-
-    heading_offset = station.heading - 1
 
     -- Skip shafts
 
@@ -557,5 +530,10 @@ local function main()
     log:info('Done!')
 end
 
+local file = assert(io.open('.active', 'w'))
+file:write(json.encode(args))
+
 -- log:catch_errors(main)
 telem:run_parallel_with('main', log:wrap_fn(main))
+
+fs.delete('.active')
