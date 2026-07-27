@@ -169,7 +169,6 @@ function TSContext:register_turtle()
         -- Should not be possible because of the parser, here for testing
         assert(poi_name ~= nil and #poi_name >= 1)
         if self.nav:get_poi(poi_name) == nil then
-            log:warning('poi', poi_name, 'is missing')
             if self.nav.map:get_waypoint(poi_name) == nil then
                 error('Missing poi ' .. tostring(poi_name))
             end
