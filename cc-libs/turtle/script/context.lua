@@ -153,11 +153,9 @@ function TSContext:register_turtle()
         local exists = turtle.detectDown()
         local pos = self.motion.location.pos
         if not exists then
-            print('exists')
             -- Add that space to the map
             self.nav.map:point(pos.x, pos.y - 1, pos.z)
         else
-            print('remove')
             self.nav.map:remove_pos(pos.x, pos.y - 1, pos.z)
         end
         return exists
