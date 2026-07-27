@@ -193,7 +193,8 @@ local function dump()
 
     log:info('Returning to mining')
     nav:follow_path(nav:find_path('resume'))
-    tmc:face(state.heading, heading_offset)
+    -- Don't use offset
+    tmc:face(state.heading)
 
     return true
 end
