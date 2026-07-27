@@ -38,8 +38,9 @@ local place_ladder = args.ladder
 
 log:info('Starting with parameters n=', n, 'block_wall=', block_wall, 'ladder=', place_ladder)
 
-local map_client = MapClient:new('server')
-local map = Map:new(map_client)
+-- local map_client = MapClient:new('server')
+-- local map = Map:new(map_client)
+local map = Map:new()
 
 local location = Location:new(map)
 local telem = get_telemetry()
