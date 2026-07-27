@@ -257,12 +257,10 @@ function Map:remove_waypoint(name)
     end
 end
 
----Add a point to the map
+---Send a point to the map server for updates
+---@private
 ---@param point Point
-function Map:add_point(point)
-    self.graph[point.id] = point
-    -- TODO test this link
-    self:link_adjacent(point)
+function Map:update_remote_point(point)
     if self.remote and not self.update_mask[point.id] then
         local remote_point, action = self.remote:add_node(point)
         if not remote_point then
@@ -271,6 +269,15 @@ function Map:add_point(point)
             log:trace('Sent node', point.id, 'to remote, response was', action)
         end
     end
+end
+
+---Add a point to the map
+---@param point Point
+function Map:add_point(point)
+    self.graph[point.id] = point
+    -- TODO test this link
+    self:link_adjacent(point)
+    self:update_remote_point(point)
 end
 
 ---Get a point from it's id
@@ -396,10 +403,16 @@ function Map:link(p1, p2, weight)
 
     assert(inline(p1, p2), 'p1 is not inline with p2')
 
+    local n_p1 = table_size(p1.links)
+    local n_p2 = table_size(p2.links)
+
     link_points(p1, p2, weight)
-    -- Re-add points so they are sent to remote
-    self:add_point(p1)
-    self:add_point(p2)
+    if table_size(p1.links) > n_p1 then
+        self:update_remote_point(p1)
+    end
+    if table_size(p2.links) > n_p2 then
+        self:update_remote_point(p2)
+    end
 end
 
 ---Create a directional link between two points. The two points must be inline.
@@ -419,9 +432,8 @@ function Map:dir_link(p1, p2, weight)
     assert(inline(p1, p2), 'p1 is not inline with p2')
 
     link_points(p1, p2, weight, true)
-    -- Re-add points so they are sent to remote
-    self:add_point(p1)
-    self:add_point(p2)
+    self:update_remote_point(p1)
+    self:update_remote_point(p2)
 end
 
 ---Link adjacent points if they exist
@@ -429,37 +441,55 @@ end
 function Map:link_adjacent(point)
     local p
 
+    local update = false
+
     -- +x
     p = self:get_pos(point.x + 1, point.y, point.z)
-    if p ~= nil then
+    if p ~= nil and (not point.links[p.id] or not p.links[point.id]) then
         link_points(point, p, 1)
+        self:update_remote_point(p)
+        update = true
     end
     -- -x
     p = self:get_pos(point.x - 1, point.y, point.z)
-    if p ~= nil then
+    if p ~= nil and (not point.links[p.id] or not p.links[point.id]) then
         link_points(point, p, 1)
+        self:update_remote_point(p)
+        update = true
     end
 
     -- +y
     p = self:get_pos(point.x, point.y + 1, point.z)
-    if p ~= nil then
+    if p ~= nil and (not point.links[p.id] or not p.links[point.id]) then
         link_points(point, p, 1)
+        self:update_remote_point(p)
+        update = true
     end
     -- -y
     p = self:get_pos(point.x, point.y - 1, point.z)
-    if p ~= nil then
+    if p ~= nil and (not point.links[p.id] or not p.links[point.id]) then
         link_points(point, p, 1)
+        self:update_remote_point(p)
+        update = true
     end
 
     -- +z
     p = self:get_pos(point.x, point.y, point.z + 1)
-    if p ~= nil then
+    if p ~= nil and (not point.links[p.id] or not p.links[point.id]) then
         link_points(point, p, 1)
+        self:update_remote_point(p)
+        update = true
     end
     -- -z
     p = self:get_pos(point.x, point.y, point.z - 1)
-    if p ~= nil then
+    if p ~= nil and (not point.links[p.id] or not p.links[point.id]) then
         link_points(point, p, 1)
+        self:update_remote_point(p)
+        update = true
+    end
+
+    if update then
+        self:update_remote_point(point)
     end
 end
 
