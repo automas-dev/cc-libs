@@ -39,14 +39,17 @@ end
 ---@param p1 Point
 ---@param p2 Point
 ---@param weight number
-local function link_points(p1, p2, weight)
+---@param one_way? boolean don't create a link from p2 to p1
+local function link_points(p1, p2, weight, one_way)
     if not p1.links[p2.id] then
         log:trace('Creating link from', p1.id, 'to', p2.id)
         p1.links[p2.id] = weight
     end
-    if not p2.links[p1.id] then
-        log:trace('Creating link from', p2.id, 'to', p1.id)
-        p2.links[p1.id] = weight
+    if not one_way then
+        if not p2.links[p1.id] then
+            log:trace('Creating link from', p2.id, 'to', p1.id)
+            p2.links[p1.id] = weight
+        end
     end
 end
 
@@ -312,6 +315,7 @@ end
 ---@return Point
 function Map:point(x, y, z)
     local point = self:get_pos(x, y, z)
+    log:trace('Got point', point, 'for', { x = x, y = y, z = z })
     if not point then
         point = {
             id = point_id(x, y, z),
@@ -335,23 +339,48 @@ function Map:pos(pos)
     return self:point(pos.x, pos.y, pos.z)
 end
 
----Link two points to the graph. The two points must be inline.
+---Create a bidirectional link between two points. The two points must be inline.
 ---@param p1 Vec3|Point the first point
 ---@param p2 Vec3|Point the second point
-function Map:link(p1, p2)
+---@param weight? number weight of the link
+function Map:link(p1, p2, weight)
     -- Get by x, y, z instead of id to support vec and auto-add missing points
     p1 = self:pos(p1)
     p2 = self:pos(p2)
-    local weight = point_weight(p1, p2)
+    if weight == nil then
+        weight = point_weight(p1, p2)
+    end
 
     log:trace('p1 =', p1.id, 'p2 =', p2.id, 'weight =', weight)
 
     assert(inline(p1, p2), 'p1 is not inline with p2')
 
     link_points(p1, p2, weight)
+    -- Re-add points so they are sent to remote
+    self:add_point(p1)
+    self:add_point(p2)
+end
 
-    self:link_adjacent(p1)
-    self:link_adjacent(p2)
+---Create a directional link between two points. The two points must be inline.
+---@param p1 Vec3|Point the first point
+---@param p2 Vec3|Point the second point
+---@param weight? number weight of the link
+function Map:dir_link(p1, p2, weight)
+    -- Get by x, y, z instead of id to support vec and auto-add missing points
+    p1 = self:pos(p1)
+    p2 = self:pos(p2)
+    if weight == nil then
+        weight = point_weight(p1, p2)
+    end
+
+    log:trace('p1 =', p1.id, 'p2 =', p2.id, 'weight =', weight)
+
+    assert(inline(p1, p2), 'p1 is not inline with p2')
+
+    link_points(p1, p2, weight, true)
+    -- Re-add points so they are sent to remote
+    self:add_point(p1)
+    self:add_point(p2)
 end
 
 ---Link adjacent points if they exist
