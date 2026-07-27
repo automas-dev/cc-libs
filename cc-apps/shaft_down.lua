@@ -9,6 +9,13 @@ logging.basic_config {
 }
 local log = logging.get_logger('main')
 
+local ccl_map = require 'cc-libs.map'
+local Map = ccl_map.Map
+local MapClient = ccl_map.MapClient
+
+local ccl_location = require 'cc-libs.turtle.location'
+local Location = ccl_location.Location
+
 local ccl_motion = require 'cc-libs.turtle.motion'
 local Motion = ccl_motion.Motion
 
@@ -31,11 +38,15 @@ local place_ladder = args.ladder
 
 log:info('Starting with parameters n=', n, 'block_wall=', block_wall, 'ladder=', place_ladder)
 
-local tmc = Motion:new()
-tmc:enable_dig()
+local map_client = MapClient:new('server')
+local map = Map:new(map_client)
 
+local location = Location:new(map)
 local telem = get_telemetry()
-telem:set_location(tmc.location)
+telem:set_location(location)
+
+local tmc = Motion:new(location)
+tmc:enable_dig()
 
 local function place()
     if not turtle.detect() then
