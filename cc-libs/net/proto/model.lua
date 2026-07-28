@@ -6,7 +6,7 @@ local ResponseStatus = {
 }
 
 ---@class Message
----@field id string uuid unique to each request
+---@field id integer id unique to each request
 ---@field path string
 ---@field body string | table | nil
 
