@@ -141,6 +141,7 @@ local function collect_torches()
         return false
     end
     tmc:face(Compass.NORTH, heading_offset)
+    return true
 end
 
 local function dump()
@@ -166,7 +167,9 @@ local function dump()
         end
     end
 
-    collect_torches()
+    if not collect_torches() then
+        return false
+    end
 
     -- Resume
 
@@ -423,7 +426,9 @@ local function main()
 
     local_frame = LocalFrame:new(location.pos, station.heading)
 
-    collect_torches()
+    if not collect_torches() then
+        return false
+    end
 
     -- Move out of station into start of first shaft
     if not dig_forward() then
@@ -511,9 +516,7 @@ local function main()
                 return false
             end
             tmc:face(Compass.NORTH, heading_offset)
-            if not tmc:forward(2) then
-                return false
-            end
+            tmc:forward(2)
         end
 
         -- Mine to start of next shaft and push
