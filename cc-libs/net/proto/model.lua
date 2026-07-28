@@ -41,8 +41,13 @@ local Request = {}
 ---@param sender number
 ---@param message Message
 ---@param protocol? string
+---@param validate? boolean validate `message` raising an error, default true
 ---@return Request
-function Request:new(sender, message, protocol)
+function Request:new(sender, message, protocol, validate)
+    -- run if validate is true or nil
+    if validate ~= false then
+        assert(validate_message(message))
+    end
     local o = {
         sender = sender,
         message = message,

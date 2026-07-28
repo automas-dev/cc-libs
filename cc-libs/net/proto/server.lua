@@ -127,7 +127,7 @@ function ProtocolServer:serve_forever()
                 self.logger:trace('Invalid message', reason)
                 rednet.send(sender, reason, self.response_protocol)
             else
-                local request = Request:new(sender, message, protocol)
+                local request = Request:new(sender, message, protocol, false)
                 local success, err = pcall(self.handle_request, self, request)
                 if not success then
                     self.logger:error('Error processing request', err, { request = request })
