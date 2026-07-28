@@ -306,7 +306,7 @@ local function mine_tunnel()
     for _ = 1, 3 do
         local local_pos = local_frame:to_local(location.pos)
         log:debug('Transformed global', location.pos, 'to local', local_pos)
-        if local_pos.z % torch == 1 then
+        if local_pos.z % 3 == 1 then
             if not place_torch() then
                 return false
             end
