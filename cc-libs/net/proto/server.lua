@@ -56,9 +56,10 @@ end
 
 ---Send a single response
 ---@param response Response
+---@return boolean success
 function ProtocolServer:send(response)
     self.logger:trace('Sending response', response)
-    rednet.send(response.recipient, {
+    return rednet.send(response.recipient, {
         id = response.request.message.id,
         path = response.request.message.path,
         status = response.status,
