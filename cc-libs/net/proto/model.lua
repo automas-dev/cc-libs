@@ -78,25 +78,33 @@ function Response:new(request, status, message)
     return o
 end
 
+---Create a Response object with `status`
+---@param status ResponseStatus|string
+---@param message any
+---@return Response response
+function Request:make_response(status, message)
+    return Response:new(self, status, message)
+end
+
 ---Create a Response with ok status
 ---@param message any
 ---@return Response response
 function Request:ok_response(message)
-    return Response:new(self, ResponseStatus.OK, message)
+    return self:make_response(ResponseStatus.OK, message)
 end
 
 ---Create a Response with error status
 ---@param message any
 ---@return Response response
 function Request:err_response(message)
-    return Response:new(self, ResponseStatus.ERROR, message)
+    return self:make_response(ResponseStatus.ERROR, message)
 end
 
 ---Create a Response with not found status
 ---@param message any
 ---@return Response response
 function Request:not_found_response(message)
-    return Response:new(self, ResponseStatus.NOT_FOUND, message)
+    return self:make_response(ResponseStatus.NOT_FOUND, message)
 end
 
 return {
