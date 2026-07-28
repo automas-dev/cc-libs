@@ -53,11 +53,6 @@ local skip = tonumber(args.skip)
 
 log:info('Starting with parameters shafts=', shafts, 'length=', length, 'torc=', torch, 'skip=', skip)
 
----@type MapClient
-local map_client
----Map has been received from the server, updates should be sent to the server
-local map_loaded = false
-
 local heading_offset = 0
 
 local map = Map:new()
@@ -123,27 +118,6 @@ local function inventory_full()
     return turtle.getItemCount(16) > 0
 end
 
----Wrapper for Map:pos to add a point which also updates the remote map if connected
----@param pos Vec3|Point
-local function add_map_point(pos)
-    local exists = map:get_pos(pos.x, pos.y, pos.z)
-    if exists == nil then
-        map:pos(pos)
-        if map_loaded then
-            map_client:add_node(pos)
-        end
-    end
-end
-
----Wrapper for Map:pos to add a point which also updates the remote map if connected
----@param pos Vec3|Point
-local function add_map_waypoint(name, pos)
-    map:add_waypoint(name, pos)
-    if map_loaded then
-        map_client:add_waypoint(name, pos)
-    end
-end
-
 local function return_to_station()
     log:info('Returning to station')
 
@@ -154,6 +128,20 @@ local function return_to_station()
     end
     debug_location()
     log:debug('Finished returning to station')
+end
+
+local function collect_torches()
+    log:info('Collecting more torches')
+    turtle.select(1)
+    tmc:face(Compass.WEST, heading_offset)
+    local success, err = turtle.suck(turtle.getItemSpace())
+    log:debug('When sucking torches, got return', tostring(success))
+    if not success and not action.find_torch() then
+        log:error('Out of torches and could not pull torches from inventory:', err)
+        return false
+    end
+    tmc:face(Compass.NORTH, heading_offset)
+    return true
 end
 
 local function dump()
@@ -178,14 +166,8 @@ local function dump()
             turtle.drop()
         end
     end
-    turtle.select(1)
 
-    log:info('Collecting more torches')
-    tmc:face(Compass.WEST, heading_offset)
-    local success, err = turtle.suck(turtle.getItemSpace())
-    log:debug('When sucking torches, got return', tostring(success))
-    if not success and not action.find_torch() then
-        log:error('Out of torches and could not pull torches from inventory:', err)
+    if not collect_torches() then
         return false
     end
 
@@ -193,7 +175,8 @@ local function dump()
 
     log:info('Returning to mining')
     nav:follow_path(nav:find_path('resume'))
-    tmc:face(state.heading, heading_offset)
+    -- Don't use offset
+    tmc:face(state.heading)
 
     return true
 end
@@ -255,19 +238,23 @@ local function dig_forward(n)
             turtle.digUp()
         end
 
+        -- Add point above
+        map:pos(location.pos + Vec3:new(0, 1, 0))
+
+        local down_is_torch = false
         local has_block, data = turtle.inspectDown()
         if has_block then
             if data.name ~= 'minecraft:torch' then
                 turtle.digDown()
+            else
+                down_is_torch = true
             end
         end
 
-        -- here
-        add_map_point(location.pos)
-        -- above
-        add_map_point(location.pos + Vec3:new(0, 1, 0))
-        -- below
-        add_map_point(location.pos - Vec3:new(0, 1, 0))
+        if not down_is_torch then
+            -- Add point below
+            map:pos(location.pos - Vec3:new(0, 1, 0))
+        end
     end
 
     return true
@@ -319,7 +306,7 @@ local function mine_tunnel()
     for _ = 1, 3 do
         local local_pos = local_frame:to_local(location.pos)
         log:debug('Transformed global', location.pos, 'to local', local_pos)
-        if local_pos.z % torch == 1 then
+        if local_pos.z % 3 == 1 then
             if not place_torch() then
                 return false
             end
@@ -369,15 +356,19 @@ end
 -- Mine through wall to last shaft for dump
 
 local function main()
-    map_client = MapClient:new('server')
+    -- TODO is this needed?
+    local file = assert(io.open('.active', 'w'))
+    file:write(json.encode(args))
+
+    local map_client = MapClient:new('server')
     local remote_map = map_client:get_map()
     if remote_map ~= nil then
         log:info('Loading map from server')
         map:from_table(remote_map)
-        map_loaded = true
+        -- Set map.remote to update map server with branches
+        map.remote = map_client
     else
         log:warning('Failed to fetch map from server')
-        map_loaded = false
     end
 
     local station = load_station()
@@ -406,7 +397,7 @@ local function main()
         end
     else
         tmc:up()
-        add_map_waypoint('station', location.pos)
+        map:add_waypoint('station', location.pos)
         nav:poi_from_waypoint('station')
     end
 
@@ -430,14 +421,19 @@ local function main()
         end
     end
 
+    heading_offset = station.heading - 1
+    tmc:face(Compass.NORTH, heading_offset)
+
     local_frame = LocalFrame:new(location.pos, station.heading)
+
+    if not collect_torches() then
+        return false
+    end
 
     -- Move out of station into start of first shaft
     if not dig_forward() then
         return false
     end
-
-    heading_offset = station.heading - 1
 
     -- Skip shafts
 
@@ -514,15 +510,13 @@ local function main()
         end
 
         -- Mine to start of previous shaft
-        if i - skip > 1 then
+        if i + skip > 1 then
             tmc:face(Compass.SOUTH, heading_offset)
             if not dig_forward(2) then
                 return false
             end
             tmc:face(Compass.NORTH, heading_offset)
-            if not tmc:forward(2) then
-                return false
-            end
+            tmc:forward(2)
         end
 
         -- Mine to start of next shaft and push
@@ -532,6 +526,10 @@ local function main()
                 return false
             end
         end
+
+        file = assert(io.open('.active', 'w'))
+        args.skip = skip + i
+        file:write(json.encode(args))
     end
 
     -- Return
@@ -558,3 +556,5 @@ end
 
 -- log:catch_errors(main)
 telem:run_parallel_with('main', log:wrap_fn(main))
+
+fs.delete('.active')
