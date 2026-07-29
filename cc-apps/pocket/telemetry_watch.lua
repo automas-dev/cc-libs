@@ -41,6 +41,7 @@ local runner = telem:make_runner()
 if type_filter:match('E') then
     runner:listen_for_event(nil, function(message)
         assert(message.type == PayloadType.EVENT)
+        log:debug('Got event', message)
         local host = message.host_id .. ':' .. message.host_name
         local match_id = id_filter == nil or tostring(message.host_id) == id_filter
         local match_host = host_filter == nil or message.host_name == host_filter
@@ -56,6 +57,7 @@ end
 if type_filter:match('A') then
     runner:listen_for_alert(nil, function(message)
         assert(message.type == PayloadType.ALERT)
+        log:debug('Got alert', message)
         local host = message.host_id .. ':' .. message.host_name
         local match_id = id_filter == nil or tostring(message.host_id) == id_filter
         local match_host = host_filter == nil or message.host_name == host_filter
