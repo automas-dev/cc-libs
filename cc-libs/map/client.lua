@@ -58,6 +58,23 @@ function MapClient:add_node(pos)
     end
 end
 
+---Update multiple nodes and their links.
+---@param nodes Point[] all nodes to update
+---@return boolean success the nodes were updated
+function MapClient:batch_update(nodes)
+    local success, status, resp = self.client:request('batch_update', {
+        nodes = nodes,
+    })
+    if success then
+        ---@cast resp table
+        return true
+    else
+        -- TODO remove this, is it somewhere else?
+        log:warning('Got unsuccessful response from server', status, resp)
+    end
+    return false
+end
+
 ---Remove a node from the map, returns the node and if it existed
 ---@param pid string
 ---@return Point? node the node or nil if it does not exist

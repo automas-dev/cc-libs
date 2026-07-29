@@ -238,23 +238,23 @@ local function dig_forward(n)
             turtle.digUp()
         end
 
-        -- Add point above
-        map:pos(location.pos + Vec3:new(0, 1, 0))
+        -- -- Add point above
+        -- map:pos(location.pos + Vec3:new(0, 1, 0))
 
-        local down_is_torch = false
+        -- local down_is_torch = false
         local has_block, data = turtle.inspectDown()
         if has_block then
             if data.name ~= 'minecraft:torch' then
                 turtle.digDown()
-            else
-                down_is_torch = true
+                -- else
+                --     down_is_torch = true
             end
         end
 
-        if not down_is_torch then
-            -- Add point below
-            map:pos(location.pos - Vec3:new(0, 1, 0))
-        end
+        -- if not down_is_torch then
+        --     -- Add point below
+        --     map:pos(location.pos - Vec3:new(0, 1, 0))
+        -- end
     end
 
     return true
@@ -367,6 +367,8 @@ local function main()
         map:from_table(remote_map)
         -- Set map.remote to update map server with branches
         map.remote = map_client
+        -- Disable live updates so we can send points in batches
+        map.live_update = false
     else
         log:warning('Failed to fetch map from server')
     end
@@ -526,6 +528,9 @@ local function main()
                 return false
             end
         end
+
+        log:info('Updating remote map')
+        map:send_updates()
 
         file = assert(io.open('.active', 'w'))
         args.skip = skip + i
