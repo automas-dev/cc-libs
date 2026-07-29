@@ -516,8 +516,19 @@ local function main()
         -- Mine to start of previous shaft
         if i + skip > 1 then
             tmc:face(Compass.SOUTH, heading_offset)
-            if not dig_forward(2) then
-                return false
+            local p1 = map:get_pos(location.pos.x, location.pos.y, location.pos.z)
+            assert(p1)
+            local p2
+            for _ = 1, 2 do
+                if not dig_forward() then
+                    return false
+                end
+                p2 = map:get_pos(location.pos.x, location.pos.y, location.pos.z)
+                assert(p2)
+                if p1.links[p2.id] < length then
+                    map:link(p1, p2, length)
+                end
+                p2 = p1
             end
             tmc:face(Compass.NORTH, heading_offset)
             tmc:forward(2)
