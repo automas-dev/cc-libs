@@ -4,7 +4,7 @@ logging.basic_config {
     -- Ideally there should be no console logs enabled
     level = logging.Level.INFO,
     file_level = logging.Level.DEBUG,
-    filepath = 'logs/alert_monitor.log',
+    filepath = 'logs/telemetry_monitor.log',
     remote_enabled = true,
 }
 local log = logging.get_logger('main')
