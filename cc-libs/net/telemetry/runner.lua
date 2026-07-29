@@ -88,7 +88,7 @@ function TelemetryRunner:listen_for_event(event_type, fn, can_kill)
                 if type(message) ~= 'table' then
                     log:debug('Invalid message type received for event', type(message))
                 elseif message.type == 'PAYLOAD_EVENT' and message.event then
-                    log:debug('Got event', message)
+                    log:trace('Got event', message)
                     ---@cast message EventTelemetryPayload
                     if not event_type or message.event.type == event_type then
                         pcall(fn, message)
@@ -120,7 +120,7 @@ function TelemetryRunner:listen_for_alert(alert_type, fn, can_kill)
                 if type(message) ~= 'table' then
                     log:debug('Invalid message type received for alert', type(message))
                 elseif message.type == 'PAYLOAD_ALERT' and message.alert then
-                    log:debug('Got alert', message)
+                    log:trace('Got alert', message)
                     ---@cast message AlertTelemetryPayload
                     if not alert_type or message.alert.type == alert_type then
                         pcall(fn, message)
