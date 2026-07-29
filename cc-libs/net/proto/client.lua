@@ -7,7 +7,7 @@ local proto_model = require 'cc-libs.net.proto.model'
 local ResponseStatus = proto_model.ResponseStatus
 local validate_message = proto_model.validate_message
 
-local uuid = require 'cc-libs.util.uuid'
+local uid = require 'cc-libs.util.uid'
 
 ---@class ProtocolClient
 ---@field protocol string
@@ -66,16 +66,16 @@ function ProtocolClient:request(path, body, timeout)
         timeout = self.timeout
     end
 
-    local request_id = uuid()
+    local request_id = uid()
     self.logger:trace('Request id is', request_id)
 
-    if
-        not rednet.send(self.server_id, {
-            id = request_id,
-            path = path,
-            body = body,
-        }, self.protocol)
-    then
+    local success = rednet.send(self.server_id, {
+        id = request_id,
+        path = path,
+        body = body,
+    }, self.protocol)
+
+    if not success then
         self.logger:trace('Failed to send request to', self.server_id)
         return false
     end

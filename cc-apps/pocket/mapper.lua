@@ -80,8 +80,8 @@ end
 
 local function mark_waypoint()
     while true do
-        io.stdout:write('waypoint> ')
-        local name = io.stdin:read()
+        write('waypoint> ')
+        local name = read()
         if name then
             local x, y, z = gps.locate(GPS_TIMEOUT, false)
             if x == nil or y == nil or z == nil then

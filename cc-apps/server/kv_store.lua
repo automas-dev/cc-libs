@@ -4,7 +4,7 @@ package.path = '../../?.lua;../../?/init.lua;' .. package.path
 -- Import and configure logging
 local logging = require 'cc-libs.util.logging'
 logging.basic_config {
-    level = logging.Level.DEBUG,
+    level = logging.Level.INFO,
     file_level = logging.Level.DEBUG,
     filepath = 'logs/kv_store.log',
 }

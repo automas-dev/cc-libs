@@ -6,7 +6,7 @@ local ResponseStatus = {
 }
 
 ---@class Message
----@field id string uuid unique to each request
+---@field id integer id unique to each request
 ---@field path string
 ---@field body string | table | nil
 
@@ -41,8 +41,13 @@ local Request = {}
 ---@param sender number
 ---@param message Message
 ---@param protocol? string
+---@param validate? boolean validate `message` raising an error, default true
 ---@return Request
-function Request:new(sender, message, protocol)
+function Request:new(sender, message, protocol, validate)
+    -- run if validate is true or nil
+    if validate ~= false then
+        assert(validate_message(message))
+    end
     local o = {
         sender = sender,
         message = message,
@@ -78,25 +83,33 @@ function Response:new(request, status, message)
     return o
 end
 
+---Create a Response object with `status`
+---@param status ResponseStatus|string
+---@param message any
+---@return Response response
+function Request:make_response(status, message)
+    return Response:new(self, status, message)
+end
+
 ---Create a Response with ok status
 ---@param message any
 ---@return Response response
 function Request:ok_response(message)
-    return Response:new(self, ResponseStatus.OK, message)
+    return self:make_response(ResponseStatus.OK, message)
 end
 
 ---Create a Response with error status
 ---@param message any
 ---@return Response response
 function Request:err_response(message)
-    return Response:new(self, ResponseStatus.ERROR, message)
+    return self:make_response(ResponseStatus.ERROR, message)
 end
 
 ---Create a Response with not found status
 ---@param message any
 ---@return Response response
 function Request:not_found_response(message)
-    return Response:new(self, ResponseStatus.NOT_FOUND, message)
+    return self:make_response(ResponseStatus.NOT_FOUND, message)
 end
 
 return {

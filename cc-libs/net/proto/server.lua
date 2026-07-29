@@ -56,14 +56,19 @@ end
 
 ---Send a single response
 ---@param response Response
+---@return boolean success
 function ProtocolServer:send(response)
     self.logger:trace('Sending response', response)
-    rednet.send(response.recipient, {
+    local success = rednet.send(response.recipient, {
         id = response.request.message.id,
         path = response.request.message.path,
         status = response.status,
         body = response.message,
     }, self.response_protocol)
+    if not success then
+        self.logger:trace('Error when calling rednet.send')
+    end
+    return success
 end
 
 ---Handle a single request
@@ -76,7 +81,10 @@ function ProtocolServer:handle_request(request)
     local route = self.routes[path]
     if route == nil then
         self.logger:trace('Route not found for path', path)
-        self:send(request:not_found_response('Route does not exist for path ' .. path))
+        assert(
+            self:send(request:not_found_response('Route does not exist for path ' .. path)),
+            'Failed to send not found response'
+        )
         return
     end
 
@@ -84,7 +92,10 @@ function ProtocolServer:handle_request(request)
         self.logger:trace('Validating request with model', route.options.request_model)
         local valid, error_path, err = route.options.request_model:validate(request.message.body)
         if not valid then
-            self:send(request:err_response('Request validation failed ' .. error_path .. ' ' .. err))
+            assert(
+                self:send(request:err_response('Request validation failed ' .. error_path .. ' ' .. err)),
+                'Failed to send validation failed response'
+            )
             return
         end
     end
@@ -107,7 +118,7 @@ function ProtocolServer:handle_request(request)
         end
     end
 
-    self:send(response)
+    assert(self:send(response), 'Failed to send response')
 end
 
 ---Wait for connections and serve responses using the attached routes.
@@ -126,7 +137,7 @@ function ProtocolServer:serve_forever()
                 self.logger:trace('Invalid message', reason)
                 rednet.send(sender, reason, self.response_protocol)
             else
-                local request = Request:new(sender, message, protocol)
+                local request = Request:new(sender, message, protocol, false)
                 local success, err = pcall(self.handle_request, self, request)
                 if not success then
                     self.logger:error('Error processing request', err, { request = request })
