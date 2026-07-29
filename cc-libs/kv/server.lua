@@ -8,9 +8,7 @@ local table_copy = require 'cc-libs.util.table_copy'
 local ccl_proto = require 'cc-libs.net.proto'
 local ProtocolServer = ccl_proto.ProtocolServer
 
-local ccl_schema = require 'cc-libs.net.proto.schema'
-local FieldType = ccl_schema.FieldType
-local Schema = ccl_schema.Schema
+local model = require 'cc-libs.kv.model'
 
 ---@enum KVItemType
 local KVItemType = {
@@ -26,66 +24,6 @@ local KVItemType = {
 ---@field set_by_id number
 ---@field last_update string os.time of the creation or last update
 ---@field history KVItem[]
-
----@type SchemaField
-local NumberValueField = {
-    type = FieldType.UNION,
-    types = {
-        { type = FieldType.INTEGER },
-        { type = FieldType.FLOAT },
-    },
-}
-
----@type SchemaField
-local OptionalNumberValueField = table_copy(NumberValueField)
-OptionalNumberValueField.optional = true
-
----@type SchemaField
-local ValueField = {
-    type = FieldType.UNION,
-    types = {
-        { type = FieldType.INTEGER },
-        { type = FieldType.FLOAT },
-        { type = FieldType.STRING },
-    },
-}
-
----@type SchemaField
-local CreateEntryField = {
-    type = FieldType.OBJECT,
-    object = {
-        key = { type = FieldType.STRING },
-        value = ValueField,
-        value_type = { type = FieldType.STRING },
-        set_by_host = { type = FieldType.STRING },
-        set_by_id = { type = FieldType.INTEGER },
-    },
-}
-
----@type SchemaField
-local EntryField = table_copy(CreateEntryField)
-EntryField.object['last_update'] = { type = FieldType.STRING }
-
----@type SchemaField
-local OptionalEntryField = table_copy(EntryField)
-OptionalEntryField.optional = true
-
----@type SchemaField
-local CreateNumberEntryField = {
-    type = FieldType.OBJECT,
-    object = {
-        key = { type = FieldType.STRING },
-        value = NumberValueField,
-        value_default = OptionalNumberValueField,
-        value_type = { type = FieldType.STRING },
-        set_by_host = { type = FieldType.STRING },
-        set_by_id = { type = FieldType.INTEGER },
-    },
-}
-
----@type SchemaField
-local NumberEntryField = table_copy(CreateNumberEntryField)
-NumberEntryField.object['last_update'] = { type = FieldType.STRING }
 
 ---Create a new ProtocolServer for a map
 ---@param hostname string
@@ -239,9 +177,7 @@ local function KVServer(hostname, kv_store_dir)
     server:route(
         'set',
         {
-            request_model = Schema:new({
-                entry = CreateEntryField,
-            }),
+            request_model = model.SetRequestSchema,
         },
         ---@param request Request
         function(request)
@@ -265,12 +201,8 @@ local function KVServer(hostname, kv_store_dir)
     server:route(
         'increment',
         {
-            request_model = Schema:new({
-                entry = CreateNumberEntryField,
-            }),
-            response_model = Schema:new({
-                entry = NumberEntryField,
-            }),
+            request_model = model.IncrementRequestSchema,
+            response_model = model.IncrementResponseSchema,
         },
         ---@param request Request
         function(request)
@@ -295,13 +227,8 @@ local function KVServer(hostname, kv_store_dir)
     server:route(
         'get',
         {
-            request_model = Schema:new({
-                key = { type = FieldType.STRING },
-            }),
-            response_model = Schema:new({
-                found = { type = FieldType.BOOL },
-                entry = OptionalEntryField,
-            }),
+            request_model = model.GetRequestSchema,
+            response_model = model.GetResponseSchema,
         },
         ---@param request Request
         function(request)
@@ -330,18 +257,8 @@ local function KVServer(hostname, kv_store_dir)
     server:route(
         'get_history',
         {
-            request_model = Schema:new({
-                key = { type = FieldType.STRING },
-            }),
-            response_model = Schema:new({
-                found = { type = FieldType.BOOL },
-                entry = OptionalEntryField,
-                history = {
-                    type = FieldType.ARRAY,
-                    optional = true,
-                    value = EntryField,
-                },
-            }),
+            request_model = model.GetHistoryRequestSchema,
+            response_model = model.GetHistoryResponseSchema,
         },
         ---@param request Request
         function(request)

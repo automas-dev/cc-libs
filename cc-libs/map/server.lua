@@ -4,64 +4,10 @@ local log = logging.get_logger('map.server')
 local ccl_proto = require 'cc-libs.net.proto'
 local ProtocolServer = ccl_proto.ProtocolServer
 
-local ccl_schema = require 'cc-libs.net.proto.schema'
-local FieldType = ccl_schema.FieldType
-local Schema = ccl_schema.Schema
+local model = require 'cc-libs.map.model'
 
 local ccl_map = require 'cc-libs.map.map'
 local Map = ccl_map.Map
-
----@type SchemaField
-local PositionField = {
-    type = FieldType.OBJECT,
-    object = {
-        x = { type = FieldType.FLOAT },
-        y = { type = FieldType.FLOAT },
-        z = { type = FieldType.FLOAT },
-    },
-}
-
----@type SchemaField
-local PointField = {
-    type = FieldType.OBJECT,
-    object = {
-        id = { type = FieldType.STRING },
-        links = { type = FieldType.OBJECT, key = { type = FieldType.STRING }, value = { type = FieldType.FLOAT } },
-        x = { type = FieldType.FLOAT },
-        y = { type = FieldType.FLOAT },
-        z = { type = FieldType.FLOAT },
-    },
-}
-
----@type SchemaField
-local OptionalPointField = {
-    type = FieldType.OBJECT,
-    optional = true,
-    object = {
-        id = { type = FieldType.STRING },
-        links = { type = FieldType.OBJECT, key = { type = FieldType.STRING }, value = { type = FieldType.FLOAT } },
-        x = { type = FieldType.FLOAT },
-        y = { type = FieldType.FLOAT },
-        z = { type = FieldType.FLOAT },
-    },
-}
-
----@type SchemaField
-local MapField = {
-    type = FieldType.OBJECT,
-    object = {
-        graph = {
-            type = FieldType.OBJECT,
-            key = { type = FieldType.STRING },
-            value = PointField,
-        },
-        waypoints = {
-            type = FieldType.OBJECT,
-            key = { type = FieldType.STRING },
-            value = { type = FieldType.STRING },
-        },
-    },
-}
 
 ---Create a new ProtocolServer for a map
 ---@param hostname string
@@ -80,9 +26,7 @@ local function MapServer(hostname, map_path)
     server:route(
         'get',
         {
-            response_model = Schema:new({
-                map = MapField,
-            }),
+            response_model = model.GetResponseSchema,
         },
         ---@param request Request
         function(request)
@@ -95,19 +39,8 @@ local function MapServer(hostname, map_path)
     server:route(
         'add_node',
         {
-            request_model = Schema:new({
-                pos = PositionField,
-                links = {
-                    type = FieldType.OBJECT,
-                    optional = true,
-                    key = { type = FieldType.STRING },
-                    value = { type = FieldType.FLOAT },
-                },
-            }),
-            response_model = Schema:new({
-                action = { type = FieldType.STRING },
-                node = PointField,
-            }),
+            request_model = model.AddNodeRequestSchema,
+            response_model = model.AddNodeResponseSchema,
         },
         ---@param request Request
         function(request)
@@ -144,12 +77,8 @@ local function MapServer(hostname, map_path)
     server:route(
         'remove_node',
         {
-            request_model = Schema:new({
-                pid = { type = FieldType.STRING },
-            }),
-            response_model = Schema:new({
-                node = OptionalPointField,
-            }),
+            request_model = model.RemoveNodeRequestSchema,
+            response_model = model.RemoveNodeResponseSchema,
         },
         ---@param request Request
         function(request)
@@ -172,14 +101,8 @@ local function MapServer(hostname, map_path)
     server:route(
         'add_waypoint',
         {
-            request_model = Schema:new({
-                name = { type = FieldType.STRING },
-                pos = PositionField,
-            }),
-            response_model = Schema:new({
-                waypoint = PointField,
-                action = { type = FieldType.STRING },
-            }),
+            request_model = model.AddWaypointRequestSchema,
+            response_model = model.AddWaypointResponseSchema,
         },
         ---@param request Request
         function(request)
@@ -202,14 +125,8 @@ local function MapServer(hostname, map_path)
     server:route(
         'get_waypoint',
         {
-            request_model = Schema:new({
-                name = { type = FieldType.STRING },
-            }),
-            response_model = Schema:new({
-                found = { type = FieldType.BOOL },
-                waypoint = OptionalPointField,
-                name = { type = FieldType.STRING, optional = true },
-            }),
+            request_model = model.GetWaypointRequestSchema,
+            response_model = model.GetWaypointResponseSchema,
         },
         ---@param request Request
         function(request)
@@ -230,14 +147,8 @@ local function MapServer(hostname, map_path)
     server:route(
         'remove_waypoint',
         {
-            request_model = Schema:new({
-                name = { type = FieldType.STRING },
-            }),
-            response_model = Schema:new({
-                found = { type = FieldType.BOOL },
-                waypoint = OptionalPointField,
-                name = { type = FieldType.STRING, optional = true },
-            }),
+            request_model = model.RemoveWaypointRequestSchema,
+            response_model = model.RemoveWaypointResponseSchema,
         },
         ---@param request Request
         function(request)
@@ -258,18 +169,7 @@ local function MapServer(hostname, map_path)
     server:route(
         'list_waypoints',
         {
-            response_model = Schema:new({
-                waypoints = {
-                    type = FieldType.ARRAY,
-                    value = {
-                        type = FieldType.OBJECT,
-                        object = {
-                            name = { type = FieldType.STRING },
-                            waypoint = PointField,
-                        },
-                    },
-                },
-            }),
+            response_model = model.ListWaypointsResponseSchema,
         },
         ---@param request Request
         function(request)
@@ -289,9 +189,7 @@ local function MapServer(hostname, map_path)
     server:route(
         'mask',
         {
-            request_model = Schema:new({
-                pid = { type = FieldType.STRING },
-            }),
+            request_model = model.MaskRequestSchema,
         },
         ---@param request Request
         function(request)
@@ -311,9 +209,7 @@ local function MapServer(hostname, map_path)
     server:route(
         'unmask',
         {
-            request_model = Schema:new({
-                pid = { type = FieldType.STRING },
-            }),
+            request_model = model.UnmaskRequestSchema,
         },
         ---@param request Request
         function(request)
