@@ -194,6 +194,7 @@ local function KVServer(hostname, kv_store_dir)
             if not success then
                 return request:err_response(err)
             end
+            log:info('Set key', entry.key, 'to value', entry.value)
             return request:ok_response()
         end
     )
@@ -220,6 +221,7 @@ local function KVServer(hostname, kv_store_dir)
             if new_entry == nil then
                 return request:err_response(err)
             end
+            log:info('Increment key', entry.key, 'to value', new_entry.value)
             return request:ok_response({ entry = new_entry })
         end
     )
