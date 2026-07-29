@@ -50,23 +50,6 @@ function Motion:disable_dig()
     self.can_dig = false
 end
 
----Broadcast an event using telemetry for a successful actions
----@private
----@param action string human readable name for action
----@param attempts number how many retries occurred before succeeding
-function Motion:_telem_event_move(action, attempts)
-    local msg = 'Action ' .. action .. ' was successful after ' .. attempts .. ' attempts'
-    if self.telemetry ~= nil then
-        log:trace('Sending telemetry event turtle_move for', action)
-        self.telemetry:send_event('turtle_move', msg, {
-            action = action,
-            attempts = attempts,
-            max_attempts = self.can_dig and self.max_tries or 1,
-            subsystem = log.subsystem,
-        })
-    end
-end
-
 ---Broadcast an alert using telemetry for a failed action
 ---@private
 ---@param action string human readable name for action
@@ -146,8 +129,6 @@ function Motion:_attempt_move(action, action_fn, dig_fn)
     if not success then
         self:_telem_alert_fail(action, tries)
         error('Failed action ' .. tostring(action) .. ' after ' .. tostring(tries) .. ' tries')
-    else
-        self:_telem_event_move(action, tries)
     end
 end
 

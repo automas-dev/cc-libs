@@ -19,6 +19,7 @@
 .settings
 test_report.json
 rom.2
+.active
 
 .luarocks
 
