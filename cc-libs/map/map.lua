@@ -44,10 +44,16 @@ local function link_points(p1, p2, weight, one_way)
     if not p1.links[p2.id] then
         log:trace('Creating link from', p1.id, 'to', p2.id)
         p1.links[p2.id] = weight
+    elseif p1.links[p2.id] ~= weight then
+        log:trace('Updating link from', p1.id, 'to', p2.id)
+        p1.links[p2.id] = weight
     end
     if not one_way then
         if not p2.links[p1.id] then
             log:trace('Creating link from', p2.id, 'to', p1.id)
+            p2.links[p1.id] = weight
+        elseif p2.links[p1.id] ~= weight then
+            log:trace('Updating link from', p2.id, 'to', p1.id)
             p2.links[p1.id] = weight
         end
     end
