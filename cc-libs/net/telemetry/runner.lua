@@ -72,17 +72,22 @@ end
 ---Register callback to handle telemetry events received over rednet
 ---@param event_type? string
 ---@param fn fun(message: EventTelemetryPayload)
-function TelemetryRunner:listen_for_event(event_type, fn)
-    local name = 'watch'
+---@param can_kill? boolean defaults to false
+function TelemetryRunner:listen_for_event(event_type, fn, can_kill)
+    if can_kill == nil then
+        can_kill = false
+    end
+    local name = 'watch event'
     if event_type then
         name = name .. ' ' .. event_type
     end
-    self:add_thread(name, false, function()
+    self:add_thread(name, can_kill, function()
         while true do
             local sender, message, protocol = rednet.receive('telemetry')
             if sender ~= nil and protocol == 'telemetry' then
-                assert(type(message) == 'table')
-                if message.type == 'PAYLOAD_EVENT' and message.event then
+                if type(message) ~= 'table' then
+                    log:debug('Invalid message type received for event', type(message))
+                elseif message.type == 'PAYLOAD_EVENT' and message.event then
                     log:debug('Got event', message)
                     ---@cast message EventTelemetryPayload
                     if not event_type or message.event.type == event_type then
@@ -99,17 +104,22 @@ end
 ---Register callback to handle telemetry alerts received over rednet
 ---@param alert_type? string
 ---@param fn fun(message: AlertTelemetryPayload)
-function TelemetryRunner:listen_for_alert(alert_type, fn)
-    local name = 'watch'
+---@param can_kill? boolean defaults to false
+function TelemetryRunner:listen_for_alert(alert_type, fn, can_kill)
+    if can_kill == nil then
+        can_kill = false
+    end
+    local name = 'watch alert'
     if alert_type then
         name = name .. ' ' .. alert_type
     end
-    self:add_thread(name, false, function()
+    self:add_thread(name, can_kill, function()
         while true do
             local sender, message, protocol = rednet.receive('telemetry')
             if sender ~= nil and protocol == 'telemetry' then
-                assert(type(message) == 'table')
-                if message.type == 'PAYLOAD_EVENT' and message.alert then
+                if type(message) ~= 'table' then
+                    log:debug('Invalid message type received for alert', type(message))
+                elseif message.type == 'PAYLOAD_ALERT' and message.alert then
                     log:debug('Got alert', message)
                     ---@cast message AlertTelemetryPayload
                     if not alert_type or message.alert.type == alert_type then
