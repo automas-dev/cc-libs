@@ -209,8 +209,13 @@ function Telemetry:make_runner()
     local function run_heartbeat_thread()
         while true do
             log:wrap_call(self.send_event, self, 'heartbeat', 'Heartbeat')
-            -- TODO this sometimes gets stuck
-            os.sleep(self.heartbeat_sleep_s)
+            -- in game time is 72 times faster, epoch is in ms
+            local next = os.clock() + self.heartbeat_sleep_s
+            log:trace('Next hb at', next)
+            -- os.sleep can get stuck if the timer event is missed.
+            while os.clock() < next do
+                os.pullEvent()
+            end
         end
     end
     runner:add_thread('heartbeat', false, log:wrap_fn(run_heartbeat_thread))
