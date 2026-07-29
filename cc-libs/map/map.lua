@@ -74,17 +74,25 @@ end
 ---@field waypoints { [string]: PointId }
 ---@field update_mask { PointId: boolean }
 ---@field remote MapClient?
+---@field live_update boolean
+---@field need_update { [PointId]: true }
 local Map = {}
 
 --- Create a new empty map
 ---@param remote? MapClient
+---@param live_update? boolean
 ---@return Map
-function Map:new(remote)
+function Map:new(remote, live_update)
+    if live_update == nil then
+        live_update = true
+    end
     local o = {
         graph = {},
         waypoints = {},
         update_mask = {},
         remote = remote,
+        live_update = live_update,
+        need_update = {},
     }
     setmetatable(o, self)
     self.__index = self
@@ -269,11 +277,34 @@ end
 ---@param point Point
 function Map:update_remote_point(point)
     if self.remote and not self.update_mask[point.id] then
-        local remote_point, action = self.remote:add_node(point)
-        if not remote_point then
-            log:warning('Failed to send node', point.id, 'to remote')
+        if self.live_update then
+            local remote_point, action = self.remote:add_node(point)
+            if not remote_point then
+                log:warning('Failed to send node', point.id, 'to remote')
+            else
+                log:trace('Sent node', point.id, 'to remote, response was', action)
+            end
         else
-            log:trace('Sent node', point.id, 'to remote, response was', action)
+            log:trace('Storing point', point.id, 'for later updates')
+            self.need_update[point.id] = true
+        end
+    end
+end
+
+---Send point updates to remote
+function Map:send_updates()
+    if self.remote then
+        ---@type Point[]
+        local to_update = {}
+        for pid in pairs(self.need_update) do
+            table.insert(to_update, self.graph[pid])
+        end
+        self.need_update = {}
+        if #to_update >= 1 then
+            log:debug('Sending batch update of', #to_update, 'points to remote')
+            self.remote:batch_update(to_update)
+        else
+            log:debug('No points to update')
         end
     end
 end
