@@ -16,9 +16,7 @@ local PayloadType = ccl_telemetry.PayloadType
 local telem = get_telemetry()
 local runner = telem:make_runner()
 
--- Remember, time runs faster in game
-local GAME_TIME_FACTOR = 72
-local HB_TIMEOUT_s = 10 * GAME_TIME_FACTOR
+local HB_TIMEOUT_s = 10
 
 local monitor = peripheral.find('monitor')
 if not monitor then
@@ -35,6 +33,9 @@ local function clear_term()
     monitor.setCursorBlink(false)
 end
 
+---@type { [integer]: number }
+local last_seen = {}
+
 ---@type { [integer] : EventTelemetryPayload }
 local watch = {}
 
@@ -47,17 +48,17 @@ local alerts = {}
 local function update_term()
     clear_term()
     local keys = {}
-    for i in pairs(watch) do
-        table.insert(keys, i)
+    for id in pairs(watch) do
+        table.insert(keys, id)
     end
     table.sort(keys)
-    local now = os.epoch('ingame') / 1000
+    local now = os.clock()
     for i, id in ipairs(keys) do
         monitor.setCursorPos(1, i)
         local msg = watch[id]
         local id_events = events[id] or {}
         local id_alerts = alerts[id] or {}
-        if msg.time_ingame + HB_TIMEOUT_s < now then
+        if (last_seen[id] or 0) + HB_TIMEOUT_s < now then
             monitor.setTextColor(colors.red)
         else
             monitor.setTextColor(colors.green)
@@ -90,6 +91,7 @@ runner:listen_for_event(nil, function(message)
             end
             table.insert(events[message.host_id], message)
         end
+        last_seen[message.host_id] = os.clock()
         update_term()
     else
         log:warning('Invalid message for event')
@@ -103,6 +105,7 @@ runner:listen_for_alert(nil, function(message)
             alerts[message.host_id] = {}
         end
         table.insert(alerts[message.host_id], message)
+        last_seen[message.host_id] = os.clock()
         update_term()
     else
         log:warning('Invalid message for alert')
