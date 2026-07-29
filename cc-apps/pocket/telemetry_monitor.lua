@@ -42,24 +42,20 @@ local function main()
 
     while true do
         local id, message = rednet.receive(TELEMETRY_PROTOCOL)
-        local success, data = pcall(json.decode, message)
-        if not success then
-            log:warning('Failed to decode message from ' .. id)
-        else
-            local host = data['host_id'] .. ':' .. data['host_name']
-            local match_id = id_filter == nil or tostring(data['host_id']) == id_filter
-            local match_host = host_filter == nil or data['host_name'] == host_filter
-            if match_id and match_host then
-                if id_filter == nil and host_filter == nil then
-                    write('[' .. host .. '] ')
-                end
-                if data._telem_type == PayloadType.EVENT and type_filter:match('E') then
-                    print('E', data.event.type, data.event.message, json.encode(data.event.data))
-                elseif data._telem_type == PayloadType.ALERT and type_filter:match('A') then
-                    print('A', data.alert.type, data.alert.message, json.encode(data.alert.data))
-                    -- elseif data._telem_type == PayloadType.STATE  and type_filter:match('S') then
-                    --     print('[' .. host .. '] S', json.encode(data.state))
-                end
+        assert(type(message) == 'table')
+        local host = message['host_id'] .. ':' .. message['host_name']
+        local match_id = id_filter == nil or tostring(message['host_id']) == id_filter
+        local match_host = host_filter == nil or message['host_name'] == host_filter
+        if match_id and match_host then
+            if id_filter == nil and host_filter == nil then
+                write('[' .. host .. '] ')
+            end
+            if message._telem_type == PayloadType.EVENT and type_filter:match('E') then
+                print('E', message.event.type, message.event.message, json.encode(message.event.data))
+            elseif message._telem_type == PayloadType.ALERT and type_filter:match('A') then
+                print('A', message.alert.type, message.alert.message, json.encode(message.alert.data))
+                -- elseif data._telem_type == PayloadType.STATE  and type_filter:match('S') then
+                --     print('[' .. host .. '] S', json.encode(data.state))
             end
         end
     end
