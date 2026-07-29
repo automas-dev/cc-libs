@@ -75,6 +75,48 @@ local function MapServer(hostname, map_path)
     )
 
     server:route(
+        'batch_update',
+        {
+            request_model = model.BatchUpdateRequestSchema,
+        },
+        ---@param request Request
+        function(request)
+            local body = request.message.body
+            ---@cast body table
+
+            local nodes = body.nodes
+            local updated = false
+
+            for _, node in nodes do
+                local pos = node.pos
+
+                local point = map:get_pos(pos.x, pos.y, pos.z)
+
+                if not point then
+                    point = map:pos(pos)
+                    updated = true
+                end
+
+                local links = body.links
+                if links then
+                    for k, v in pairs(links) do
+                        point.links[k] = v
+                        updated = true
+                    end
+                end
+            end
+
+            log:info('Batch update', #nodes, 'nodes')
+
+            if updated then
+                map:dump(map_path)
+            end
+
+            return request:ok_response()
+        end
+    )
+
+    server:route(
         'remove_node',
         {
             request_model = model.RemoveNodeRequestSchema,

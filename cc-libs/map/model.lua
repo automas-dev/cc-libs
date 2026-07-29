@@ -40,6 +40,14 @@ local OptionalPointField = {
 }
 
 ---@type SchemaField
+local LinksField = {
+    type = FieldType.OBJECT,
+    optional = true,
+    key = { type = FieldType.STRING },
+    value = { type = FieldType.FLOAT },
+}
+
+---@type SchemaField
 local MapField = {
     type = FieldType.OBJECT,
     object = {
@@ -82,17 +90,27 @@ M.GetResponseSchema = Schema:new({
 
 M.AddNodeRequestSchema = Schema:new({
     pos = PositionField,
-    links = {
-        type = FieldType.OBJECT,
-        optional = true,
-        key = { type = FieldType.STRING },
-        value = { type = FieldType.FLOAT },
-    },
+    links = LinksField,
 })
 
 M.AddNodeResponseSchema = Schema:new({
     action = { type = FieldType.STRING },
     node = PointField,
+})
+
+-- batch_update route
+
+M.BatchUpdateRequestSchema = Schema:new({
+    nodes = {
+        type = FieldType.ARRAY,
+        value = {
+            type = FieldType.OBJECT,
+            object = {
+                pos = PositionField,
+                links = LinksField,
+            },
+        },
+    },
 })
 
 -- remove_node route
