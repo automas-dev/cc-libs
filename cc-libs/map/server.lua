@@ -87,13 +87,11 @@ local function MapServer(hostname, map_path)
             local nodes = body.nodes
             local updated = false
 
-            for _, node in nodes do
-                local pos = node.pos
-
-                local point = map:get_pos(pos.x, pos.y, pos.z)
+            for _, node in ipairs(nodes) do
+                local point = map:get_pos(node.x, node.y, node.z)
 
                 if not point then
-                    point = map:pos(pos)
+                    point = map:pos(node)
                     updated = true
                 end
 

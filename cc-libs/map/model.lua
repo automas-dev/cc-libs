@@ -103,13 +103,7 @@ M.AddNodeResponseSchema = Schema:new({
 M.BatchUpdateRequestSchema = Schema:new({
     nodes = {
         type = FieldType.ARRAY,
-        value = {
-            type = FieldType.OBJECT,
-            object = {
-                pos = PositionField,
-                links = LinksField,
-            },
-        },
+        value = PointField,
     },
 })
 
