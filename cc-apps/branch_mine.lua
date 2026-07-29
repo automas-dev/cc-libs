@@ -367,6 +367,8 @@ local function main()
         map:from_table(remote_map)
         -- Set map.remote to update map server with branches
         map.remote = map_client
+        -- Disable live updates so we can send points in batches
+        map.live_update = false
     else
         log:warning('Failed to fetch map from server')
     end
@@ -526,6 +528,9 @@ local function main()
                 return false
             end
         end
+
+        log:info('Updating remote map')
+        map:send_updates()
 
         file = assert(io.open('.active', 'w'))
         args.skip = skip + i
