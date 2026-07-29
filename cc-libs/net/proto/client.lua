@@ -69,13 +69,13 @@ function ProtocolClient:request(path, body, timeout)
     local request_id = uid()
     self.logger:trace('Request id is', request_id)
 
-    if
-        not rednet.send(self.server_id, {
-            id = request_id,
-            path = path,
-            body = body,
-        }, self.protocol)
-    then
+    local success = rednet.send(self.server_id, {
+        id = request_id,
+        path = path,
+        body = body,
+    }, self.protocol)
+
+    if not success then
         self.logger:trace('Failed to send request to', self.server_id)
         return false
     end
