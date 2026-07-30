@@ -19,13 +19,15 @@ function Inv.iter()
     local i = 1
     return function()
         local details = turtle.getItemDetail(i, false)
-        while i <= 16 or not details do
+        while i < 16 and not details do
             i = i + 1
             details = turtle.getItemDetail(i, false)
         end
-        if i <= 16 then
+        if i <= 16 and details then
+            local slot = i
+            i = i + 1
             ---@cast details ccTweaked.turtle.slotInfo
-            return i, details
+            return slot, details
         end
     end
 end
@@ -51,13 +53,15 @@ function Inv.detailed_iter()
     local i = 1
     return function()
         local details = turtle.getItemDetail(i, true)
-        while i <= 16 or not details do
+        while i < 16 and not details do
             i = i + 1
             details = turtle.getItemDetail(i, true)
         end
-        if i <= 16 then
+        if i <= 16 and details then
+            local slot = i
+            i = i + 1
             ---@cast details ccTweaked.turtle.slotInfoDetailed
-            return i, details
+            return slot, details
         end
     end
 end
