@@ -32,14 +32,12 @@ function M.find_slot(item_name, need)
 end
 
 ---Find the first slot with at least 1 torch.
----@deprecated use turtle.inventory.find_slot_name('minecraft:torch')
 ---@return integer|nil
 function M.find_torch()
     return ccl_turtle_inv.find_slot_name('minecraft:torch')
 end
 
 ---Find and select the first slot with an item with the given minecraft id
----@deprecated use turtle.inventory.find_slot_name with turtle.select
 ---@param item_name string minecraft item id
 ---@return integer|nil item_slot slot number if selected
 function M.select_slot(item_name)
@@ -97,6 +95,7 @@ end
 ---@deprecated use turtle.inventory.inventory_full
 ---@return boolean
 function M.inventory_full()
+    log:warning('Call to deprecated function inventory_full, use turtle.inventory.full instead')
     log:debug('Check if inventory is full')
     for i = 1, 16 do
         if turtle.getItemCount(i) == 0 then
