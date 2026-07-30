@@ -174,8 +174,9 @@ end
 
 ---Check if all slots have at least 1 item
 ---@return boolean
-function Inv.inventory_full()
-    log:debug('Check if inventory is full')
+function Inv.full()
+    log:trace('Check if inventory is full')
+
     for i = 1, 16 do
         if turtle.getItemCount(i) == 0 then
             log:debug('Found free slot', i)
@@ -184,7 +185,8 @@ function Inv.inventory_full()
             log:trace('Slot', i, 'was not free')
         end
     end
-    log:info('Inventory is full')
+
+    log:debug('Inventory is full')
     return true
 end
 
