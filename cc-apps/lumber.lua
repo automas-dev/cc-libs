@@ -8,11 +8,24 @@ logging.basic_config {
 }
 local log = logging.get_logger('main')
 
+local inventory = require 'cc-libs.turtle.inventory'
+
+local ccl_location = require 'cc-libs.turtle.location'
+local Location = ccl_location.Location
+
 local ccl_motion = require 'cc-libs.turtle.motion'
 local Motion = ccl_motion.Motion
 
-local tmc = Motion:new()
+local ccl_telemetry = require 'cc-libs.net.telemetry'
+local get_telemetry = ccl_telemetry.get_telemetry
+
+local location = Location:new()
+local tmc = Motion:new(location)
 tmc:enable_dig()
+
+local telem = get_telemetry()
+telem:set_location(location)
+tmc:attach_telemetry(telem)
 
 local function is_log()
     local exists, info = turtle.inspect()
@@ -23,22 +36,47 @@ local function is_log()
     return false
 end
 
-local function place_sapling()
-    for i = 1, 16 do
-        local item = turtle.getItemDetail(i)
-        log:trace('Checking slot', i, 'found item', item)
-        if item ~= nil and string.find(item.name, 'sapling') ~= nil then
-            log:info('Placing sapling', item.name, 'from slot', i)
-            turtle.select(i)
-            turtle.place()
-            return true
+-- TODO inv.pullItems returns success but no items are moved
+local function pull_from_inventory()
+    log:info('Trying to pull a sapling from the chest below')
+    local inv = peripheral.wrap('bottom')
+    ---@cast inv ccTweaked.peripherals.Inventory
+    for slot = 1, inv.size() do
+        local item = inv.getItemDetail(slot)
+        log:debug('Chest slot', slot, 'has item', item)
+        if item and item.tags['minecraft:saplings'] then
+            local count = inv.pullItems('bottom', slot)
+            log:info('Got', count, 'saplings from the chest')
         end
+    end
+    log:warning('No saplings in chest')
+end
+
+local function place_sapling()
+    local slot = inventory.find_slot_tag('minecraft:saplings')
+    if not slot then
+        log:info('Getting items from chest bellow')
+        -- pull_from_inventory()
+        while turtle.suckDown() do
+        end
+        slot = inventory.find_slot_tag('minecraft:saplings')
+    end
+    if slot then
+        assert(turtle.select(slot))
+        assert(turtle.place())
+        return true
+    else
+        log:warning('Failed to find sapling to plant')
     end
     return false
 end
 
 local function harvest()
     log:info('Starting harvest')
+    if turtle.getFuelLevel() == 0 then
+        telem:send_alert('no_fuel', 'Out of fuel')
+        error('Out of fuel')
+    end
     local height = 0
     while is_log() do
         log:trace('Mining log at height', height)
@@ -72,4 +110,4 @@ local function main()
     end
 end
 
-log:catch_errors(main)
+telem:run_parallel_with('main', log:wrap_fn(main))
