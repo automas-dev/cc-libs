@@ -203,7 +203,7 @@ end
 
 ---Parse arguments and return their values.
 ---@param args string[] array of arguments to parse
----@return table table of args
+---@return table args table of values for each argument, values can be string or string[]
 function ArgParse:parse_args(args)
     local result = {}
 

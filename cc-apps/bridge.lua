@@ -20,6 +20,7 @@ local args = parser:parse_args({ ... })
 local ccl_motion = require 'cc-libs.turtle.motion'
 local Motion = ccl_motion.Motion
 
+local inventory = require 'cc-libs.turtle.inventory'
 local actions = require 'cc-libs.turtle.actions'
 
 local length = tonumber(args.length)
@@ -27,11 +28,11 @@ local block_floor = args.block_floor
 local block_ceiling = args.block_ceiling
 local replace_floor = args.replace_floor
 
-if not actions.find_slot(block_floor, 1) then
+if not inventory.find_slot_name(block_floor) then
     error('Could not find block ' .. block_floor .. ' in inventory')
 end
 
-if block_ceiling and not actions.find_slot(block_ceiling, 1) then
+if block_ceiling and not inventory.find_slot_name(block_ceiling) then
     error('Could not find block ' .. block_ceiling .. ' in inventory')
 end
 

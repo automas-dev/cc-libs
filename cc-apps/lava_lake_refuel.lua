@@ -24,7 +24,7 @@ local ccl_motion = require 'cc-libs.turtle.motion'
 local Motion = ccl_motion.Motion
 
 -- Gather arguments
-local n = args.new
+local limit = tonumber(args.limit)
 
 -- Create objects
 local tmc = Motion:new()
@@ -39,7 +39,7 @@ local function main()
 
     local total = 0
 
-    while true do
+    while not limit or turtle.getFuelLevel() < limit do
         if not tmc:try_forward() then
             break
         end
