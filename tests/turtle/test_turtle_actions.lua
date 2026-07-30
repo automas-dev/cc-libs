@@ -1,5 +1,6 @@
 ---@diagnostic disable: inject-field, undefined-field
 local actions = require 'cc-libs.turtle.actions'
+local ccl_turtle_inv = require 'cc-libs.turtle.inventory'
 
 local test = {}
 
@@ -48,35 +49,32 @@ function test.find_slot_second()
 end
 
 function test.find_torch()
-    local mock = patch_local(actions, 'find_slot')
+    local mock = patch_local(ccl_turtle_inv, 'find_slot_name')
     mock.return_value = 2
     local slot = actions.find_torch()
     expect_eq(2, slot)
     expect_eq(1, mock.call_count)
     expect_eq('minecraft:torch', mock.args[1])
-    expect_eq(1, mock.args[2])
 end
 
 function test.select_slot()
-    local mock = patch_local(actions, 'find_slot')
+    local mock = patch_local(ccl_turtle_inv, 'find_slot_name')
     mock.return_value = 2
     local slot = actions.select_slot('name')
     expect_eq(2, slot)
     assert_eq(1, mock.call_count)
     expect_eq('name', mock.args[1])
-    expect_eq(1, mock.args[2])
     assert_eq(1, turtle.select.call_count)
     expect_eq(2, turtle.select.args[1])
 end
 
 function test.select_slot_empty()
-    local mock = patch_local(actions, 'find_slot')
+    local mock = patch_local(ccl_turtle_inv, 'find_slot_name')
     mock.return_value = nil
     local slot = actions.select_slot('name')
     expect_eq(nil, slot)
     assert_eq(1, mock.call_count)
     expect_eq('name', mock.args[1])
-    expect_eq(1, mock.args[2])
     expect_eq(0, turtle.select.call_count)
 end
 
@@ -137,7 +135,7 @@ end
 
 function test.place_torch()
     turtle.getSelectedSlot.return_value = 2
-    local mock = patch_local(actions, 'find_torch')
+    local mock = patch_local(ccl_turtle_inv, 'find_slot_name')
     mock.return_value = 1
     local res = actions.place_torch()
     expect_true(res)
@@ -149,7 +147,7 @@ end
 
 function test.place_torch_empty()
     turtle.getSelectedSlot.return_value = 2
-    local mock = patch_local(actions, 'find_torch')
+    local mock = patch_local(ccl_turtle_inv, 'find_slot_name')
     mock.return_value = nil
     local res = actions.place_torch()
     expect_false(res)

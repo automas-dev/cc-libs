@@ -1,15 +1,19 @@
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('actions')
 
+local ccl_turtle_inv = require 'cc-libs.turtle.inventory'
+
 local M = {}
 
 ---Find the first slot with at least `need` items of the given name.
+---@deprecated use turtle.inventory.find_slot_name instead
 ---@param item_name string minecraft item id
 ---@param need? integer 1 to 64, default 1
 ---@return integer|nil
 function M.find_slot(item_name, need)
+    log:warning('Call to deprecated function find_slot, use turtle.inventory.find_slot_name instead')
     need = need or 1
-    log:debug('Finding slot for', item_name, 'need', need)
+    log:debug('Finding slot for name', item_name, 'need', need)
 
     for i = 1, 16 do
         local item = turtle.getItemDetail(i)
@@ -28,17 +32,19 @@ function M.find_slot(item_name, need)
 end
 
 ---Find the first slot with at least 1 torch.
+---@deprecated use turtle.inventory.find_slot_name('minecraft:torch')
 ---@return integer|nil
 function M.find_torch()
-    return M.find_slot('minecraft:torch', 1)
+    return ccl_turtle_inv.find_slot_name('minecraft:torch')
 end
 
 ---Find and select the first slot with an item with the given minecraft id
+---@deprecated use turtle.inventory.find_slot_name with turtle.select
 ---@param item_name string minecraft item id
 ---@return integer|nil item_slot slot number if selected
 function M.select_slot(item_name)
     log:debug('Select slot for item', item_name)
-    local item_slot = M.find_slot(item_name, 1)
+    local item_slot = ccl_turtle_inv.find_slot_name(item_name)
     log:debug('Found slot', item_slot)
 
     if item_slot ~= nil then
@@ -88,6 +94,7 @@ function M.assert_items(item_name, need)
 end
 
 ---Check if all slots have at least 1 item
+---@deprecated use turtle.inventory.inventory_full
 ---@return boolean
 function M.inventory_full()
     log:debug('Check if inventory is full')
@@ -141,7 +148,7 @@ function M.place_torch()
     local old_slot = turtle.getSelectedSlot()
     log:debug('Storing current slot as', old_slot)
 
-    local torch_slot = M.find_torch()
+    local torch_slot = ccl_turtle_inv.find_slot_name('minecraft_torch')
     if torch_slot == nil then
         log:error('No torches were found in inventory')
         return false
