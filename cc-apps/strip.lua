@@ -62,12 +62,12 @@ local dig_vert = telem:span('dig_up', function(side)
         if turtle.detectUp() then
             turtle.digUp()
         end
-        map:link(map:pos(location.pos), map:point(location.pos.x, location.pos.y + 1, location.pos.z))
+        map:point(location.pos.x, location.pos.y + 1, location.pos.z)
     else
         if turtle.detectDown() then
             turtle.digDown()
         end
-        map:link(map:pos(location.pos), map:point(location.pos.x, location.pos.y - 1, location.pos.z))
+        map:point(location.pos.x, location.pos.y - 1, location.pos.z)
     end
 end)
 
@@ -101,11 +101,9 @@ local mine_step = telem:span('mine_step', function(dig_up, dig_down)
     if dig_up then
         dig_vert('up')
     end
-    map:link(map:pos(location.pos), map:point(location.pos.x, location.pos.y + 1, location.pos.z))
     if dig_down then
         dig_vert('down')
     end
-    map:link(map:pos(location.pos), map:point(location.pos.x, location.pos.y - 1, location.pos.z))
     return true
 end)
 
