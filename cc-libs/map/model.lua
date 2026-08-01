@@ -61,6 +61,11 @@ local MapField = {
             key = { type = FieldType.STRING },
             value = { type = FieldType.STRING },
         },
+        update_mask = {
+            type = FieldType.OBJECT,
+            key = { type = FieldType.STRING },
+            value = { type = FieldType.BOOL },
+        },
     },
 }
 

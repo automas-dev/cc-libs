@@ -4,7 +4,8 @@ local log = logging.get_logger('telemetry')
 local ccl_telem_runner = require 'cc-libs.net.telemetry.runner'
 local TelemetryRunner = ccl_telem_runner.TelemetryRunner
 
-local json = require 'cc-libs.util.json'
+local ccl_net_util = require 'cc-libs.net.util'
+local open_rednet = ccl_net_util.open_rednet
 
 local uid = require 'cc-libs.util.uid'
 
@@ -32,6 +33,7 @@ local PayloadType = {
 ---@field heading? number
 ---@field has_fix boolean
 ---@field has_heading boolean
+---@field fuel_level number|"unlimited"?
 ---@field subsystem string?
 ---@field state table
 ---@field stack string[]
@@ -47,6 +49,7 @@ local PayloadType = {
 ---@field location Location?
 ---@field local_state table
 ---@field heartbeat_sleep_s number
+---@field rednet_enabled boolean
 ---@field stack string[]
 local Telemetry = {}
 
@@ -55,15 +58,12 @@ local Telemetry = {}
 ---@param location? Location used for position and heading metadata
 ---@return Telemetry
 function Telemetry:new(subsystem, location)
-    if not rednet.isOpen() then
-        log:debug('Opening rednet')
-        peripheral.find('modem', rednet.open)
-    end
     local o = {
         subsystem = subsystem,
         location = location,
         local_state = {},
         heartbeat_sleep_s = DEFAULT_HEARTBEAT_SLEEP_S,
+        rednet_enabled = open_rednet(),
         stack = {},
     }
     setmetatable(o, self)
@@ -94,6 +94,9 @@ function Telemetry:_build_payload(type)
         state = self.local_state,
         spans = self.stack,
     }
+    if turtle then
+        payload.fuel_level = turtle.getFuelLevel()
+    end
     if self.location then
         payload.pos, payload.heading = self.location:location()
         payload.has_fix = self.location.has_fix
@@ -170,10 +173,12 @@ function Telemetry:send_event(event_type, msg, data)
         message = msg,
         data = data,
     }
-    -- local message = json.encode(payload)
-    local message = payload
-    rednet.broadcast(message, TELEMETRY_PROTOCOL)
-    log:trace('Sent event to protocol', TELEMETRY_PROTOCOL, 'with message', message)
+    if self.rednet_enabled then
+        -- local message = json.encode(payload)
+        local message = payload
+        rednet.broadcast(message, TELEMETRY_PROTOCOL)
+        log:trace('Sent event to protocol', TELEMETRY_PROTOCOL, 'with message', message)
+    end
     return payload
 end
 
@@ -194,10 +199,12 @@ function Telemetry:send_alert(alert_type, msg, data)
         message = msg,
         data = data,
     }
-    -- local message = json.encode(payload)
-    local message = payload
-    rednet.broadcast(message, TELEMETRY_PROTOCOL)
-    log:trace('Sent alert to protocol', TELEMETRY_PROTOCOL, 'with message', message)
+    if self.rednet_enabled then
+        -- local message = json.encode(payload)
+        local message = payload
+        rednet.broadcast(message, TELEMETRY_PROTOCOL)
+        log:trace('Sent alert to protocol', TELEMETRY_PROTOCOL, 'with message', message)
+    end
     return payload
 end
 

@@ -35,10 +35,10 @@ local ccl_telemetry = require 'cc-libs.net.telemetry'
 local TELEMETRY_PROTOCOL = ccl_telemetry.TELEMETRY_PROTOCOL
 local PayloadType = ccl_telemetry.PayloadType
 
-local ccl_proto_util = require 'cc-libs.net.proto.util'
+local ccl_net_util = require 'cc-libs.net.util'
 
 local function main()
-    ccl_proto_util.open_rednet()
+    assert(ccl_net_util.open_rednet())
 
     while true do
         local id, message = rednet.receive(TELEMETRY_PROTOCOL)

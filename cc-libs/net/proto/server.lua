@@ -1,7 +1,7 @@
 local logging = require 'cc-libs.util.logging'
 
-local proto_util = require 'cc-libs.net.proto.util'
-local open_rednet = proto_util.open_rednet
+local ccl_net_util = require 'cc-libs.net.util'
+local open_rednet = ccl_net_util.open_rednet
 
 local proto_model = require 'cc-libs.net.proto.model'
 local Request = proto_model.Request
@@ -124,7 +124,7 @@ end
 ---Wait for connections and serve responses using the attached routes.
 ---This function will return if it receives a terminate os event.
 function ProtocolServer:serve_forever()
-    open_rednet()
+    assert(open_rednet(), 'Failed to open rednet')
     rednet.host(self.protocol, self.hostname)
     self.logger:info('Registered host', self.hostname, 'for protocol', self.protocol)
     while true do
