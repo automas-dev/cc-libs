@@ -31,7 +31,11 @@ local function MapServer(hostname, map_path)
         ---@param request Request
         function(request)
             return request:ok_response({
-                map = map,
+                map = {
+                    graph = map.graph,
+                    waypoint = map.waypoints,
+                    update_mask = map.update_mask,
+                },
             })
         end
     )
