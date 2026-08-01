@@ -48,6 +48,7 @@ local PayloadType = {
 ---@field location Location?
 ---@field local_state table
 ---@field heartbeat_sleep_s number
+---@field rednet_enabled boolean
 ---@field stack string[]
 local Telemetry = {}
 
@@ -56,12 +57,12 @@ local Telemetry = {}
 ---@param location? Location used for position and heading metadata
 ---@return Telemetry
 function Telemetry:new(subsystem, location)
-    assert(open_rednet(), 'Failed to open rednet')
     local o = {
         subsystem = subsystem,
         location = location,
         local_state = {},
         heartbeat_sleep_s = DEFAULT_HEARTBEAT_SLEEP_S,
+        rednet_enabled = open_rednet(),
         stack = {},
     }
     setmetatable(o, self)
@@ -168,10 +169,12 @@ function Telemetry:send_event(event_type, msg, data)
         message = msg,
         data = data,
     }
-    -- local message = json.encode(payload)
-    local message = payload
-    rednet.broadcast(message, TELEMETRY_PROTOCOL)
-    log:trace('Sent event to protocol', TELEMETRY_PROTOCOL, 'with message', message)
+    if self.rednet_enabled then
+        -- local message = json.encode(payload)
+        local message = payload
+        rednet.broadcast(message, TELEMETRY_PROTOCOL)
+        log:trace('Sent event to protocol', TELEMETRY_PROTOCOL, 'with message', message)
+    end
     return payload
 end
 
@@ -192,10 +195,12 @@ function Telemetry:send_alert(alert_type, msg, data)
         message = msg,
         data = data,
     }
-    -- local message = json.encode(payload)
-    local message = payload
-    rednet.broadcast(message, TELEMETRY_PROTOCOL)
-    log:trace('Sent alert to protocol', TELEMETRY_PROTOCOL, 'with message', message)
+    if self.rednet_enabled then
+        -- local message = json.encode(payload)
+        local message = payload
+        rednet.broadcast(message, TELEMETRY_PROTOCOL)
+        log:trace('Sent alert to protocol', TELEMETRY_PROTOCOL, 'with message', message)
+    end
     return payload
 end
 
