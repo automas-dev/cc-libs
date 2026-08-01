@@ -66,12 +66,12 @@ local function build_inventory(modem)
 
     for _, name in ipairs(names) do
         if modem.hasTypeRemote(name, 'inventory') then
+            log:trace('Inspecting remote inventory', name)
             local inv = assert(wrap_remote_inv(modem, name))
             if name == INTERFACE then
                 log:trace('Skipping', name, 'in capacity calculation')
             else
                 local size = inv.size()
-                log:debug('Inspecting remote inventory', name, 'of size', size)
                 capacity = capacity + size
                 inventory_count = inventory_count + 1
 
@@ -83,7 +83,7 @@ local function build_inventory(modem)
                     used_count = used_count + 1
                 end
 
-                log:trace('Inventory', name, 'has', table_size(items), 'items')
+                log:debug('Remote inventory', name, 'has capacity', size, 'and', table_size(items), 'items')
 
                 inventories[name] = {
                     inv = inv,
