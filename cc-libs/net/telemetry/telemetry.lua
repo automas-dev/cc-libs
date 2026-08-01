@@ -33,6 +33,7 @@ local PayloadType = {
 ---@field heading? number
 ---@field has_fix boolean
 ---@field has_heading boolean
+---@field fuel_level number|"unlimited"?
 ---@field subsystem string?
 ---@field state table
 ---@field stack string[]
@@ -93,6 +94,9 @@ function Telemetry:_build_payload(type)
         state = self.local_state,
         spans = self.stack,
     }
+    if turtle then
+        payload.fuel_level = turtle.getFuelLevel()
+    end
     if self.location then
         payload.pos, payload.heading = self.location:location()
         payload.has_fix = self.location.has_fix
