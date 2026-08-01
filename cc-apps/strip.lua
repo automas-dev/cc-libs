@@ -144,12 +144,14 @@ local turn_to_next = telem:span('turn_to_next', function(turn_direction, dig_up,
 end)
 
 ---Mine a layer up to 3 blocks
+---@param l number
+---@param w number
 ---@param dig_up boolean
 ---@param dig_down boolean
-local mine_layer = telem:span('mine_layer', function(dig_up, dig_down)
-    for z = 1, length do
-        mine_line(width - 1, dig_up, dig_down)
-        if z < length then
+local mine_layer = telem:span('mine_layer', function(l, w, dig_up, dig_down)
+    for z = 1, w do
+        mine_line(l - 1, dig_up, dig_down)
+        if z < w then
             turn_to_next(z % 2 == 1 and 'right' or 'left', dig_up, dig_down)
         end
     end
@@ -165,10 +167,15 @@ end)
 ---Execute the mission
 local mission = telem:span('mission', function()
     -- Mine 3 layers at a time
+    local l = length
+    local w = width
     while height >= 3 do
         log:info('Mining layer of height 3')
-        mine_layer(true, true)
+        mine_layer(l, w, true, true)
         tmc:right()
+        if w % 2 == 1 then
+            tmc:right()
+        end
         height = height - 3
 
         if height >= 1 then
@@ -184,15 +191,22 @@ local mission = telem:span('mission', function()
                 end
             end
         end
+        if w % 2 == 0 then
+            local old_l = l
+            l = w
+            w = old_l
+            -- TODO does this work?
+            -- l, w = w, l
+        end
     end
 
     -- Handle 1 or 2 remaining layers
     if height == 1 then
         log:info('Mining layer of height 1')
-        mine_layer(false, false)
+        mine_layer(l, w, false, false)
     elseif height == 2 then
         log:info('Mining layer of height 2')
-        mine_layer(direction == 'up', direction == 'down')
+        mine_layer(l, w, direction == 'up', direction == 'down')
     end
 end)
 
