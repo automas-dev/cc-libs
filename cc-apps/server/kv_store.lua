@@ -6,7 +6,7 @@ local logging = require 'cc-libs.util.logging'
 logging.basic_config {
     level = logging.Level.INFO,
     file_level = logging.Level.DEBUG,
-    filepath = 'logs/kv_store.log',
+    filepath = 'logs/server_kv_store.log',
 }
 local log = logging.get_logger('main')
 
