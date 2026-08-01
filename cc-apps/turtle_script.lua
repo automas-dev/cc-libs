@@ -17,6 +17,9 @@ parser:add_arg('cmd', { help = 'command string, leave empty for repl', required 
 parser:add_option('f', 'file', 'script file to read and run', true)
 local args = parser:parse_args({ ... })
 
+local ccl_net_util = require 'cc-libs.net.util'
+local open_rednet = ccl_net_util.open_rednet
+
 local ccl_ts = require 'cc-libs.turtle.script'
 local TSContext = ccl_ts.TSContext
 
@@ -36,8 +39,13 @@ local Nav = ccl_nav.Nav
 local ccl_telemetry = require 'cc-libs.net.telemetry'
 local get_telemetry = ccl_telemetry.get_telemetry
 
-local map_client = MapClient:new('server')
-local map = Map:new(map_client)
+local map
+if open_rednet() then
+    local map_client = MapClient:new('server')
+    map = Map:new(map_client)
+else
+    map = Map:new()
+end
 
 local location = Location:new(map)
 local tmc = Motion:new(location)
