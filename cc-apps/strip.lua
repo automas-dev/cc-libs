@@ -35,8 +35,8 @@ parser:add_arg('height', { help = 'height of area to mine' })
 parser:add_option('u', 'up', 'mine up instead of down')
 local args = parser:parse_args({ ... })
 
-local length = tonumber(args.width)
-local width = tonumber(args.length)
+local length = tonumber(args.length)
+local width = tonumber(args.width)
 local height = tonumber(args.height)
 local direction = args.up and 'up' or 'down'
 
