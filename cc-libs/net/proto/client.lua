@@ -1,7 +1,7 @@
 local logging = require 'cc-libs.util.logging'
 
-local proto_util = require 'cc-libs.net.proto.util'
-local open_rednet = proto_util.open_rednet
+local ccl_net_util = require 'cc-libs.net.util'
+local open_rednet = ccl_net_util.open_rednet
 
 local proto_model = require 'cc-libs.net.proto.model'
 local ResponseStatus = proto_model.ResponseStatus
@@ -29,7 +29,7 @@ function ProtocolClient:new(protocol, server_hostname, timeout, connection_timeo
         connection_timeout = 30
     end
     local log = logging.get_logger(table.concat({ 'proto_client', protocol, server_hostname }, '.'))
-    open_rednet()
+    assert(open_rednet(), 'Failed to open rednet')
     log:trace('Lookup protocol', protocol, 'on host', server_hostname)
     local connect_end = os.clock() + connection_timeout
     local server_id

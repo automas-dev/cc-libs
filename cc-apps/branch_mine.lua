@@ -55,6 +55,9 @@ log:info('Starting with parameters shafts=', shafts, 'length=', length, 'torc=',
 
 local heading_offset = 0
 
+local ccl_net_util = require 'cc-libs.net.util'
+local open_rednet = ccl_net_util.open_rednet
+
 local map = Map:new()
 local location = Location:new(map)
 local tmc = Motion:new(location)
@@ -362,17 +365,19 @@ local function main()
     local file = assert(io.open('.active', 'w'))
     file:write(json.encode(args))
 
-    local map_client = MapClient:new('server')
-    local remote_map = map_client:get_map()
-    if remote_map ~= nil then
-        log:info('Loading map from server')
-        map:from_table(remote_map)
-        -- Set map.remote to update map server with branches
-        map.remote = map_client
-        -- Disable live updates so we can send points in batches
-        map.live_update = false
-    else
-        log:warning('Failed to fetch map from server')
+    if open_rednet() then
+        local map_client = MapClient:new('server')
+        local remote_map = map_client:get_map()
+        if remote_map ~= nil then
+            log:info('Loading map from server')
+            map:from_table(remote_map)
+            -- Set map.remote to update map server with branches
+            map.remote = map_client
+            -- Disable live updates so we can send points in batches
+            map.live_update = false
+        else
+            log:warning('Failed to fetch map from server')
+        end
     end
 
     local station = load_station()

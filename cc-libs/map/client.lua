@@ -1,9 +1,6 @@
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('map.client')
 
-local ccl_map = require 'cc-libs.map.map'
-local Map = ccl_map.Map
-
 local ccl_proto = require 'cc-libs.net.proto'
 local ProtocolClient = ccl_proto.ProtocolClient
 
@@ -24,14 +21,12 @@ function MapClient:new(hostname)
 end
 
 ---Get the full map from server
----@return Map? map nil if there was an error
+---@return { graph: table?, waypoints: table?, update_mask: table? }|nil map nil if there was an error
 function MapClient:get_map()
     local success, status, resp = self.client:request('get')
     if success then
         ---@cast resp table
-        local map = Map:new()
-        map:from_table(resp.map)
-        return map
+        return resp.map
     else
         -- TODO remove this, is it somewhere else?
         log:warning('Got unsuccessful response from server', status, resp)
