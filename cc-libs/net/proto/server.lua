@@ -124,7 +124,7 @@ end
 ---Wait for connections and serve responses using the attached routes.
 ---This function will return if it receives a terminate os event.
 function ProtocolServer:serve_forever()
-    open_rednet()
+    assert(open_rednet(), 'Failed to open rednet')
     rednet.host(self.protocol, self.hostname)
     self.logger:info('Registered host', self.hostname, 'for protocol', self.protocol)
     while true do

@@ -38,7 +38,7 @@ local PayloadType = ccl_telemetry.PayloadType
 local ccl_proto_util = require 'cc-libs.net.proto.util'
 
 local function main()
-    ccl_proto_util.open_rednet()
+    assert(ccl_proto_util.open_rednet())
 
     while true do
         local id, message = rednet.receive(TELEMETRY_PROTOCOL)
