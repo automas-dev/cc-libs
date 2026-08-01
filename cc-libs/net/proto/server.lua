@@ -1,7 +1,7 @@
 local logging = require 'cc-libs.util.logging'
 
-local proto_util = require 'cc-libs.net.proto.util'
-local open_rednet = proto_util.open_rednet
+local ccl_net_util = require 'cc-libs.net.util'
+local open_rednet = ccl_net_util.open_rednet
 
 local proto_model = require 'cc-libs.net.proto.model'
 local Request = proto_model.Request

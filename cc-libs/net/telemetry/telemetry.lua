@@ -4,7 +4,8 @@ local log = logging.get_logger('telemetry')
 local ccl_telem_runner = require 'cc-libs.net.telemetry.runner'
 local TelemetryRunner = ccl_telem_runner.TelemetryRunner
 
-local json = require 'cc-libs.util.json'
+local ccl_net_util = require 'cc-libs.net.util'
+local open_rednet = ccl_net_util.open_rednet
 
 local uid = require 'cc-libs.util.uid'
 
@@ -55,10 +56,7 @@ local Telemetry = {}
 ---@param location? Location used for position and heading metadata
 ---@return Telemetry
 function Telemetry:new(subsystem, location)
-    if not rednet.isOpen() then
-        log:debug('Opening rednet')
-        peripheral.find('modem', rednet.open)
-    end
+    assert(open_rednet(), 'Failed to open rednet')
     local o = {
         subsystem = subsystem,
         location = location,
