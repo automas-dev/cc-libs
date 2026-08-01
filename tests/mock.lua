@@ -7,7 +7,7 @@ local function reset_mocks()
     end
 end
 
----@class Mock
+---@class Mock : { [string] : Mock }
 ---@field call_count number how many times was this function called
 ---@field args any[] arguments of the last call
 ---@field calls any[][] arguments of each call
@@ -24,8 +24,13 @@ end
 function Mock(args)
     args = args or {}
     local mock = {
-        mt = {
+        __mt = {
             reserved = {
+                '__mt',
+                'call_count',
+                'args',
+                'calls',
+                'reset_all',
                 'return_value',
                 'return_unpack',
                 'return_sequence',
@@ -42,10 +47,10 @@ function Mock(args)
         return_sequence = args.return_sequence,
         return_sequence_unpack = args.return_sequence_unpack,
     }
-    setmetatable(mock, mock.mt)
+    setmetatable(mock, mock.__mt)
     table.insert(all_mocks, mock)
 
-    mock.mt.__call = function(_, ...)
+    mock.__mt.__call = function(_, ...)
         mock.call_count = mock.call_count + 1
         mock.args = { ... }
         table.insert(mock.calls, mock.args)
@@ -70,8 +75,8 @@ function Mock(args)
         end
     end
 
-    mock.mt.__index = function(table, key)
-        for _, opt in ipairs(mock.mt.reserved) do
+    mock.__mt.__index = function(table, key)
+        for _, opt in ipairs(mock.__mt.reserved) do
             if opt == key then
                 for k, v in pairs(mock) do
                     if k == key then
