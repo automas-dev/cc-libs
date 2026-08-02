@@ -18,7 +18,10 @@ local json = require 'cc-libs.util.json'
 
 local table_size = require 'cc-libs.util.table_size'
 
-local INTERFACE = 'minecraft:barrel_13'
+local INTERFACE = {
+    ['minecraft:barrel_13'] = true,
+    ['minecraft:chest_26'] = true,
+}
 
 ---This is a copy of peripheral.wrap that wraps a remote peripheral.
 ---@param modem ccTweaked.peripherals.WiredModem
@@ -111,7 +114,6 @@ local ChestUse = {
 ---@param modem ccTweaked.peripherals.WiredModem
 ---@param cache? { capacity: integer, used: integer, inventory: { [string]: ChestInventory } }
 ---@return { capacity: integer, used: integer, inventory: { [string]: ChestInventory } } chests
----@return ChestInventory? interfaces
 ---@see ccTweaked.peripherals.Inventory
 local function build_inventory(modem, cache)
     log:info('Building inventory')
@@ -124,8 +126,6 @@ local function build_inventory(modem, cache)
     local inventory = {}
     local inventory_count = 0
     local used_count = 0
-
-    local interface_inv = nil
 
     for _, name in ipairs(names) do
         if modem.hasTypeRemote(name, 'inventory') then
@@ -173,17 +173,10 @@ local function build_inventory(modem, cache)
 
             inventory[name] = {
                 name = name,
-                use = name == INTERFACE and ChestUse.Interface or ChestUse.Storage,
+                use = INTERFACE[name] and ChestUse.Interface or ChestUse.Storage,
                 size = size,
                 items = items,
             }
-
-            if inventory[name].use == ChestUse.Interface then
-                if interface_inv then
-                    log:error('Found multiple interface inventories')
-                end
-                interface_inv = inventory[name]
-            end
         else
             log:trace('Skipping non inventory remote', name)
         end
@@ -195,7 +188,7 @@ local function build_inventory(modem, cache)
         capacity = capacity,
         used = used_count,
         inventory = inventory,
-    }, interface_inv
+    }
 end
 
 local function dump_inv(inv)
@@ -257,60 +250,61 @@ local function main()
         '% )'
     )
 
-    if interface_inv then
-        log:info('Watching interface inventory')
-        local r_inv = assert(wrap_remote_inv(modem, interface_inv.name))
+    log:info('Watching interface inventory')
 
-        while true do
-            log:trace('Checking interface inventory')
+    while true do
+        log:trace('Checking interface inventory')
 
-            local r_items = r_inv.list()
-            if #r_items > 0 then
-                log:info('Moving items from input into storage')
+        for name, chest in pairs(global_inv.inventory) do
+            if chest.use == ChestUse.Interface then
+                local r_inv = assert(wrap_remote_inv(modem, name))
+                local r_items = r_inv.list()
+                if #r_items > 0 then
+                    log:info('Moving items from input into storage')
 
-                -- Handle items being added during transfer
-                while #r_items > 0 do
-                    for slot, item in pairs(r_items) do
-                        log:debug('Moving item', item, 'from slot', slot)
-                        local details = r_inv.getItemDetail(slot)
+                    -- Handle items being added during transfer
+                    while #r_items > 0 do
+                        for slot, item in pairs(r_items) do
+                            log:debug('Moving item', item, 'from slot', slot)
+                            local details = r_inv.getItemDetail(slot)
 
-                        -- target_slot is not needed
-                        local target_name, target_slot = find_empty_slot(global_inv.inventory)
-                        if target_name and target_slot then
-                            log:debug('Moving', item.name, slot, 'to', target_name)
+                            -- target_slot is not needed
+                            local target_name, target_slot = find_empty_slot(global_inv.inventory)
+                            if target_name and target_slot then
+                                log:debug('Moving', item.name, slot, 'to', target_name)
 
-                            local moved = r_inv.pushItems(target_name, slot)
-                            log:trace('Moved', moved, 'items')
+                                local moved = r_inv.pushItems(target_name, slot)
+                                log:trace('Moved', moved, 'items')
 
-                            -- TODO handle partial stacks being combined
-                            assert(moved == item.count, 'Not enough items moved, ' .. moved .. ' of ' .. item.count)
-                            global_inv.inventory[target_name].items[target_slot] = details
+                                -- TODO handle partial stacks being combined
+                                -- >= in case items are being added to interface chest during transfer
+                                assert(moved >= item.count, 'Not enough items moved, ' .. moved .. ' of ' .. item.count)
+                                global_inv.inventory[target_name].items[target_slot] = details
+                            end
                         end
+                        r_items = r_inv.list()
                     end
-                    r_items = r_inv.list()
+
+                    -- TODO a cleaner way to show new storage capacity
+                    global_inv, interface_inv = build_inventory(modem, cache)
+                    used_perc = global_inv.used / global_inv.capacity * 100
+                    log:info(
+                        'Storage has capacity of',
+                        global_inv.capacity,
+                        'slots with',
+                        global_inv.used,
+                        'slots in use (',
+                        math.floor(used_perc * 100) / 100,
+                        '% )'
+                    )
+
+                    -- TODO handle interior empty slots
+                    dump_inv(global_inv)
                 end
-
-                -- TODO a cleaner way to show new storage capacity
-                global_inv, interface_inv = build_inventory(modem, cache)
-                used_perc = global_inv.used / global_inv.capacity * 100
-                log:info(
-                    'Storage has capacity of',
-                    global_inv.capacity,
-                    'slots with',
-                    global_inv.used,
-                    'slots in use (',
-                    math.floor(used_perc * 100) / 100,
-                    '% )'
-                )
-
-                -- TODO handle interior empty slots
-                dump_inv(global_inv)
             end
-
-            sleep(10)
         end
-    else
-        log:warning('Could not find interface inventory', INTERFACE)
+
+        sleep(10)
     end
 end
 
