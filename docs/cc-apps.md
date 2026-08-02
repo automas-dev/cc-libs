@@ -77,6 +77,16 @@ Options:
     -r/--replace_floor: Replace existing floor if it does not match
 ```
 
+## [benchmark](benchmark.lua)
+
+Run a small benchmark of common turtle actions and report the timing results through the logger.
+
+### Usage
+
+```
+Usage: cc/benchmark
+```
+
 ## [demo_logging](demo_logging.lua)
 
 Demonstrate usage of `cc-libs.logging`
@@ -214,6 +224,30 @@ Report telemetry data for a computer or turtle.
 ```
 
 
+## [lava_lake_refuel](lava_lake_refuel.lua)
+
+Refuel the turtle from a lava lake by placing a bucket and collecting the resulting lava bucket. The turtle will move forward until the fuel limit or lava source is exhausted and then return to its starting point.
+
+### Usage
+
+```
+Usage: cc/lava_lake_refuel [limit]
+
+Refuel from a lava lake using a bucket
+Args:
+    limit: optional fuel level target before stopping
+```
+
+## [load](load.lua)
+
+Stress-test the map and telemetry stack by repeatedly connecting to the map server and sending telemetry events.
+
+### Usage
+
+```
+Usage: cc/load
+```
+
 ## [portal_takedown](portal_takedown.lua)
 
 Remove an obsidian portal. The order is counter clockwise with the turtle
@@ -241,6 +275,46 @@ Listen to the `remote_log` protocol and print messages to the console.
 
 ```
 Usage: cc/remote_log_monitor
+```
+
+## [structure](structure.lua)
+
+Build a basic structure from a JSON definition in the structures/ directory. The layout is defined by aliases and layers, and the script will place blocks accordingly.
+
+### Usage
+
+```
+Usage: cc/structure <name>
+```
+
+## [test_face](test_face.lua)
+
+Exercise the motion controller's heading logic by rotating the turtle through several face commands and pausing between them.
+
+### Usage
+
+```
+Usage: cc/test_face
+```
+
+## [tunnel](tunnel.lua)
+
+Dig a 3x3 tunnel using the map, motion, navigation, and telemetry libraries. The script mines forward while tracking the path and returns to the start when complete.
+
+### Usage
+
+```
+Usage: cc/tunnel <length>
+```
+
+## [tunnel2](tunnel2.lua)
+
+A simpler tunnel script that mines forward for a given length and optionally returns to the starting position.
+
+### Usage
+
+```
+Usage: tunnel2 <length> [return|false]
 ```
 
 ## [shaft_down](shaft_down.lua)
@@ -302,14 +376,18 @@ Options:
     -u/--up: mine up instead of down.
 ```
 
-## [structure](structure.lua)
-
-**TODO**
-
-## [tunnel2](tunnel2.lua)
-
-**TODO**
-
 ## [watch_lava](watch_lava.lua)
 
-**TODO**
+Watch a cauldron for lava, collect it into buckets, and store the resulting lava buckets into an adjacent chest while reporting the count to the KV store and telemetry network.
+
+### Usage
+
+```
+Usage: cc/watch_lava
+```
+
+## Pocket and server helpers
+
+The repository also contains additional helpers under [pocket](../cc-apps/pocket/) and [server](../cc-apps/server/). These scripts support mapping, telemetry, waypoint management, and remote monitoring workflows for turtles and computers.
+
+Examples include [pocket/mapper.lua](../cc-apps/pocket/mapper.lua), which records GPS positions into the map service, and [server/monitor.lua](../cc-apps/server/monitor.lua), which displays telemetry events and alerts on a connected monitor.
