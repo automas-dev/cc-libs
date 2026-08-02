@@ -36,6 +36,8 @@ assert(n ~= nil)
 local block_wall = args.block_wall
 local place_ladder = args.ladder
 
+local LADDER_ITEM = 'minecraft:ladder'
+
 log:info('Starting with parameters n=', n, 'block_wall=', block_wall, 'ladder=', place_ladder)
 
 -- local map_client = MapClient:new('server')
@@ -69,7 +71,7 @@ end
 local function main()
     actions.assert_fuel(n * 2)
     if place_ladder then
-        actions.assert_items('minecraft:ladder', n)
+        actions.assert_items(LADDER_ITEM, n)
     end
 
     local total = 0
@@ -89,7 +91,7 @@ local function main()
     if place_ladder then
         for _ = 1, total do
             tmc:up()
-            if actions.select_slot('minecraft:ladder') then
+            if actions.select_slot(LADDER_ITEM) then
                 turtle.placeDown()
             end
         end
