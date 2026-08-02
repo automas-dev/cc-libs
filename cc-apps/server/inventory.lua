@@ -10,6 +10,10 @@ logging.basic_config {
 }
 local log = logging.get_logger('main')
 
+local ccl_schemas = require 'cc-libs.net.proto.schema'
+local Schema = ccl_schemas.Schema
+local FieldType = ccl_schemas.FieldType
+
 local json = require 'cc-libs.util.json'
 
 local table_size = require 'cc-libs.util.table_size'
@@ -46,31 +50,77 @@ local function wrap_remote_inv(modem, name)
     return result
 end
 
----@class InventoryEntry
----@field name string
--- ---@field inv ccTweaked.peripherals.Inventory
----@field items ccTweaked.peripherals.inventory.itemList
----@field size integer
----@field is_interface boolean?
+---@type SchemaField
+local ItemGroupField = {
+    type = FieldType.OBJECT,
+    object = {
+        id = { type = FieldType.STRING },
+        displayName = { type = FieldType.STRING },
+    },
+}
 
----@class Inventory
----@field capacity integer
----@field used integer
----@field inventory { [string]: InventoryEntry }
+local ItemSchema = Schema:new({
+    name = { type = FieldType.STRING },
+    displayName = { type = FieldType.STRING },
+    count = { type = FieldType.INTEGER },
+    maxCount = { type = FieldType.INTEGER },
+    tags = {
+        type = FieldType.OBJECT,
+        key = { type = FieldType.STRING },
+        value = { type = FieldType.BOOL },
+    },
+    itemGroups = {
+        type = FieldType.ARRAY,
+        value = ItemGroupField,
+    },
+    mapColor = { type = FieldType.INTEGER },
+    -- This one is returned by getItemDetail but it's optional to validate objects we make
+    mapColour = { type = FieldType.INTEGER, optional = true },
+    nbt = { type = FieldType.STRING, optional = true },
+})
+
+---@alias SlotId integer
+
+---@enum ChestUse
+local ChestUse = {
+    Storage = 'STORAGE',
+    Interface = 'INTERFACE',
+}
+
+---@class ChestItemGroup
+---@field id string
+---@field displayName string
+
+---@class ChestItem
+---@field name string
+---@field displayName string
+---@field count integer
+---@field maxCount integer
+---@field tags { [string]: true }
+---@field itemGroups { [string]: ChestItemGroup[] }
+---@field mapColor integer
+---@field nbt string?
+
+---@class ChestInventory
+---@field name string
+---@field use ChestUse
+---@field size integer
+---@field items { [SlotId] : ChestItem }
 
 ---Scan all inventories attached to the network
 ---@param modem ccTweaked.peripherals.WiredModem
----@return Inventory
----@return InventoryEntry? interface
+---@param saved_inv? { capacity: integer, used: integer, inventory: { [string]: ChestInventory } }
+---@return { capacity: integer, used: integer, inventory: { [string]: ChestInventory } } chests
+---@return ChestInventory? interfaces
 ---@see ccTweaked.peripherals.Inventory
-local function build_inventory(modem)
+local function build_inventory(modem, saved_inv)
     log:info('Building inventory')
 
     local names = modem.getNamesRemote()
     log:debug('Has remote names', table.concat(names, ', '))
 
     local capacity = 0
-    ---@type { [string]: InventoryEntry }
+    ---@type { [string]: ChestInventory }
     local inventory = {}
     local inventory_count = 0
     local used_count = 0
@@ -86,9 +136,23 @@ local function build_inventory(modem)
             inventory_count = inventory_count + 1
 
             local items = {}
-            for slot in pairs(inv.list()) do
-                local detail = inv.getItemDetail(slot)
+            for slot, item in pairs(inv.list()) do
+                local detail
+                if saved_inv and saved_inv.inventory then
+                    local saved_item = saved_inv.inventory[name].items[slot]
+                    if saved_item and item.name == saved_item.name and item.count == saved_item.count then
+                        log:trace('Using saved item data')
+                        detail = saved_item
+                    end
+                end
+                detail = inv.getItemDetail(slot)
                 log:trace('detail', detail)
+                -- Because getITemDetail fields are undocumented, check that our assumed schema is correct
+                local valid, error_path, err = ItemSchema:validate(detail, false)
+                if not valid then
+                    error(name .. ' ' .. slot .. ' ' .. error_path .. ' ' .. err)
+                end
+                -- detail['displayName'] = 1
                 items[slot] = detail
                 used_count = used_count + 1
             end
@@ -97,13 +161,12 @@ local function build_inventory(modem)
 
             inventory[name] = {
                 name = name,
-                -- inv = inv,
+                use = name == INTERFACE and ChestUse.Interface or ChestUse.Storage,
                 size = size,
                 items = items,
-                is_interface = name == INTERFACE,
             }
 
-            if inventory[name].is_interface then
+            if inventory[name].use == ChestUse.Interface then
                 if interface_inv then
                     log:error('Found multiple interface inventories')
                 end
@@ -136,13 +199,12 @@ local function load_inv()
     return inv
 end
 
----@param inventory Inventory
+---@param inventory { [string]: ChestInventory }
 ---@return string? name
 ---@return integer? slot
 local function find_empty_slot(inventory)
     assert(inventory ~= nil)
-    assert(inventory.inventory ~= nil)
-    for name, inv in pairs(inventory.inventory) do
+    for name, inv in pairs(inventory) do
         for slot = 1, inv.size do
             if not inv[slot] then
                 return inv.name, slot
@@ -157,7 +219,15 @@ local function main()
 
     log:info('Modem name is', modem.getNameLocal() or 'nil')
 
-    local inv, interface_inv = build_inventory(modem)
+    local success, saved_inv = pcall(load_inv)
+    if not success then
+        -- Rename for clarity
+        local err = saved_inv
+        log:warning('Failed to load saved inventory', err)
+        saved_inv = nil
+    end
+
+    local inv, interface_inv = build_inventory(modem, saved_inv)
     local used_perc = inv.used / inv.capacity * 100
     log:info(
         'Storage has capacity of',
@@ -168,8 +238,6 @@ local function main()
         math.floor(used_perc * 100) / 100,
         '% )'
     )
-
-    local _, saved_inv = pcall(load_inv)
 
     if saved_inv then
         -- TODO compare to inv
@@ -183,13 +251,17 @@ local function main()
         local r_inv = assert(wrap_remote_inv(modem, interface_inv.name))
         for slot, item in pairs(interface_inv.items) do
             -- target_slot is not needed
-            local target_name, target_slot = find_empty_slot(inv)
+            local target_name, target_slot = find_empty_slot(inv.inventory)
             if target_name and target_slot then
                 log:info('Moving', item.name, slot, 'to', target_name)
-                r_inv.pushItems(target_name, slot)
+                local moved = r_inv.pushItems(target_name, slot)
+                log:trace('Moved', moved, 'items')
+                assert(moved == item.count, 'Not enough items moved, ' .. moved .. ' of ' .. item.count)
                 inv.inventory[target_name].items[target_slot] = item
             end
         end
+    else
+        log:warning('Could not find interface inventory', INTERFACE)
     end
 
     dump_inv(inv)
