@@ -26,13 +26,19 @@ end
 function Mock(args)
     args = args or {}
     local mock = {
-        mt = {
+        __mt = {
             reserved = {
+                '__mt',
+                'call_count',
+                'args',
+                'calls',
                 'return_value',
                 'return_unpack',
                 'return_sequence',
                 'return_sequence_unpack',
                 'custom_function',
+                'reset',
+                'reset_all',
             },
         },
         call_count = 0,
@@ -44,10 +50,10 @@ function Mock(args)
         return_sequence = args.return_sequence,
         return_sequence_unpack = args.return_sequence_unpack,
     }
-    setmetatable(mock, mock.mt)
+    setmetatable(mock, mock.__mt)
     table.insert(all_mocks, mock)
 
-    mock.mt.__call = function(_, ...)
+    mock.__mt.__call = function(_, ...)
         mock.call_count = mock.call_count + 1
         mock.args = { ... }
         table.insert(mock.calls, mock.args)
@@ -72,8 +78,8 @@ function Mock(args)
         end
     end
 
-    mock.mt.__index = function(table, key)
-        for _, opt in ipairs(mock.mt.reserved) do
+    mock.__mt.__index = function(table, key)
+        for _, opt in ipairs(mock.__mt.reserved) do
             if opt == key then
                 for k, v in pairs(mock) do
                     if k == key then
