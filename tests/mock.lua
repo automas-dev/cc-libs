@@ -19,6 +19,8 @@ end
 ---@field reset fun() reset mock
 ---@field reset_all fun() reset all mocks
 
+---Create a callable Mock for tests.
+---The mock records every invocation and can return fixed or sequenced values.
 ---@param args? {return_value?: any, return_unpack?: any[], return_sequence?: any[], return_sequence_unpack?: any[][], custom_function?: fun(...): any?}
 ---@return Mock | any
 function Mock(args)
@@ -86,6 +88,7 @@ function Mock(args)
         return new_mock
     end
 
+    ---Reset the mock clearing all return values, recorded calls and counts.
     mock.reset = function()
         mock.call_count = 0
         mock.args = {}

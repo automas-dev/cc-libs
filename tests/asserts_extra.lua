@@ -1,3 +1,8 @@
+---Expect that two arrays are equivalent by comparing size and individual elements.
+---This is a shallow check, elements that are arrays will not be recursively checked.
+---@param lhs table
+---@param rhs table
+---@param msg? string optional failure message
 function expect_arr_eq(lhs, rhs, msg)
     if #lhs ~= #rhs then
         local error_msg = 'expect failed length ' .. #lhs .. ' ~= ' .. #rhs

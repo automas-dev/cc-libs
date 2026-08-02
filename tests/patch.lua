@@ -49,6 +49,7 @@ function patch_local(obj, field)
     return mock
 end
 
+---Restore all patched globals and locals to their original values.
 function reset_patches()
     for _, p in ipairs(patches) do
         p.obj[p.field] = p.old
