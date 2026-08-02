@@ -220,7 +220,7 @@ function Schema:validate_type(field, value, path)
     return true
 end
 
----Validate a value against it's field
+---Validate a value against its field
 ---This is being defined in validate_schema so it can call validate_schema
 ---@private
 ---@param field SchemaField

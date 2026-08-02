@@ -196,8 +196,8 @@ end
 
 -- TODO should this one be here?
 
----Open an inventory peripheral and inspect it's contents. If side is front, top
----or bottom, the block state will be reported with it's contents.
+---Open an inventory peripheral and inspect its contents. If side is front, top
+---or bottom, the block state will be reported with its contents.
 ---@param side string peripheral side
 ---@return {size: integer, slots: table[], details: table, block: table | nil } | nil info inventory details if present
 function Inv.examine_inventory(side)

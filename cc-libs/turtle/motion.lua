@@ -8,7 +8,7 @@ local CompassName = ccl_location.CompassName
 
 ---@class Motion
 ---@field max_tries integer max attempts to move before failing
----@field can_dig boolean turtle can mine blocks in it's path
+---@field can_dig boolean turtle can mine blocks in its path
 ---@field location Location optional location tracking
 ---@field telemetry? Telemetry used to send alerts if an action fails
 ---@field motion_fail_cb? function called if an action fails

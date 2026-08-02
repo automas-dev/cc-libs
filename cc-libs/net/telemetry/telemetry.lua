@@ -123,7 +123,7 @@ function Telemetry:pop_span()
     table.remove(self.stack)
 end
 
----Wrap a function to label it's state during execution
+---Wrap a function to label its state during execution
 ---@generic T : function
 ---@param name string
 ---@param fn T

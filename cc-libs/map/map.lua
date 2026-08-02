@@ -318,7 +318,7 @@ function Map:add_point(point)
     self:update_remote_point(point)
 end
 
----Get a point from it's id
+---Get a point from its id
 ---@param pid PointId
 ---@return Point?
 function Map:get_point(pid)
@@ -334,7 +334,7 @@ function Map:get_pos(x, y, z)
     return self:get_point(point_id(x, y, z))
 end
 
----Remove a point using it's id
+---Remove a point using its id
 ---@param pid PointId
 function Map:remove_point(pid)
     local point = self:get_point(pid)
@@ -396,7 +396,7 @@ function Map:unmask_pos(x, y, z)
     self:unmask_point(point_id(x, y, z))
 end
 
----Get or create a point by it's components
+---Get or create a point by its components
 ---@param x number
 ---@param y number
 ---@param z number

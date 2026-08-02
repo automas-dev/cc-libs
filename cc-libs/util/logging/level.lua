@@ -31,7 +31,7 @@ function M.level_name(level)
     end
 end
 
----Get the level from it's string name
+---Get the level from its string name
 ---@param name string name of the level
 ---@return LogLevel? level number
 function M.level_from_name(name)
