@@ -109,11 +109,11 @@ local ChestUse = {
 
 ---Scan all inventories attached to the network
 ---@param modem ccTweaked.peripherals.WiredModem
----@param saved_inv? { capacity: integer, used: integer, inventory: { [string]: ChestInventory } }
+---@param cache? { capacity: integer, used: integer, inventory: { [string]: ChestInventory } }
 ---@return { capacity: integer, used: integer, inventory: { [string]: ChestInventory } } chests
 ---@return ChestInventory? interfaces
 ---@see ccTweaked.peripherals.Inventory
-local function build_inventory(modem, saved_inv)
+local function build_inventory(modem, cache)
     log:info('Building inventory')
 
     local names = modem.getNamesRemote()
@@ -140,8 +140,8 @@ local function build_inventory(modem, saved_inv)
             for slot, item in pairs(inv.list()) do
                 -- Try to find item in existing inventory data
                 local saved_item = nil
-                if saved_inv then
-                    saved_item = saved_inv.inventory[name].items[slot]
+                if cache and cache.inventory[name] then
+                    saved_item = cache.inventory[name].items[slot]
                 end
 
                 -- Get item details from getItemDetail if it does not already exist
@@ -208,6 +208,7 @@ local function load_inv()
     local file = assert(io.open('inventory.json', 'r'))
     local inv = json.decode(file:read('a'))
     file:close()
+    assert(inv.inventory, 'Load json data is missing field inventory')
     return inv
 end
 
@@ -236,23 +237,21 @@ local function main()
 
     log:info('Modem name is', modem.getNameLocal() or 'nil')
 
-    local success, saved_inv = pcall(load_inv)
+    local success, cache = pcall(load_inv)
     if not success then
         -- Rename for clarity
-        local err = saved_inv
+        local err = cache
         log:warning('Failed to load saved inventory', err)
-        saved_inv = nil
-    else
-        assert(saved_inv.inventory, 'Load inventory is missing field inventory')
+        cache = nil
     end
 
-    local inv, interface_inv = build_inventory(modem, saved_inv)
-    local used_perc = inv.used / inv.capacity * 100
+    local global_inv, interface_inv = build_inventory(modem, cache)
+    local used_perc = global_inv.used / global_inv.capacity * 100
     log:info(
         'Storage has capacity of',
-        inv.capacity,
+        global_inv.capacity,
         'slots with',
-        inv.used,
+        global_inv.used,
         'slots in use (',
         math.floor(used_perc * 100) / 100,
         '% )'
@@ -269,26 +268,43 @@ local function main()
             if #r_items > 0 then
                 log:info('Moving items from input into storage')
 
-                for slot, item in pairs(r_items) do
-                    log:debug('Moving item', item, 'from slot', slot)
-                    local details = r_inv.getItemDetail(slot)
+                -- Handle items being added during transfer
+                while #r_items > 0 do
+                    for slot, item in pairs(r_items) do
+                        log:debug('Moving item', item, 'from slot', slot)
+                        local details = r_inv.getItemDetail(slot)
 
-                    -- target_slot is not needed
-                    local target_name, target_slot = find_empty_slot(inv.inventory)
-                    if target_name and target_slot then
-                        log:info('Moving', item.name, slot, 'to', target_name)
+                        -- target_slot is not needed
+                        local target_name, target_slot = find_empty_slot(global_inv.inventory)
+                        if target_name and target_slot then
+                            log:debug('Moving', item.name, slot, 'to', target_name)
 
-                        local moved = r_inv.pushItems(target_name, slot)
-                        log:trace('Moved', moved, 'items')
+                            local moved = r_inv.pushItems(target_name, slot)
+                            log:trace('Moved', moved, 'items')
 
-                        -- TODO handle partial stacks being combined
-                        assert(moved == item.count, 'Not enough items moved, ' .. moved .. ' of ' .. item.count)
-                        inv.inventory[target_name].items[target_slot] = details
+                            -- TODO handle partial stacks being combined
+                            assert(moved == item.count, 'Not enough items moved, ' .. moved .. ' of ' .. item.count)
+                            global_inv.inventory[target_name].items[target_slot] = details
+                        end
                     end
+                    r_items = r_inv.list()
                 end
 
+                -- TODO a cleaner way to show new storage capacity
+                global_inv, interface_inv = build_inventory(modem, cache)
+                used_perc = global_inv.used / global_inv.capacity * 100
+                log:info(
+                    'Storage has capacity of',
+                    global_inv.capacity,
+                    'slots with',
+                    global_inv.used,
+                    'slots in use (',
+                    math.floor(used_perc * 100) / 100,
+                    '% )'
+                )
+
                 -- TODO handle interior empty slots
-                dump_inv(inv)
+                dump_inv(global_inv)
             end
 
             sleep(10)
