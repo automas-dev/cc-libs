@@ -1,4 +1,4 @@
----@diagnostic disable: inject-field, undefined-field
+---@diagnostic disable: inject-field, undefined-field, deprecated
 local actions = require 'cc-libs.turtle.actions'
 local ccl_turtle_inv = require 'cc-libs.turtle.inventory'
 

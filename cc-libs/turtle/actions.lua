@@ -88,7 +88,14 @@ function M.assert_items(item_name, need)
         end
     end
 
-    error('Inventory does not have enough ' .. tostring(item_name) .. ' found ' .. tostring(has))
+    error(
+        'Inventory does not have enough '
+            .. tostring(item_name)
+            .. ' found '
+            .. tostring(has)
+            .. ' need '
+            .. tostring(need)
+    )
 end
 
 ---Check if all slots have at least 1 item

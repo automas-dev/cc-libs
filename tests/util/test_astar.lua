@@ -1,4 +1,4 @@
-local astar = require 'cc-libs.astar'
+local astar = require 'cc-libs.util.astar'
 
 local nodes = {
     a = {

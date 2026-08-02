@@ -65,18 +65,22 @@ local function encode_table(val, stack)
 
     stack[val] = true
 
+    -- TODO these changes are untested
+    local is_array = false
     if rawget(val, 1) ~= nil or next(val) == nil then
         -- Treat as array -- check keys are valid and it is not sparse
         local n = 0
         for k in pairs(val) do
             if type(k) ~= "number" then
-                error("invalid table: mixed or invalid key types")
+                break
             end
             n = n + 1
         end
-        if n ~= #val then
-            error("invalid table: sparse array")
-        end
+        -- TODO this might need to be a different check
+        is_array = n == #val
+    end
+
+    if is_array then
         -- Encode
         for i, v in ipairs(val) do
             table.insert(res, encode(v, stack))

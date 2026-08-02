@@ -6,7 +6,7 @@ local json = require 'cc-libs.util.json'
 local table_copy = require 'cc-libs.util.table_copy'
 local table_size = require 'cc-libs.util.table_size'
 
-local astar = require 'cc-libs.astar'
+local astar = require 'cc-libs.util.astar'
 
 ---@alias PointId string
 
