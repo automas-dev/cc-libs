@@ -20,6 +20,9 @@ local Location = ccl_location.Location
 local ccl_nav = require 'cc-libs.turtle.nav'
 local Nav = ccl_nav.Nav
 
+local actions = require 'cc-libs.turtle.actions'
+local inventory = require 'cc-libs.turtle.inventory'
+
 local ccl_telemetry = require 'cc-libs.net.telemetry'
 local get_telemetry = ccl_telemetry.get_telemetry
 
@@ -33,18 +36,31 @@ parser:add_arg('length', { help = 'length of area to mine' })
 parser:add_arg('width', { help = 'width of area to mine' })
 parser:add_arg('height', { help = 'height of area to mine' })
 parser:add_option('u', 'up', 'mine up instead of down')
+parser:add_option(nil, 'dump', 'return to start and dump inventory into chest behind start when full')
 local args = parser:parse_args({ ... })
 
 local length = tonumber(args.length)
 local width = tonumber(args.width)
 local height = tonumber(args.height)
 local direction = args.up and 'up' or 'down'
+local dump_when_full = args.dump
 
 assert(type(length) == 'number' and length >= 1, 'length must be at least 1')
 assert(type(width) == 'number' and width >= 1, 'width must be at least 1')
 assert(type(height) == 'number' and height >= 1, 'height must be at least 1')
 
-log:info('Starting with parameters length=', length, 'width=', width, 'height=', height, 'direction=', direction)
+log:info(
+    'Starting with parameters length=',
+    length,
+    'width=',
+    width,
+    'height=',
+    height,
+    'direction=',
+    direction,
+    'dump=',
+    dump_when_full
+)
 
 local map = Map:new()
 local location = Location:new(map)
@@ -92,17 +108,58 @@ local lineup_start = telem:span('lineup_start', function()
     end
 end)
 
+---Navigate to the start
+local return_to_start = telem:span('return_to_start', function()
+    local path = nav:find_path('start')
+    log:trace('Path is', path)
+    nav:follow_path(path)
+end)
+
+---Navigate to the start
+local return_to_resume = telem:span('return_to_resume', function()
+    local path = nav:find_path('resume')
+    log:trace('Path is', path)
+    nav:follow_path(path)
+end)
+
+local drop_items = telem:span('drop_items', function()
+    log:debug('At station, dumping inventory')
+    for i = 1, 16 do
+        actions.dump_slot(i)
+    end
+    turtle.select(1)
+end)
+
+---Navigate to the start
+local dump = telem:span('dump', function()
+    local heading = location.heading
+    nav:mark_poi('resume')
+    return_to_start()
+    drop_items()
+    return_to_resume()
+    tmc:face(heading)
+end)
+
+local function check_full()
+    if dump_when_full and inventory.full() then
+        dump()
+    end
+end
+
 ---Mine and move forward, then mine up and down if blocks exist
 ---@param dig_up boolean
 ---@param dig_down boolean
 local mine_step = telem:span('mine_step', function(dig_up, dig_down)
-    log:debug('Mining forward 1 step dig_up =', dig_up, 'dig_down =', dig_down)
+    log:trace('Mining forward 1 step dig_up =', dig_up, 'dig_down =', dig_down)
     tmc:forward()
+    check_full()
     if dig_up then
         dig_vert('up')
+        check_full()
     end
     if dig_down then
         dig_vert('down')
+        check_full()
     end
     return true
 end)
@@ -155,13 +212,6 @@ local mine_layer = telem:span('mine_layer', function(l, w, dig_up, dig_down)
             turn_to_next(z % 2 == 1 and 'right' or 'left', dig_up, dig_down)
         end
     end
-end)
-
----Navigate to the start
-local return_to_start = telem:span('return_to_start', function()
-    local path = nav:find_path('start')
-    log:trace('Path is', path)
-    nav:follow_path(path)
 end)
 
 ---Execute the mission
@@ -220,6 +270,10 @@ local function main()
     end
 
     return_to_start()
+
+    if dump_when_full then
+        drop_items()
+    end
 
     if start_heading ~= nil then
         tmc:face(start_heading)
