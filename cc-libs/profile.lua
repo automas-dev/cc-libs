@@ -90,7 +90,7 @@ function Profiler:wrap_call(name, fn, ...)
 
     -- Create alias for readability
     local success = res[1]
-    log:trace('Trace is', success, 'with delta', delta)
+    log:trace('Trace', name, 'is', success, 'with delta', delta)
 
     -- Store the delta time, create the array if needed
     if not self.times[name] then
