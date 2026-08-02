@@ -136,23 +136,35 @@ local function build_inventory(modem, saved_inv)
             inventory_count = inventory_count + 1
 
             local items = {}
+            -- IMPORTANT each call to inv.list() takes 1 tick (50 ms)
             for slot, item in pairs(inv.list()) do
-                local detail
-                if saved_inv and saved_inv.inventory then
-                    local saved_item = saved_inv.inventory[name].items[slot]
-                    if saved_item and item.name == saved_item.name and item.count == saved_item.count then
-                        log:trace('Using saved item data')
-                        detail = saved_item
-                    end
+                -- Try to find item in existing inventory data
+                local saved_item = nil
+                if saved_inv then
+                    saved_item = saved_inv.inventory[name].items[slot]
                 end
-                detail = inv.getItemDetail(slot)
-                log:trace('detail', detail)
+
+                -- Get item details from getItemDetail if it does not already exist
+                local detail = nil
+                if saved_item and item.name == saved_item.name and item.count == saved_item.count then
+                    log:trace('Using saved item data for', name, slot)
+                    detail = saved_item
+                else
+                    -- TODO create a validation function that always uses getItemDetail
+                    log:trace('Calling getItemDetail for', name, slot)
+                    -- IMPORTANT each call to inv.getItemDetail() takes 1 tick (50 ms)
+                    detail = inv.getItemDetail(slot)
+                    log:trace('detail', detail)
+                end
+
                 -- Because getITemDetail fields are undocumented, check that our assumed schema is correct
                 local valid, error_path, err = ItemSchema:validate(detail, false)
                 if not valid then
                     error(name .. ' ' .. slot .. ' ' .. error_path .. ' ' .. err)
                 end
-                -- detail['displayName'] = 1
+
+                log:trace('item validation passed')
+
                 items[slot] = detail
                 used_count = used_count + 1
             end
@@ -225,6 +237,8 @@ local function main()
         local err = saved_inv
         log:warning('Failed to load saved inventory', err)
         saved_inv = nil
+    else
+        assert(saved_inv.inventory, 'Load inventory is missing field inventory')
     end
 
     local inv, interface_inv = build_inventory(modem, saved_inv)
