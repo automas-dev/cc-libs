@@ -111,15 +111,9 @@ end)
 ---Navigate to the start
 local return_to_start = telem:span('return_to_start', function()
     local path = nav:find_path('start')
-    log:trace('Path is', path)
+    log:debug('Path is', path)
     nav:follow_path(path)
-end)
-
----Navigate to the start
-local return_to_resume = telem:span('return_to_resume', function()
-    local path = nav:find_path('resume')
-    log:trace('Path is', path)
-    nav:follow_path(path)
+    return path
 end)
 
 local drop_items = telem:span('drop_items', function()
@@ -134,9 +128,14 @@ end)
 local dump = telem:span('dump', function()
     local heading = location.heading
     nav:mark_poi('resume')
-    return_to_start()
+    local path = return_to_start()
     drop_items()
-    return_to_resume()
+    local path_inv = {}
+    log:debug('Starting reverse from', #path, 'points')
+    for i = 1, #path do
+        path_inv[i] = path[#path - (i - 1)]
+    end
+    nav:follow_path(path_inv)
     tmc:face(heading)
 end)
 

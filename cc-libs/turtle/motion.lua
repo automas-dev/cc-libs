@@ -138,7 +138,7 @@ end
 function Motion:forward(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
-    log:debug('move forward', n, 'blocks')
+    log:trace('move forward', n, 'blocks')
     for _ = 1, n do
         self:_attempt_move('forward', turtle.forward, (self.can_dig and turtle.dig or nil))
         -- Update location after move
@@ -161,7 +161,7 @@ end
 function Motion:backward(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
-    log:debug('move backward', n, 'blocks')
+    log:trace('move backward', n, 'blocks')
     for _ = 1, n do
         self:_attempt_move('back', turtle.back)
         -- Update location after move
@@ -184,7 +184,7 @@ end
 function Motion:up(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
-    log:debug('move up', n, 'blocks')
+    log:trace('move up', n, 'blocks')
     for _ = 1, n do
         self:_attempt_move('up', turtle.up, (self.can_dig and turtle.digUp or nil))
         -- Update location after move
@@ -207,7 +207,7 @@ end
 function Motion:down(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
-    log:debug('move down', n, 'blocks')
+    log:trace('move down', n, 'blocks')
     for _ = 1, n do
         self:_attempt_move('down', turtle.down, (self.can_dig and turtle.digDown or nil))
         -- Update location after move
@@ -229,10 +229,10 @@ end
 function Motion:left(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
-    log:debug('turn left', n, 'times')
+    log:trace('turn left', n, 'times')
 
     if n == 0 then
-        log:debug('n is 0, will do nothing')
+        log:trace('n is 0, will do nothing')
         return
     end
 
@@ -250,10 +250,10 @@ end
 function Motion:right(n)
     n = n or 1
     assert(n >= 0, 'n must be positive')
-    log:debug('turn right', n, 'times')
+    log:trace('turn right', n, 'times')
 
     if n == 0 then
-        log:debug('n is 0, will do nothing')
+        log:trace('n is 0, will do nothing')
         return
     end
 
