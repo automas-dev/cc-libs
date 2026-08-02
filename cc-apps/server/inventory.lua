@@ -253,32 +253,44 @@ local function main()
         '% )'
     )
 
-    if saved_inv then
-        -- TODO compare to inv
-        if inv.capacity ~= saved_inv.capacity then
-            log:warning('Changes have been made, capacity does not match')
-        end
-    end
-
     if interface_inv then
-        log:info('Checking interface inventory')
+        log:info('Watching interface inventory')
         local r_inv = assert(wrap_remote_inv(modem, interface_inv.name))
-        for slot, item in pairs(interface_inv.items) do
-            -- target_slot is not needed
-            local target_name, target_slot = find_empty_slot(inv.inventory)
-            if target_name and target_slot then
-                log:info('Moving', item.name, slot, 'to', target_name)
-                local moved = r_inv.pushItems(target_name, slot)
-                log:trace('Moved', moved, 'items')
-                assert(moved == item.count, 'Not enough items moved, ' .. moved .. ' of ' .. item.count)
-                inv.inventory[target_name].items[target_slot] = item
+
+        while true do
+            log:trace('Checking interface inventory')
+
+            local r_items = r_inv.list()
+            if #r_items > 0 then
+                log:info('Moving items from input into storage')
+
+                for slot, item in pairs(r_items) do
+                    log:debug('Moving item', item, 'from slot', slot)
+                    local details = r_inv.getItemDetail(slot)
+
+                    -- target_slot is not needed
+                    local target_name, target_slot = find_empty_slot(inv.inventory)
+                    if target_name and target_slot then
+                        log:info('Moving', item.name, slot, 'to', target_name)
+
+                        local moved = r_inv.pushItems(target_name, slot)
+                        log:trace('Moved', moved, 'items')
+
+                        -- TODO handle partial stacks being combined
+                        assert(moved == item.count, 'Not enough items moved, ' .. moved .. ' of ' .. item.count)
+                        inv.inventory[target_name].items[target_slot] = details
+                    end
+                end
+
+                -- TODO handle interior empty slots
+                dump_inv(inv)
             end
+
+            sleep(10)
         end
     else
         log:warning('Could not find interface inventory', INTERFACE)
     end
-
-    dump_inv(inv)
 end
 
 log:catch_errors(main)
