@@ -78,7 +78,7 @@ end
 ---@field need_update { [PointId]: true }
 local Map = {}
 
---- Create a new empty map
+---Create a new empty map
 ---@param remote? MapClient
 ---@param live_update? boolean
 ---@return Map

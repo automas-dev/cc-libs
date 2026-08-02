@@ -89,7 +89,7 @@ function Logger:log(level, ...)
     local msg = table_to_string(...)
     local record = Record:new(self.subsystem, level, traceback(), msg, log_time)
     local handlers = self.handlers
-    --- root should always have handlers after basic_config is called
+    -- root should always have handlers after basic_config is called
     if #handlers == 0 and self.parent ~= nil then
         handlers = self.parent.handlers
     end

@@ -40,8 +40,8 @@ function test.remove_nil_before()
     expect_arr_eq(t, {})
 end
 
---- In lua 5.2 this will pass, array ends at first nil
---- In lua 5.4+ this will pass
+-- In lua 5.2 this will pass, array ends at first nil
+-- In lua 5.4+ this will pass
 function test.remove_nil_center()
     local t = { 1, nil, 3 }
     expect_arr_eq({ 1, nil, 3 }, t)
