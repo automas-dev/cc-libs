@@ -3,8 +3,15 @@ local log = logging.get_logger('profile')
 
 local json = require 'cc-libs.util.json'
 
+---@class ProfilerResult
+---@field min number
+---@field max number
+---@field avg number
+---@field sum number
+---@field data number[]|nil
+
 ---@class Profiler
----@field results { [string] : number[] }
+---@field times { [string] : number[] }
 local Profiler = {
     active = 0,
 }
@@ -13,7 +20,7 @@ local Profiler = {
 ---@return Profiler
 function Profiler:new()
     local o = {
-        results = {},
+        times = {},
     }
     setmetatable(o, self)
     self.__index = self
@@ -25,8 +32,34 @@ end
 function Profiler:dump(path)
     -- TODO test
     local file = assert(io.open(path, 'w'))
-    file:write(json.encode({ results = self.results }))
+    file:write(json.encode(self:calc_results()))
     file:close()
+end
+
+---Calculate the results of all calls
+---@return { [string]: ProfilerResult }
+function Profiler:calc_results()
+    ---@type { [string]: ProfilerResult }
+    local res = {}
+    for name, data in pairs(self.times) do
+        assert(#data > 0, name .. ' is missing data')
+
+        local min = math.min(table.unpack(data))
+        local max = math.max(table.unpack(data))
+        local sum = 0
+        for _, v in ipairs(data) do
+            sum = sum + v
+        end
+        local avg = sum / #data
+        res[name] = {
+            min = min,
+            max = max,
+            avg = avg,
+            sum = sum,
+            data = data,
+        }
+    end
+    return res
 end
 
 ---Call a function and track its execution time
@@ -53,10 +86,10 @@ function Profiler:wrap_call(name, fn, ...)
     log:trace('Trace is', success, 'with delta', delta)
 
     -- Store the delta time, create the array if needed
-    if not self.results[name] then
-        self.results[name] = {}
+    if not self.times[name] then
+        self.times[name] = {}
     end
-    table.insert(self.results[name], delta)
+    table.insert(self.times[name], delta)
 
     -- Handle errors by re-raising
     if not success then

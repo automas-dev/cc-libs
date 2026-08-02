@@ -17,14 +17,14 @@ end
 
 function test.new()
     local p = Profiler:new()
-    assert_ne(nil, p.results)
-    expect_eq(0, #p.results)
+    assert_ne(nil, p.times)
+    expect_eq(0, #p.times)
 end
 
 function test.wrap_call()
     local p = Profiler:new()
-    assert_ne(nil, p.results)
-    expect_eq(0, #p.results)
+    assert_ne(nil, p.times)
+    expect_eq(0, #p.times)
 
     local name = 'foo'
     local function fn()
@@ -33,18 +33,18 @@ function test.wrap_call()
 
     local res = p:wrap_call(name, fn)
     expect_eq('bar', res)
-    assert_ne(nil, p.results[name])
-    expect_arr_eq({ 1 }, p.results[name])
+    assert_ne(nil, p.times[name])
+    expect_arr_eq({ 1 }, p.times[name])
 
     res = p:wrap_call(name, fn)
     expect_eq('bar', res)
-    expect_arr_eq({ 1, 1 }, p.results[name])
+    expect_arr_eq({ 1, 1 }, p.times[name])
 end
 
 function test.wrap_fn()
     local p = Profiler:new()
-    assert_ne(nil, p.results)
-    expect_eq(0, #p.results)
+    assert_ne(nil, p.times)
+    expect_eq(0, #p.times)
 
     local name = 'foo'
     local fn = p:wrap_fn(name, function()
@@ -53,18 +53,18 @@ function test.wrap_fn()
 
     local res = fn()
     expect_eq('bar', res)
-    assert_ne(nil, p.results[name])
-    expect_arr_eq({ 1 }, p.results[name])
+    assert_ne(nil, p.times[name])
+    expect_arr_eq({ 1 }, p.times[name])
 
     res = fn()
     expect_eq('bar', res)
-    expect_arr_eq({ 1, 1 }, p.results[name])
+    expect_arr_eq({ 1, 1 }, p.times[name])
 end
 
 function test.wrap_nested()
     local p = Profiler:new()
-    assert_ne(nil, p.results)
-    expect_eq(0, #p.results)
+    assert_ne(nil, p.times)
+    expect_eq(0, #p.times)
 
     local foo = p:wrap_fn('foo', function()
         expect_eq(2, Profiler.active)
@@ -77,10 +77,10 @@ function test.wrap_nested()
     end)
 
     bar()
-    assert_ne(nil, p.results['foo'])
-    expect_arr_eq({ 1 }, p.results['foo'])
-    assert_ne(nil, p.results['bar'])
-    expect_arr_eq({ 3 }, p.results['bar'])
+    assert_ne(nil, p.times['foo'])
+    expect_arr_eq({ 1 }, p.times['foo'])
+    assert_ne(nil, p.times['bar'])
+    expect_arr_eq({ 3 }, p.times['bar'])
 end
 
 return test
