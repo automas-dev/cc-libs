@@ -14,7 +14,7 @@ local json = require 'cc-libs.util.json'
 
 local table_size = require 'cc-libs.util.table_size'
 
-local INTERFACE = 'minecraft:barrel_11'
+local INTERFACE = 'minecraft:barrel_13'
 
 ---This is a copy of peripheral.wrap that wraps a remote peripheral.
 ---@param modem ccTweaked.peripherals.WiredModem
@@ -50,6 +50,7 @@ end
 ---@field name string
 -- ---@field inv ccTweaked.peripherals.Inventory
 ---@field items ccTweaked.peripherals.inventory.itemList
+---@field size integer
 ---@field is_interface boolean?
 
 ---@class Inventory
@@ -60,6 +61,7 @@ end
 ---Scan all inventories attached to the network
 ---@param modem ccTweaked.peripherals.WiredModem
 ---@return Inventory
+---@return InventoryEntry? interface
 ---@see ccTweaked.peripherals.Inventory
 local function build_inventory(modem)
     log:info('Building inventory')
@@ -69,7 +71,7 @@ local function build_inventory(modem)
 
     local capacity = 0
     ---@type { [string]: InventoryEntry }
-    local inventories = {}
+    local inventory = {}
     local inventory_count = 0
     local used_count = 0
 
@@ -93,18 +95,19 @@ local function build_inventory(modem)
 
             log:debug('Remote inventory', name, 'has capacity', size, 'and', table_size(items), 'items')
 
-            inventories[name] = {
+            inventory[name] = {
                 name = name,
                 -- inv = inv,
+                size = size,
                 items = items,
                 is_interface = name == INTERFACE,
             }
 
-            if inventories[name].is_interface then
+            if inventory[name].is_interface then
                 if interface_inv then
                     log:error('Found multiple interface inventories')
                 end
-                interface_inv = inventories[name]
+                interface_inv = inventory[name]
             end
         else
             log:trace('Skipping non inventory remote', name)
@@ -116,8 +119,8 @@ local function build_inventory(modem)
     return {
         capacity = capacity,
         used = used_count,
-        inventories = inventories,
-    }
+        inventory = inventory,
+    }, interface_inv
 end
 
 local function dump_inv(inv)
@@ -133,13 +136,28 @@ local function load_inv()
     return inv
 end
 
+---@param inventory Inventory
+---@return string? name
+---@return integer? slot
+local function find_empty_slot(inventory)
+    assert(inventory ~= nil)
+    assert(inventory.inventory ~= nil)
+    for name, inv in pairs(inventory.inventory) do
+        for slot = 1, inv.size do
+            if not inv[slot] then
+                return inv.name, slot
+            end
+        end
+    end
+end
+
 local function main()
     local modem = assert(peripheral.find('modem'), 'No modem connected')
     ---@cast modem ccTweaked.peripherals.WiredModem
 
     log:info('Modem name is', modem.getNameLocal() or 'nil')
 
-    local inv = build_inventory(modem)
+    local inv, interface_inv = build_inventory(modem)
     local used_perc = inv.used / inv.capacity * 100
     log:info(
         'Storage has capacity of',
@@ -157,6 +175,20 @@ local function main()
         -- TODO compare to inv
         if inv.capacity ~= saved_inv.capacity then
             log:warning('Changes have been made, capacity does not match')
+        end
+    end
+
+    if interface_inv then
+        log:info('Checking interface inventory')
+        local r_inv = assert(wrap_remote_inv(modem, interface_inv.name))
+        for slot, item in pairs(interface_inv.items) do
+            -- target_slot is not needed
+            local target_name, target_slot = find_empty_slot(inv)
+            if target_name and target_slot then
+                log:info('Moving', item.name, slot, 'to', target_name)
+                r_inv.pushItems(target_name, slot)
+                inv.inventory[target_name].items[target_slot] = item
+            end
         end
     end
 
