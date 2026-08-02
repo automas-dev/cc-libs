@@ -19,9 +19,9 @@ function M.find_slot(item_name, need)
         local item = turtle.getItemDetail(i)
         log:trace('Checking slot', i, 'found item', item)
         if item ~= nil and item.name == item_name then
-            log:debug('Found item', item.name, 'in slot', i)
+            log:trace('Found item', item.name, 'in slot', i)
             if turtle.getItemCount(i) >= need then
-                log:debug('Item found', item_name, 'has', turtle.getItemCount(i), 'in slot', i)
+                log:trace('Item found', item_name, 'has', turtle.getItemCount(i), 'in slot', i)
                 return i
             end
         end
@@ -43,13 +43,13 @@ end
 function M.select_slot(item_name)
     log:debug('Select slot for item', item_name)
     local item_slot = ccl_turtle_inv.find_slot_name(item_name)
-    log:debug('Found slot', item_slot)
+    log:trace('Found slot', item_slot)
 
     if item_slot ~= nil then
-        log:debug('Item was selected')
+        log:trace('Item was selected')
         turtle.select(item_slot)
     else
-        log:debug('Did not select item')
+        log:trace('Did not select item')
     end
 
     return item_slot
@@ -79,10 +79,10 @@ function M.assert_items(item_name, need)
         local item = turtle.getItemDetail(i)
         log:trace('Checking slot', i, 'found item', item)
         if item ~= nil and item.name == item_name then
-            log:debug('Found item', item.name, 'in slot', i)
+            log:trace('Found item', item.name, 'in slot', i)
             has = has + turtle.getItemCount(i)
             if has >= need then
-                log:debug('Inventory has enough of', item_name)
+                log:trace('Inventory has enough of', item_name)
                 return
             end
         end
@@ -99,7 +99,7 @@ function M.inventory_full()
     log:debug('Check if inventory is full')
     for i = 1, 16 do
         if turtle.getItemCount(i) == 0 then
-            log:debug('Found free slot', i)
+            log:trace('Found free slot', i)
             log:info('Inventory has space')
             return false
         else
@@ -116,11 +116,11 @@ end
 ---@return integer count number of items dropped
 function M.dump_slot(slot, direction)
     assert(slot > 0 and slot <= 16, 'slot must be a number between 1 and 16')
-    log:debug('Dumping slot', slot)
+    log:trace('Dumping slot', slot)
 
     turtle.select(slot)
 
-    log:debug('Slot has', turtle.getItemCount(), 'items')
+    log:trace('Slot has', turtle.getItemCount(), 'items')
 
     local count = 0
     while turtle.getItemCount() > 0 do
@@ -135,7 +135,7 @@ function M.dump_slot(slot, direction)
         count = count + 1
     end
 
-    log:debug('Finished dropping items')
+    log:trace('Finished dropping items')
     return count
 end
 
@@ -145,14 +145,14 @@ function M.place_torch()
     log:info('Place torch')
 
     local old_slot = turtle.getSelectedSlot()
-    log:debug('Storing current slot as', old_slot)
+    log:trace('Storing current slot as', old_slot)
 
     local torch_slot = ccl_turtle_inv.find_slot_name('minecraft_torch')
     if torch_slot == nil then
         log:error('No torches were found in inventory')
         return false
     end
-    log:debug('Found torch slot', torch_slot)
+    log:trace('Found torch slot', torch_slot)
 
     turtle.select(torch_slot)
     log:trace('Selected torch slot', torch_slot)
@@ -169,7 +169,7 @@ end
 ---@param side string peripheral side
 ---@return {size: integer, slots: table[], details: table, block: table | nil } | nil info inventory details if present
 function M.examine_inventory(side)
-    log:debug('Opening peripheral on side', side)
+    log:trace('Opening peripheral on side', side)
 
     local is_inv = false
     for _, t in ipairs({ peripheral.getType(side) }) do
@@ -177,14 +177,14 @@ function M.examine_inventory(side)
     end
 
     if not is_inv then
-        log:debug('Peripheral on side', side, 'is not an inventory')
+        log:trace('Peripheral on side', side, 'is not an inventory')
         return nil
     end
 
     local inv = peripheral.wrap(side)
 
     if not inv then
-        log:debug('No inventory found')
+        log:trace('No inventory found')
         return nil
     end
 
@@ -222,7 +222,7 @@ function M.examine_inventory(side)
     end
 
     if exists then
-        log:debug('Adding block info')
+        log:trace('Adding block info')
         info.block = block
     end
 
