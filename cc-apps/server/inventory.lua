@@ -216,10 +216,15 @@ end
 ---@return integer? slot
 local function find_empty_slot(inventory)
     assert(inventory ~= nil)
+    log:debug('Looking for empty slots')
     for name, inv in pairs(inventory) do
+        log:trace('checking', name, 'for space')
         for slot = 1, inv.size do
-            if not inv[slot] then
+            if not inv.items[slot] then
+                log:debug('Found empty slot', name, slot)
                 return inv.name, slot
+            else
+                log:trace(name, slot, 'is used')
             end
         end
     end
