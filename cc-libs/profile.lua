@@ -9,6 +9,7 @@ local json = require 'cc-libs.util.json'
 ---@field avg number
 ---@field sum number
 ---@field data number[]|nil
+---@field count integer
 
 ---@class Profiler
 ---@field times { [string] : number[] }
@@ -28,17 +29,20 @@ function Profiler:new()
 end
 
 ---Dump results to a json file
+---@param include_data? boolean include array of times with results, default False
 ---@param path string
-function Profiler:dump(path)
+function Profiler:dump(path, include_data)
     -- TODO test
     local file = assert(io.open(path, 'w'))
-    file:write(json.encode(self:calc_results()))
+    file:write(json.encode(self:calc_results(include_data)))
     file:close()
 end
 
 ---Calculate the results of all calls
+---@param include_data? boolean include array of times with results, default False
 ---@return { [string]: ProfilerResult }
-function Profiler:calc_results()
+function Profiler:calc_results(include_data)
+    -- TODO test
     ---@type { [string]: ProfilerResult }
     local res = {}
     for name, data in pairs(self.times) do
@@ -56,8 +60,11 @@ function Profiler:calc_results()
             max = max,
             avg = avg,
             sum = sum,
-            data = data,
+            count = #data,
         }
+        if include_data then
+            res[name].data = data
+        end
     end
     return res
 end
