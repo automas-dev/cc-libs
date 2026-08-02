@@ -19,7 +19,7 @@ local json = require 'cc-libs.util.json'
 local table_size = require 'cc-libs.util.table_size'
 
 local INTERFACE = {
-    ['minecraft:barrel_13'] = true,
+    ['minecraft:barrel_14'] = true,
     ['minecraft:chest_26'] = true,
 }
 
