@@ -39,7 +39,9 @@ local test = {}
 function test.astar()
     local path = astar('a', 'c', neighbors, f, h)
 
+    assert_ne(nil, path)
     assert_eq(3, #path)
+    ---@cast path table
     expect_eq('c', path[1])
     expect_eq('b', path[2])
     expect_eq('a', path[3])

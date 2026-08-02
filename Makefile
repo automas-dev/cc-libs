@@ -11,6 +11,9 @@ format:
 test:
 	cd tests && $(LUA) runtests.lua
 
+test_cov: export COVERAGE=1
+test_cov: test
+
 check: format lint test
 
 emulate:

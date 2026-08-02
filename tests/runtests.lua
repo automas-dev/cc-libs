@@ -3,6 +3,11 @@ package.path = '../?.lua;../?/init.lua;' .. package.path
 local disable_color = os.getenv('DISABLE_COLOR_TEST')
 local verbose = os.getenv('VERBOSE')
 local test_file_prefix = 'test_'
+local coverage_enabled = os.getenv('COVERAGE') ~= nil
+local coverage = require 'coverage'
+local coverage_state = coverage.new_state(coverage_enabled)
+local coverage_warn = 70.0
+local coverage_fail = 100.0
 
 require 'asserts'
 require 'asserts_extra'
@@ -224,71 +229,219 @@ local function print_test_trace(test_name, cases)
     print()
 end
 
-local n_test_run = 0
-local n_test_pass = 0
-local all_test_results = {}
-
-for test_file in io.popen([[find . -name 'test_*.lua']]):lines() do
-    if test_file:find('^./') then
-        test_file = test_file:sub(3)
+---Print a table
+---@param columns string[] column names
+---@param rows string[][] rows of values
+local function print_table(columns, rows)
+    local col_len = {}
+    for i = 1, #columns do
+        col_len[i] = #columns[i]
     end
-    -- local module = test_file:sub(1, -5):gsub('/', '.')
-    local module = test_file:sub(1, -5)
-    local cases = {}
-
-    -- Store state of globals and packages before loading test file
-    local old_g = save_g()
-    local old_packages = save_packages()
-
-    local success, test = xpcall(require, debug.traceback, module)
-    if success then
-        success, cases = run_test_module(test, module)
-        if success then
-            n_test_pass = n_test_pass + 1
+    for _, row in ipairs(rows) do
+        for i = 1, #columns do
+            local val_len = #tostring(row[i])
+            if col_len[i] < val_len then
+                col_len[i] = val_len
+            end
         end
-
-        -- Only print case details if there was a fail or verbose is enabled
-        if not success or verbose then
-            print_test_trace(module, cases)
+    end
+    local function print_row(row)
+        local cells = {}
+        for i = 1, #row do
+            if i == 1 then
+                table.insert(cells, string.format('%-' .. col_len[i] .. 's', tostring(row[i])))
+            else
+                table.insert(cells, string.format('%-' .. col_len[i] .. 's', tostring(row[i])))
+            end
         end
-    else
-        if disable_color then
-            print('Failed to load test file ' .. test_file)
+        print('| ' .. table.concat(cells, ' | ') .. ' |')
+    end
+    print_row(columns)
+    local div = {}
+    for i, count in ipairs(col_len) do
+        div[i] = string.rep('-', count)
+    end
+    print_row(div)
+    for _, row in ipairs(rows) do
+        print_row(row)
+    end
+end
+
+---@param missing_lines number[]
+---@return string
+local function format_missing(missing_lines)
+    local str_arr = {}
+    local last_start = 1
+    for i in ipairs(missing_lines) do
+        if i == 1 then
+            if missing_lines[i + 1] ~= missing_lines[i] + 1 then
+                table.insert(str_arr, tostring(missing_lines[i]))
+                last_start = 2
+            end
         else
-            -- Yellow
-            print('\27[33mFailed to load test file ' .. test_file .. '\27[0m')
+            if missing_lines[i] ~= missing_lines[i - 1] + 1 then
+                if i == last_start then
+                    table.insert(str_arr, tostring(missing_lines[i]))
+                else
+                    table.insert(
+                        str_arr,
+                        table.concat({
+                            tostring(missing_lines[last_start]),
+                            tostring(missing_lines[i]),
+                        }, '-')
+                    )
+                end
+            end
         end
-        print(test)
+    end
+    if #missing_lines >= last_start then
+        table.insert(str_arr, missing_lines[#missing_lines])
+    end
+    local res = table.concat(str_arr, ', ')
+    local max_width = 40
+    if #res > max_width then
+        res = res:sub(1, max_width - 3) .. '...'
+    end
+    return res
+end
+
+local function run()
+    local n_test_run = 0
+    local n_test_pass = 0
+    local all_test_results = {}
+
+    coverage.start_coverage(coverage_state)
+
+    for test_file in io.popen([[find . -name 'test_*.lua']]):lines() do
+        if test_file:find('^./') then
+            test_file = test_file:sub(3)
+        end
+        -- local module = test_file:sub(1, -5):gsub('/', '.')
+        local module = test_file:sub(1, -5)
+        local cases = {}
+
+        -- Store state of globals and packages before loading test file
+        local old_g = save_g()
+        local old_packages = save_packages()
+
+        local success, test = xpcall(require, debug.traceback, module)
+        if success then
+            success, cases = run_test_module(test, module)
+            if success then
+                n_test_pass = n_test_pass + 1
+            end
+
+            -- Only print case details if there was a fail or verbose is enabled
+            if not success or verbose then
+                print_test_trace(module, cases)
+            end
+        else
+            if disable_color then
+                print('Failed to load test file ' .. test_file)
+            else
+                -- Yellow
+                print('\27[33mFailed to load test file ' .. test_file .. '\27[0m')
+            end
+            print(test)
+        end
+
+        n_test_run = n_test_run + 1
+        table.insert(all_test_results, {
+            name = module,
+            cases = cases,
+            status = success and 'pass' or 'fail',
+        })
+
+        -- Restore state of globals and packages after running all cases to
+        -- prevent side effects.
+        reset_packages(old_packages)
+        reset_g(old_g)
     end
 
-    n_test_run = n_test_run + 1
-    table.insert(all_test_results, {
-        name = module,
-        cases = cases,
-        status = success and 'pass' or 'fail',
-    })
+    coverage.stop_coverage(coverage_state)
 
-    -- Restore state of globals and packages after running all cases to
-    -- prevent side effects.
-    reset_packages(old_packages)
-    reset_g(old_g)
+    -- Dump test results to a report json file
+    local test_file = io.open('test_report.json', 'w')
+    if test_file then
+        test_file:write(json.encode(all_test_results))
+        test_file:close()
+    end
+
+    local coverage_summary = coverage.write_coverage_report(coverage_state)
+    if coverage_enabled and coverage_summary then
+        coverage.print_coverage_table(coverage_summary)
+
+        if disable_color then
+            print(
+                string.format(
+                    'Line coverage %.2f%% (%d/%d lines) across %d files',
+                    coverage_summary.coverage,
+                    coverage_summary.covered_lines,
+                    coverage_summary.total_lines,
+                    #coverage_summary.files
+                )
+            )
+        elseif coverage_summary.coverage < coverage_fail then
+            print(
+                string.format(
+                    '\27[31mLine coverage %.2f%% (%d/%d lines) across %d files\27[0m',
+                    coverage_summary.coverage,
+                    coverage_summary.covered_lines,
+                    coverage_summary.total_lines,
+                    #coverage_summary.files
+                )
+            )
+        elseif coverage_summary.coverage < coverage_warn then
+            print(
+                string.format(
+                    '\27[33mLine coverage %.2f%% (%d/%d lines) across %d files\27[0m',
+                    coverage_summary.coverage,
+                    coverage_summary.covered_lines,
+                    coverage_summary.total_lines,
+                    #coverage_summary.files
+                )
+            )
+        else
+            print(
+                string.format(
+                    '\27[32mLine coverage %.2f%% (%d/%d lines) across %d files\27[0m',
+                    coverage_summary.coverage,
+                    coverage_summary.covered_lines,
+                    coverage_summary.total_lines,
+                    #coverage_summary.files
+                )
+            )
+        end
+    end
+
+    if disable_color then
+        print('Finished tests, ' .. n_test_pass .. ' passed of ' .. n_test_run)
+    elseif n_test_pass == n_test_run then
+        -- Green
+        print('\27[32mFinished tests ' .. n_test_pass .. '/' .. n_test_run .. ' passed\27[0m')
+    else
+        -- Red
+        print('\27[31mFinished tests ' .. n_test_pass .. '/' .. n_test_run .. ' passed\27[0m')
+    end
+
+    if coverage_enabled and coverage_summary then
+        os.exit(n_test_pass == n_test_run and coverage_summary.coverage >= coverage_fail)
+    else
+        os.exit(n_test_pass == n_test_run)
+    end
 end
 
--- Dump test results to a report json file
-local test_file = io.open('test_report.json', 'w')
-if test_file then
-    test_file:write(json.encode(all_test_results))
-    test_file:close()
+local M = {
+    normalize_coverage_path = coverage.normalize_coverage_path,
+    resolve_coverage_path = coverage.resolve_coverage_path,
+    is_coverage_target = coverage.is_coverage_target,
+    should_count_coverage_line = coverage.should_count_coverage_line,
+}
+
+package.loaded['runtests'] = M
+
+if not _G._RUNTESTS_TEST_MODE then
+    run()
 end
 
-if disable_color then
-    print('Finished tests, ' .. n_test_pass .. ' passed of ' .. n_test_run)
-elseif n_test_pass == n_test_run then
-    -- Green
-    print('\27[32mFinished tests ' .. n_test_pass .. '/' .. n_test_run .. ' passed\27[0m')
-else
-    -- Red
-    print('\27[31mFinished tests ' .. n_test_pass .. '/' .. n_test_run .. ' passed\27[0m')
-end
-
-os.exit(n_test_pass == n_test_run)
+return M
