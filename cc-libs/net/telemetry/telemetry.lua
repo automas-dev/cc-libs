@@ -130,7 +130,7 @@ end
 ---@return T
 function Telemetry:span(name, fn)
     return function(...)
-        log:debug('Start span', name)
+        log:trace('Start span', name)
         self:push_span(name)
         -- local start = os.clock()
         local res = table.pack(pcall(fn, ...))
@@ -143,7 +143,7 @@ function Telemetry:span(name, fn)
             error(res[2], 2)
         end
 
-        log:debug('End span', name)
+        log:trace('End span', name)
         return table.unpack(res, 2)
     end
 end

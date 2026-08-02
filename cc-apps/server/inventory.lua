@@ -10,6 +10,8 @@ logging.basic_config {
 }
 local log = logging.get_logger('main')
 
+local json = require 'cc-libs.util.json'
+
 local table_size = require 'cc-libs.util.table_size'
 
 local INTERFACE = 'minecraft:barrel_11'
@@ -44,10 +46,16 @@ local function wrap_remote_inv(modem, name)
     return result
 end
 
+---@class InventoryEntry
+---@field name string
+-- ---@field inv ccTweaked.peripherals.Inventory
+---@field items ccTweaked.peripherals.inventory.itemList
+---@field is_interface boolean?
+
 ---@class Inventory
 ---@field capacity integer
 ---@field used integer
----@field inventory { [string]: { inv: ccTweaked.peripherals.Inventory, items: ccTweaked.peripherals.inventory.itemList } }
+---@field inventory { [string]: InventoryEntry }
 
 ---Scan all inventories attached to the network
 ---@param modem ccTweaked.peripherals.WiredModem
@@ -60,35 +68,43 @@ local function build_inventory(modem)
     log:debug('Has remote names', table.concat(names, ', '))
 
     local capacity = 0
+    ---@type { [string]: InventoryEntry }
     local inventories = {}
     local inventory_count = 0
     local used_count = 0
+
+    local interface_inv = nil
 
     for _, name in ipairs(names) do
         if modem.hasTypeRemote(name, 'inventory') then
             log:trace('Inspecting remote inventory', name)
             local inv = assert(wrap_remote_inv(modem, name))
-            if name == INTERFACE then
-                log:trace('Skipping', name, 'in capacity calculation')
-            else
-                local size = inv.size()
-                capacity = capacity + size
-                inventory_count = inventory_count + 1
+            local size = inv.size()
+            capacity = capacity + size
+            inventory_count = inventory_count + 1
 
-                local items = {}
-                for slot in pairs(inv.list()) do
-                    local detail = inv.getItemDetail(slot)
-                    log:trace('detail', detail)
-                    items[slot] = detail
-                    used_count = used_count + 1
+            local items = {}
+            for slot in pairs(inv.list()) do
+                local detail = inv.getItemDetail(slot)
+                log:trace('detail', detail)
+                items[slot] = detail
+                used_count = used_count + 1
+            end
+
+            log:debug('Remote inventory', name, 'has capacity', size, 'and', table_size(items), 'items')
+
+            inventories[name] = {
+                name = name,
+                -- inv = inv,
+                items = items,
+                is_interface = name == INTERFACE,
+            }
+
+            if inventories[name].is_interface then
+                if interface_inv then
+                    log:error('Found multiple interface inventories')
                 end
-
-                log:debug('Remote inventory', name, 'has capacity', size, 'and', table_size(items), 'items')
-
-                inventories[name] = {
-                    inv = inv,
-                    items = items,
-                }
+                interface_inv = inventories[name]
             end
         else
             log:trace('Skipping non inventory remote', name)
@@ -102,6 +118,19 @@ local function build_inventory(modem)
         used = used_count,
         inventories = inventories,
     }
+end
+
+local function dump_inv(inv)
+    local file = assert(io.open('inventory.json', 'w'))
+    file:write(json.encode(inv))
+    file:close()
+end
+
+local function load_inv()
+    local file = assert(io.open('inventory.json', 'r'))
+    local inv = json.decode(file:read('a'))
+    file:close()
+    return inv
 end
 
 local function main()
@@ -121,6 +150,17 @@ local function main()
         math.floor(used_perc * 100) / 100,
         '% )'
     )
+
+    local _, saved_inv = pcall(load_inv)
+
+    if saved_inv then
+        -- TODO compare to inv
+        if inv.capacity ~= saved_inv.capacity then
+            log:warning('Changes have been made, capacity does not match')
+        end
+    end
+
+    dump_inv(inv)
 end
 
 log:catch_errors(main)
