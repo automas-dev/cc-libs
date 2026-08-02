@@ -1,6 +1,8 @@
 local logging = require 'cc-libs.util.logging'
 local log = logging.get_logger('profile')
 
+local json = require 'cc-libs.util.json'
+
 ---@class Profiler
 ---@field results { [string] : number[] }
 local Profiler = {
@@ -16,6 +18,15 @@ function Profiler:new()
     setmetatable(o, self)
     self.__index = self
     return o
+end
+
+---Dump results to a json file
+---@param path string
+function Profiler:dump(path)
+    -- TODO test
+    local file = assert(io.open(path, 'w'))
+    file:write(json.encode({ results = self.results }))
+    file:close()
 end
 
 ---Call a function and track its execution time
