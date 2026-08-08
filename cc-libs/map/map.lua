@@ -44,10 +44,16 @@ local function link_points(p1, p2, weight, one_way)
     if not p1.links[p2.id] then
         log:trace('Creating link from', p1.id, 'to', p2.id)
         p1.links[p2.id] = weight
+    elseif p1.links[p2.id] ~= weight then
+        log:trace('Updating link from', p1.id, 'to', p2.id)
+        p1.links[p2.id] = weight
     end
     if not one_way then
         if not p2.links[p1.id] then
             log:trace('Creating link from', p2.id, 'to', p1.id)
+            p2.links[p1.id] = weight
+        elseif p2.links[p1.id] ~= weight then
+            log:trace('Updating link from', p2.id, 'to', p1.id)
             p2.links[p1.id] = weight
         end
     end
@@ -446,12 +452,14 @@ function Map:link(p1, p2, weight)
 
     local n_p1 = table_size(p1.links)
     local n_p2 = table_size(p2.links)
+    local w1 = p1.links[p2.id]
+    local w2 = p2.links[p1.id]
 
     link_points(p1, p2, weight)
-    if table_size(p1.links) > n_p1 then
+    if weight ~= w1 or table_size(p1.links) > n_p1 then
         self:update_remote_point(p1)
     end
-    if table_size(p2.links) > n_p2 then
+    if weight ~= w2 or table_size(p2.links) > n_p2 then
         self:update_remote_point(p2)
     end
 end
@@ -472,9 +480,13 @@ function Map:dir_link(p1, p2, weight)
 
     assert(inline(p1, p2), 'p1 is not inline with p2')
 
+    local n_p1 = table_size(p1.links)
+    local w1 = p1.links[p2.id]
+
     link_points(p1, p2, weight, true)
-    self:update_remote_point(p1)
-    self:update_remote_point(p2)
+    if weight ~= w1 or table_size(p1.links) > n_p1 then
+        self:update_remote_point(p1)
+    end
 end
 
 ---Link adjacent points if they exist
